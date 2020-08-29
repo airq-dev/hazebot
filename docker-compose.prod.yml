@@ -3,16 +3,26 @@ version: '3'
 services:
   app:
     build: ./app
+    image: 146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/app
     command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 manage:app
-    volumes:
-      - ./app/:/usr/src/app/
     expose:
       - 5000
     env_file:
       - ./.env.prod
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: airq
+        awslogs-region: us-west-1
+        awslogs-stream-prefix: app
   nginx:
     build: ./nginx
+    image: 146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/nginx
     ports:
-      - 1337:80
-    depends_on:
-      - app
+      - 80:80
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: airq
+        awslogs-region: us-west-1
+        awslogs-stream-prefix: nginx
