@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app:
+    build: ./app
+    command: gunicorn --bind 0.0.0.0:5000 manage:app
+    volumes:
+      - ./app/:/usr/src/app/
+    expose:
+      - 5000
+    env_file:
+      - ./.env.prod
+  nginx:
+    build: ./nginx
+    ports:
+      - 1337:80
+    depends_on:
+      - app
+
