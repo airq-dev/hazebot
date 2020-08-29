@@ -1,9 +1,9 @@
-version: '3.7'
+version: '3'
 
 services:
   app:
     build: ./app
-    command: gunicorn --bind 0.0.0.0:5000 manage:app
+    command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 manage:app
     volumes:
       - ./app/:/usr/src/app/
     expose:
@@ -16,4 +16,3 @@ services:
       - 1337:80
     depends_on:
       - app
-
