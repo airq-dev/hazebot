@@ -1,3 +1,4 @@
+import collections
 import logging
 import requests
 import math
@@ -6,6 +7,9 @@ import textwrap
 
 
 logger = logging.getLogger(__name__)
+
+
+Sensor = collections.namedtuple("Sensor", ["id", "pm_25"])
 
 
 def haversine_distance(lon1, lat1, lon2, lat2):
@@ -34,30 +38,40 @@ def _get_connection():
     return conn
 
 
-def _find_nearest_sensor(zipcode):
+def _find_neighboring_sensor_ids(zipcode, max_distance=15):
     conn = _get_connection()
     cursor = conn.cursor()
-    sql = "SELECT id, latitude, longitude FROM sensors WHERE zipcode=?"
-    cursor.execute(sql, (zipcode["id"],))
-    rows = cursor.fetchall()
-    conn.close()
-    if rows:
-        closest_sensor = None
-        smallest_distance = float("inf")
-        for row in rows:
-            distance = haversine_distance(
-                zipcode["longitude"],
-                zipcode["latitude"],
-                row["longitude"],
-                row["latitude"],
+    gh = "".join([zipcode[f"geohash_bit_{i + 1}"] for i in range(12)])
+    while gh:
+        sql = textwrap.dedent(
+            """
+            SELECT id, latitude, longitude
+            FROM sensors
+            WHERE {}
+            """.format(
+                " AND ".join([f"geohash_bit_{i + 1}=?" for i, _ in enumerate(gh)])
             )
-            if distance <= 25 and smallest_distance > distance:
-                closest_sensor = row["id"]
-                smallest_distance = distance
-        return closest_sensor
+        )
+        cursor.execute(sql, tuple(gh))
+        rows = cursor.fetchall()
+        if rows:
+            conn.close()
+            sensor_ids = [
+                row
+                for row in rows
+                if haversine_distance(
+                    zipcode["longitude"],
+                    zipcode["latitude"],
+                    row["longitude"],
+                    row["latitude"],
+                )
+                <= max_distance
+            ]
+            return sensor_ids
+        gh = gh[:-1]
 
 
-def _get_sensor_for_zipcode(zipcode):
+def _get_sensors_for_zipcode(zipcode):
     conn = _get_connection()
     cursor = conn.cursor()
 
@@ -67,13 +81,17 @@ def _get_sensor_for_zipcode(zipcode):
     if not row:
         return
 
-    # Now get the closest sensor
-    sensor_id = _find_nearest_sensor(row)
-    if not sensor_id:
+    # Now get the closest sensors
+    sensor_ids = _find_neighboring_sensor_ids(row)
+    if not sensor_ids:
         return
 
     try:
-        resp = requests.get("https://www.purpleair.com/json?show={}".format(sensor_id))
+        resp = requests.get(
+            "https://www.purpleair.com/json?show={}".format(
+                "|".join(map(str, sensor_ids))
+            )
+        )
     except requests.RequestException as e:
         logger.exception(
             "Error retrieving data for sensor %s and zipcode %s: %s",
@@ -82,12 +100,20 @@ def _get_sensor_for_zipcode(zipcode):
             e,
         )
     else:
-        results = resp.json().get("results")
-        if results:
-            return results[0]
+        return [
+            Sensor(s["ID"], float(s["PM2_5Value"])) for s in resp.json().get("results")
+        ]
 
 
 def get_message_for_zipcode(zipcode):
-    sensor = _get_sensor_for_zipcode(zipcode)
-    if sensor:
-        return f"pm25 near {zipcode}: {sensor['PM2_5Value']} (sensor_id: {sensor['ID']})"
+    sensors = _get_sensors_for_zipcode(zipcode)
+    sensors = [
+        s
+        for s in sensors
+        # Less than 0 or greater than 500 is, we hope, some kind of fluke.
+        # I've seen it in the data...
+        if s.pm_25 > 0 and s.pm_25 < 500
+    ]
+    if sensors:
+        average_pm_25 = round(sum(s.pm_25 for s in sensors) / len(sensors), ndigits=3)
+        return f"Average pm25 near {zipcode}: {average_pm_25} (sensors: {', '.join([str(s.id) for s in sensors])})"

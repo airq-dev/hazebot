@@ -5,8 +5,8 @@ from airq.providers import purpleair
 
 
 class ProviderType(str, enum.Enum):
-    AIRNOW = 'airnow'
-    PURPLEAIR = 'purpleair'
+    AIRNOW = "airnow"
+    PURPLEAIR = "purpleair"
 
 
 def get_message_for_zipcode(zipcode, provider_type=None):

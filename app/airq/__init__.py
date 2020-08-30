@@ -47,7 +47,7 @@ def index():
 def sms_reply():
     resp = MessagingResponse()
     body = request.values.get("Body", "").strip()
-    parts = body.split(' ')
+    parts = body.split(" ")
     if len(parts) == 2:
         body, provider = parts
     else:

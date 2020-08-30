@@ -53,7 +53,9 @@ def get_message_for_zipcode(zipcode):
             # -1 indicates that airnow doesn't know the AQI
             if datum["AQI"] != -1:
                 aqi_categories[datum["Category"]["Number"]] += 1
-                category_number_to_category_name[datum["Category"]["Number"]] = datum['Category']['Name']
+                category_number_to_category_name[datum["Category"]["Number"]] = datum[
+                    "Category"
+                ]["Name"]
                 combined_aqi += datum["AQI"]
                 total_forecasts += 1
         if total_forecasts:
@@ -66,7 +68,5 @@ def get_message_for_zipcode(zipcode):
                 "Summary: {category_name}\n"
                 "Average AQI: {air_quality}\n"
             ).format(
-                zipcode=zipcode,
-                category_name=category_name,
-                air_quality=average_aqi,
+                zipcode=zipcode, category_name=category_name, air_quality=average_aqi,
             )

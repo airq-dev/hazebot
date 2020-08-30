@@ -59,7 +59,7 @@ def create_db():
             """
         CREATE TABLE sensors (
             id INTEGER PRIMARY KEY,
-            zipcode INTEGER NOT NULL,
+            zipcode INTEGER,
             latitude REAL NOT NULL,
             longitude REAL NOT NULL,
             geohash_bit_1 VARCHAR NOT NULL,
@@ -199,7 +199,7 @@ def create_sensors():
     for result in results:
         if result.get("DEVICE_LOCATIONTYPE") != "outside":
             continue
-        if result.get("ParentId"):
+        if result.get("ParentID"):
             # I don't know what this means but feel it's probably
             # best to skip?
             continue
@@ -209,9 +209,6 @@ def create_sensors():
             continue
         gh = geohash.encode(latitude, longitude)
         zipcode_id = find_zipcode(latitude, longitude, gh)
-        if zipcode_id is None:
-            # This is not remotely near the US.
-            continue
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
