@@ -1,15 +1,10 @@
-import collections
 import logging
 import requests
 import math
 import sqlite3
-import textwrap
 
 
 logger = logging.getLogger(__name__)
-
-
-Sensor = collections.namedtuple("Sensor", ["id", "pm_25"])
 
 
 def haversine_distance(lon1, lat1, lon2, lat2):
@@ -43,21 +38,15 @@ def _find_neighboring_sensor_ids(zipcode, max_distance=15):
     cursor = conn.cursor()
     gh = [zipcode[f"geohash_bit_{i + 1}"] for i in range(12)]
     while gh:
-        sql = textwrap.dedent(
-            """
-            SELECT id, latitude, longitude
-            FROM sensors
-            WHERE {}
-            """.format(
-                " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
-            )
+        sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
+            " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
         )
         cursor.execute(sql, tuple(gh))
         rows = cursor.fetchall()
         if rows:
             conn.close()
             sensor_ids = [
-                row['id']
+                row["id"]
                 for row in rows
                 if haversine_distance(
                     zipcode["longitude"],
@@ -79,12 +68,12 @@ def _get_sensors_for_zipcode(zipcode):
     row = cursor.fetchone()
     conn.close()
     if not row:
-        return
+        return []
 
     # Now get the closest sensors
     sensor_ids = _find_neighboring_sensor_ids(row)
     if not sensor_ids:
-        return
+        return []
 
     try:
         resp = requests.get(
@@ -99,17 +88,21 @@ def _get_sensors_for_zipcode(zipcode):
             zipcode["zipcode"],
             e,
         )
+        return []
     else:
         return [
-            Sensor(s["ID"], float(s["PM2_5Value"])) for s in resp.json().get("results")
+            s
+            for s in resp.json().get("results")
             # Less than 0 or greater than 500 is, we hope, some kind of fluke.
             # I've seen it in the data...
-            if 0 < float(s.get('PM2_5Value', 0)) < 500
+            if 0 < float(s.get("PM2_5Value", 0)) < 500
         ]
 
 
 def get_message_for_zipcode(zipcode):
     sensors = _get_sensors_for_zipcode(zipcode)
     if sensors:
-        average_pm_25 = round(sum(s.pm_25 for s in sensors) / len(sensors), ndigits=3)
-        return f"Average pm25 near {zipcode}: {average_pm_25} (sensors: {', '.join([str(s.id) for s in sensors])})"
+        average_pm_25 = round(
+            sum(float(s["PM2_5Value"]) for s in sensors) / len(sensors), ndigits=3
+        )
+        return f"Average pm25 near {zipcode}: {average_pm_25} (sensors: {', '.join([str(s['ID']) for s in sensors])})"
