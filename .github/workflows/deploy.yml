@@ -1,9 +1,5 @@
 name: Deploy
 
-env:
-  TAG: ""
-  ECR_ROOT: "146486422038.dkr.ecr.us-west-1.amazonaws.com"
-
 on: push
 
 jobs:
@@ -38,30 +34,36 @@ jobs:
               uses: actions/checkout@v2
               with:
                 ref: ${{ github.event.pull_request.head.sha }}
-            - name: Configure AWS Credentials
+            - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
               with:
                 aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                 aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                 aws-region: us-west-1
-            - name: Calculate Docker image name
-              run: | 
-                echo "::set-env name=TAG::`git rev-parse --short HEAD`"
-            - name: Build
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
+            - name: Build, tag, and push image to Amazon ECR
+              id: build-image
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: airq/app
+                IMAGE_TAG: ${{ github.sha }}
               run: |
-                docker-compose -f docker-compose.prod.yml build --build-arg AIRNOW_API_KEY=${{ secrets.AIRNOW_API_KEY }}
-            - name: Login
-              run: |
-                aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_ROOT
-            - name: Push
-              run: |
-                docker-compose -f docker-compose.prod.yml push
-            - name: Update Images
-              run: |
-                aws ecs update-service \
-                  --service app \
-                  --cluster airq \
-                  --region us-west-1 \
-                  --force-new-deployment \
-                  --desired-count 2 \
-                  --deployment-configuration minimumHealthyPercent=50,maximumPercent=100 \
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+            - name: Fill in the new image ID in the Amazon ECS task definition
+              id: task-def
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                task-definition: task-definition.json
+                container-name: app
+                image: ${{ steps.build-image.outputs.image }}
+            - name: Deploy Amazon ECS task definition
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                task-definition: ${{ steps.task-def.outputs.task-definition }}
+                service: app
+                cluster: airq
+                wait-for-service-stability: true
