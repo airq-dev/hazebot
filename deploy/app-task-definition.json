@@ -1,137 +1,135 @@
 {
-    "taskDefinition": {
-        "taskDefinitionArn": "",
-        "containerDefinitions": [
-            {
-                "name": "app",
-                "image": "",
-                "cpu": 0,
-                "links": [],
-                "portMappings": [],
-                "essential": true,
-                "entryPoint": [],
-                "command": [
-                    "gunicorn",
-                    "--bind",
-                    "0.0.0.0:5000",
-                    "--workers",
-                    "2",
-                    "--threads",
-                    "4",
-                    "airq:app"
-                ],
-                "environment": [
-                    {
-                        "name": "FLASK_APP",
-                        "value": "project/__init__.py"
-                    },
-                    {
-                        "name": "FLASK_ENV",
-                        "value": "production"
-                    }
-                ],
-                "mountPoints": [],
-                "volumesFrom": [],
-                "linuxParameters": {
-                    "capabilities": {},
-                    "devices": []
+    "taskDefinitionArn": "",
+    "containerDefinitions": [
+        {
+            "name": "app",
+            "image": "",
+            "cpu": 0,
+            "links": [],
+            "portMappings": [],
+            "essential": true,
+            "entryPoint": [],
+            "command": [
+                "gunicorn",
+                "--bind",
+                "0.0.0.0:5000",
+                "--workers",
+                "2",
+                "--threads",
+                "4",
+                "airq:app"
+            ],
+            "environment": [
+                {
+                    "name": "FLASK_APP",
+                    "value": "project/__init__.py"
                 },
-                "privileged": false,
-                "readonlyRootFilesystem": false,
-                "dnsServers": [],
-                "dnsSearchDomains": [],
-                "extraHosts": [],
-                "dockerSecurityOptions": [],
-                "pseudoTerminal": false,
-                "logConfiguration": {
-                    "logDriver": "awslogs",
-                    "options": {
-                        "awslogs-group": "airq",
-                        "awslogs-region": "us-west-1",
-                        "awslogs-stream-prefix": "app"
-                    }
+                {
+                    "name": "FLASK_ENV",
+                    "value": "production"
                 }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "linuxParameters": {
+                "capabilities": {},
+                "devices": []
             },
-            {
-                "name": "nginx",
-                "image": "",
-                "cpu": 0,
-                "links": [],
-                "portMappings": [
-                    {
-                        "containerPort": 80,
-                        "hostPort": 80,
-                        "protocol": "tcp"
-                    }
-                ],
-                "essential": true,
-                "entryPoint": [],
-                "command": [],
-                "environment": [],
-                "mountPoints": [],
-                "volumesFrom": [],
-                "linuxParameters": {
-                    "capabilities": {},
-                    "devices": []
-                },
-                "privileged": false,
-                "readonlyRootFilesystem": false,
-                "dnsServers": [],
-                "dnsSearchDomains": [],
-                "extraHosts": [],
-                "dockerSecurityOptions": [],
-                "pseudoTerminal": false,
-                "logConfiguration": {
-                    "logDriver": "awslogs",
-                    "options": {
-                        "awslogs-group": "airq",
-                        "awslogs-region": "us-west-1",
-                        "awslogs-stream-prefix": "nginx"
-                    }
+            "privileged": false,
+            "readonlyRootFilesystem": false,
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "pseudoTerminal": false,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "airq",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "app"
                 }
             }
-        ],
-        "family": "app",
-        "executionRoleArn": "arn:aws:iam::146486422038:role/ecsTaskExecutionRole",
-        "networkMode": "awsvpc",
-        "revision": 6,
-        "volumes": [],
-        "status": "ACTIVE",
-        "requiresAttributes": [
-            {
-                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "nginx",
+            "image": "",
+            "cpu": 0,
+            "links": [],
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [],
+            "command": [],
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "linuxParameters": {
+                "capabilities": {},
+                "devices": []
             },
-            {
-                "name": "ecs.capability.execution-role-awslogs"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.ecr-auth"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
-            },
-            {
-                "name": "ecs.capability.execution-role-ecr-pull"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-            },
-            {
-                "name": "ecs.capability.task-eni"
+            "privileged": false,
+            "readonlyRootFilesystem": false,
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "pseudoTerminal": false,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "airq",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "nginx"
+                }
             }
-        ],
-        "placementConstraints": [],
-        "compatibilities": [
-            "EC2",
-            "FARGATE"
-        ],
-        "requiresCompatibilities": [
-            "FARGATE"
-        ],
-        "cpu": "256",
-        "memory": "512"
-    }
+        }
+    ],
+    "family": "app",
+    "executionRoleArn": "arn:aws:iam::146486422038:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 6,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512"
 }
