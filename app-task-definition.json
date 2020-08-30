@@ -27,7 +27,9 @@
                 {
                     "name": "FLASK_ENV",
                     "value": "production"
-                },
+                }
+            ],
+            "secrets": [
                 {
                     "name": "AIRNOW_API_KEY",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:airnow-api-key-5zQSRd"
