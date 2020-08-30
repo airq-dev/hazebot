@@ -72,7 +72,7 @@ class Provider(abc.ABC):
         self._logger = logging.getLogger(f"airq.providers.{self.TYPE}")
 
     def __repr__(self):
-        return f'{self.__class__.__name__}()'
+        return f"{self.__class__.__name__}()"
 
     def _generate_metrics(self, metrics: TMetrics, zipcode: str) -> Metrics:
         return Metrics(metrics, zipcode, self.TYPE)

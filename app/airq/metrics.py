@@ -29,7 +29,9 @@ def _aggregate_metrics(
         try:
             metrics = provider.get_metrics_cached(zipcode)
         except ProviderOutOfService as e:
-            logger.exception('%s unable to provide metrics for %s: %s', provider, zipcode, e)
+            logger.exception(
+                "%s unable to provide metrics for %s: %s", provider, zipcode, e
+            )
         else:
             if metrics:
                 all_metrics.append(metrics)

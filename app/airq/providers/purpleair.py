@@ -54,7 +54,7 @@ class Sqlite3Zipcode:
 class PurpleairProvider(Provider):
     TYPE = ProviderType.PURPLEAIR
     RADIUS = 5
-    DB_PATH = 'airq/providers/purpleair.db'
+    DB_PATH = "airq/providers/purpleair.db"
 
     def _check_database(self):
         if not os.path.exists(self.DB_PATH):
