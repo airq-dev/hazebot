@@ -1,6 +1,6 @@
-![Build](https://github.com/ianhoffman/airq/workflows/.github/workflows/deploy.yml/badge.svg?branch=master)
-
 # Airq
+
+![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
 Airq allows you to recieve information about the air quality near you simply by sending an SMS. While this is FOSS, it does require a bit of setup if you want to run it yourself: you'll need to setup a Twilio account and then deploy this application somewhere. Changes to the code in the `deploy` directory, and in the `docker-compose` files,  will be neceessary.
 
