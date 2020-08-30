@@ -1,6 +1,6 @@
 # Airq
 
-![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
+![Build](https://github.com/ianhoffman/airq/workflows/CI/badge.svg?branch=master)
 
 Airq allows you to recieve information about the air quality near you simply by sending an SMS. While this is FOSS, it does require a bit of setup if you want to run it yourself: you'll need to setup a Twilio account and then deploy this application somewhere. Currently airq is deployed to Amazon ECS, but it could be deployed elsewhere — either way, you'll need to setup the necessary infrastructure.
 
