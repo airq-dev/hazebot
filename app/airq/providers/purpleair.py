@@ -41,7 +41,7 @@ def _get_connection():
 def _find_neighboring_sensor_ids(zipcode, max_distance=15):
     conn = _get_connection()
     cursor = conn.cursor()
-    gh = "".join([zipcode[f"geohash_bit_{i + 1}"] for i in range(12)])
+    gh = [zipcode[f"geohash_bit_{i + 1}"] for i in range(12)]
     while gh:
         sql = textwrap.dedent(
             """
@@ -49,7 +49,7 @@ def _find_neighboring_sensor_ids(zipcode, max_distance=15):
             FROM sensors
             WHERE {}
             """.format(
-                " AND ".join([f"geohash_bit_{i + 1}=?" for i, _ in enumerate(gh)])
+                " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
             )
         )
         cursor.execute(sql, tuple(gh))
@@ -57,7 +57,7 @@ def _find_neighboring_sensor_ids(zipcode, max_distance=15):
         if rows:
             conn.close()
             sensor_ids = [
-                row
+                row['id']
                 for row in rows
                 if haversine_distance(
                     zipcode["longitude"],
@@ -68,7 +68,7 @@ def _find_neighboring_sensor_ids(zipcode, max_distance=15):
                 <= max_distance
             ]
             return sensor_ids
-        gh = gh[:-1]
+        gh.pop()
 
 
 def _get_sensors_for_zipcode(zipcode):
@@ -102,18 +102,14 @@ def _get_sensors_for_zipcode(zipcode):
     else:
         return [
             Sensor(s["ID"], float(s["PM2_5Value"])) for s in resp.json().get("results")
+            # Less than 0 or greater than 500 is, we hope, some kind of fluke.
+            # I've seen it in the data...
+            if 0 < float(s.get('PM2_5Value', 0)) < 500
         ]
 
 
 def get_message_for_zipcode(zipcode):
     sensors = _get_sensors_for_zipcode(zipcode)
-    sensors = [
-        s
-        for s in sensors
-        # Less than 0 or greater than 500 is, we hope, some kind of fluke.
-        # I've seen it in the data...
-        if s.pm_25 > 0 and s.pm_25 < 500
-    ]
     if sensors:
         average_pm_25 = round(sum(s.pm_25 for s in sensors) / len(sensors), ndigits=3)
         return f"Average pm25 near {zipcode}: {average_pm_25} (sensors: {', '.join([str(s.id) for s in sensors])})"
