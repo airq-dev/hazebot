@@ -36,7 +36,7 @@ class Forecast:
         aqi_categories = collections.Counter()
         for datum in airnow_response:
             # -1 indicates that airnow doesn't know the AQI
-            if datum["AQI"] != '-1':
+            if datum["AQI"] != -1:
                 aqi_categories[datum["Category"]["Number"]] += 1
                 combined_aqi += datum["AQI"]
         if aqi_categories:
