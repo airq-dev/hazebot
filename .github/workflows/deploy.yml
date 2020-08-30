@@ -54,23 +54,23 @@ jobs:
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             - name: Fill in the new app image ID in the Amazon ECS task definition
-              id: app-task-def
+              id: render-app-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: deploy/app-task-definition.json
                 container-name: app
                 image: ${{ steps.build-image.outputs.image }}
             - name: Fill in the new nginx image ID in the Amazon ECS task definition
-              id: nginx-task-def
+              id: render-nginx-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                task-definition: deploy/app-task-definition.json
+                task-definition: ${{ steps.render-app-container.outputs.task-definition }}
                 container-name: nginx
                 image: ${{ steps.build-image.outputs.image }}
             - name: Deploy Amazon ECS task definition
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
-                task-definition: ${{ steps.task-def.outputs.task-definition }}
+                task-definition: ${{ steps.render-nginx-container.outputs.task-definition }}
                 service: app
                 cluster: airq
                 wait-for-service-stability: true
