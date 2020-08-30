@@ -60,7 +60,7 @@ class PurpleairProvider(Provider):
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
-        sensor_ids = set()
+        sensor_ids: typing.Set[int] = set()
         while gh:
             sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
                 " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
