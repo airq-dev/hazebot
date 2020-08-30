@@ -5,7 +5,7 @@ Airq allows you to recieve information about the air quality near you simply by 
 
 ## Features
 
-Right now, Airq supports two different air quality APIs as backends: [airnow](https://docs.airnowapi.org/) and [purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing). We are still deciding which API is optimal for our needs, or even if some combinatin of APIs is most useful, so for now we support both.
+Right now, Airq supports two different air quality APIs as backends: [airnow](https://docs.airnowapi.org/) and [purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing). We are still deciding which API is optimal for our needs, or even if some combination of APIs is most useful, so for now we support both.
 
 
 ## Local Setup
@@ -20,6 +20,8 @@ If you want to test with purpleair, you need to do a bit more work, but not much
 * `python3 build.py`.
 
 Wait 5 mintes or so — this takes some time. At the end of the build process, you'll have a sqlite database which acts as a static mapping from zipcodes to purpleair sensors, which are then queried in real time by the app. Now run `docker-compose up --build` and test the API by navigating to `http://localhost:5000/feedback?zipcode<YOUR ZIPCODE>&provider=purpleair`.
+
+Obviously it will be necessary to rebuild the purpleair database every once in awhile as purpleair sensors do go offline, come online, and move around. An eventual todo is to create a cron which does this for us.
 
 
 ## Productionizing
