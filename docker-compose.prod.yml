@@ -3,10 +3,13 @@ version: '3'
 services:
   app:
     build: ./app
-    image: 146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/app
+    image: "146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/app:${TAG}"
     command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 airq:app
     expose:
       - 5000
+    environment:
+      - FLASK_APP=airq/__init__.py
+      - FLASK_ENV=production
     env_file:
       - ./.env.prod
     logging:
@@ -17,7 +20,7 @@ services:
         awslogs-stream-prefix: app
   nginx:
     build: ./nginx
-    image: 146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/nginx
+    image: "146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/nginx:${TAG}"
     ports:
       - 80:80
     logging:

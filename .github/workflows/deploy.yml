@@ -1,6 +1,7 @@
 name: Deploy
 
 env:
+  TAG: ""
   ECR_ROOT: "146486422038.dkr.ecr.us-west-1.amazonaws.com"
 
 on: push
@@ -43,9 +44,13 @@ jobs:
                 aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                 aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                 aws-region: us-west-1
+            - name: Calculate Docker image name
+              run: | 
+                echo "::set-env name=TAG::`git rev-parse --short HEAD`"
+                echo $TAG
             - name: Build
               run: |
-                docker-compose -f docker-compose.prod.yml build
+                docker-compose -f docker-compose.prod.yml build -e AIRNOW_API_KEY=${{ secrets.AIRNOW_API_KEY }}
             - name: Login
               run: |
                 aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_ROOT
