@@ -2,3 +2,5 @@
 .env.dev
 .env.prod
 __pycache__
+.vscode
+*.db
