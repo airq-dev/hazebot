@@ -5,6 +5,8 @@ import enum
 import logging
 import typing
 
+from airq.cache import cache
+
 
 @enum.unique
 class ProviderType(str, enum.Enum):
@@ -59,13 +61,7 @@ class Metrics:
         return self._zipcode
 
 
-class IProvider(abc.ABC):
-    @abc.abstractmethod
-    def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
-        pass
-
-
-class Provider(IProvider):
+class Provider(abc.ABC):
     TYPE: ProviderType
 
     def __init__(self):
@@ -73,6 +69,14 @@ class Provider(IProvider):
 
     def _generate_metrics(self, metrics: TMetrics, zipcode: str) -> Metrics:
         return Metrics(metrics, zipcode, self.TYPE)
+
+    @cache.memoize(timeout=60 * 60)
+    def get_metrics_cached(self, zipcode: str) -> typing.Optional[Metrics]:
+        return self.get_metrics(zipcode)
+
+    @abc.abstractmethod
+    def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
+        pass
 
     @property
     def logger(self) -> logging.Logger:

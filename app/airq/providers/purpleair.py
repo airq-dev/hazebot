@@ -4,6 +4,7 @@ import requests
 import sqlite3
 import typing
 
+from airq.cache import cache
 from airq.providers.base import Metrics, Provider, ProviderType
 
 
@@ -29,11 +30,14 @@ def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> fl
 
 @dataclasses.dataclass(frozen=True)
 class Sqlite3Zipcode:
-    id: str
+    id: int
     zipcode: str
     latitude: float
     longitude: float
     geohash: typing.List[str]
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "Sqlite3Zipcode":
@@ -48,7 +52,6 @@ class Sqlite3Zipcode:
 
 class PurpleairProvider(Provider):
     TYPE = ProviderType.PURPLEAIR
-
     RADIUS = 5
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -56,7 +59,9 @@ class PurpleairProvider(Provider):
         conn.row_factory = sqlite3.Row
         return conn
 
+    @cache.memoize()
     def _find_neighboring_sensor_ids(self, zipcode: Sqlite3Zipcode) -> typing.Set[int]:
+        self.logger.info("Finding nearby sensors for %s", zipcode)
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
