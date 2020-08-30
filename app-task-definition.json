@@ -27,6 +27,10 @@
                 {
                     "name": "FLASK_ENV",
                     "value": "production"
+                },
+                {
+                    "name": "AIRNOW_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:airnow-api-key-5zQSRd"
                 }
             ],
             "mountPoints": [],
@@ -94,32 +98,6 @@
     "executionRoleArn": "arn:aws:iam::146486422038:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
     "volumes": [],
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
-            "name": "ecs.capability.execution-role-awslogs"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.ecr-auth"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
-        },
-        {
-            "name": "ecs.capability.execution-role-ecr-pull"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        }
-    ],
     "placementConstraints": [],
     "cpu": "256",
     "memory": "512"

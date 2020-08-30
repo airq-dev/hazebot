@@ -26,6 +26,7 @@ jobs:
     #           uses: jpetrucciani/mypy-check@master
     #           with:
     #             path: 'app'
+
     deploy: 
         name: Deploy
         runs-on: ubuntu-latest
@@ -50,7 +51,7 @@ jobs:
                 ECR_REPOSITORY: airq/app
                 IMAGE_TAG: ${{ github.sha }}
               run: |
-                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f app/Dockerfile.prod app
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG app
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             - name: Build, tag, and push nginx image to Amazon ECR
@@ -60,14 +61,14 @@ jobs:
                 ECR_REPOSITORY: airq/nginx
                 IMAGE_TAG: ${{ github.sha }}
               run: |
-                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f nginx/Dockerfile nginx
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG nginx
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             - name: Fill in the new app image ID in the Amazon ECS task definition
               id: render-app-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                task-definition: deploy/app-task-definition.json
+                task-definition: app-task-definition.json
                 container-name: app
                 image: ${{ steps.build-app-image.outputs.image }}
             - name: Fill in the new nginx image ID in the Amazon ECS task definition
