@@ -73,13 +73,17 @@ class PurpleairProvider(Provider):
                 should_continue = False
                 for row in rows:
                     # If we haven't seen this sensor before, check if it's within the radius.
-                    if row['id'] not in sensor_ids and haversine_distance(
-                        zipcode.longitude,
-                        zipcode.latitude,
-                        row["longitude"],
-                        row["latitude"],
-                    ) <= self.RADIUS:
-                        sensor_ids.add(row['id'])
+                    if (
+                        row["id"] not in sensor_ids
+                        and haversine_distance(
+                            zipcode.longitude,
+                            zipcode.latitude,
+                            row["longitude"],
+                            row["latitude"],
+                        )
+                        <= self.RADIUS
+                    ):
+                        sensor_ids.add(row["id"])
                         should_continue = True
                 if not should_continue:
                     break
