@@ -1,11 +1,12 @@
 import dataclasses
 import math
+import os
 import requests
 import sqlite3
 import typing
 
 from airq.cache import cache
-from airq.providers.base import Metrics, Provider, ProviderType
+from airq.providers.base import Metrics, Provider, ProviderOutOfService, ProviderType
 
 
 def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
@@ -53,6 +54,17 @@ class Sqlite3Zipcode:
 class PurpleairProvider(Provider):
     TYPE = ProviderType.PURPLEAIR
     RADIUS = 5
+    DB_PATH = 'airq/providers/purpleair.db'
+
+    def _check_database(self):
+        if not os.path.exists(self.DB_PATH):
+            cwd = os.getcwd()
+            contents = os.listdir(cwd)
+            msg = (
+                f"Database unexecpectedly absent at {self.DB_PATH}"
+                f"(cwd: {cwd}, contents: {listdir})"
+            )
+            raise ProviderOutOfService(msg)
 
     def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect("airq/providers/purpleair.db")
@@ -135,6 +147,8 @@ class PurpleairProvider(Provider):
             ]
 
     def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
+        self._check_database()
+
         sensors = self._get_sensors_for_zipcode(zipcode)
         if not sensors:
             return None

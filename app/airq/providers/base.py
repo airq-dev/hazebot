@@ -61,11 +61,18 @@ class Metrics:
         return self._zipcode
 
 
+class ProviderOutOfService(Exception):
+    pass
+
+
 class Provider(abc.ABC):
     TYPE: ProviderType
 
     def __init__(self):
         self._logger = logging.getLogger(f"airq.providers.{self.TYPE}")
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'
 
     def _generate_metrics(self, metrics: TMetrics, zipcode: str) -> Metrics:
         return Metrics(metrics, zipcode, self.TYPE)

@@ -3,7 +3,7 @@
 .env.prod
 __pycache__
 .vscode
-*.db
+data/*.db
 *.zip
 data/purpleair.json
 .mypy_cache

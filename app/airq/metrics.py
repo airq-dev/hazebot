@@ -1,8 +1,12 @@
+import logging
 import typing
 
 from airq.cache import cache
 from airq.providers import get_providers
-from airq.providers.base import Metrics, Provider
+from airq.providers.base import Metrics, Provider, ProviderOutOfService
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_message_for_zipcode(
@@ -22,9 +26,13 @@ def _aggregate_metrics(
 ) -> typing.List[Metrics]:
     all_metrics = []
     for provider in providers:
-        metrics = provider.get_metrics_cached(zipcode)
-        if metrics:
-            all_metrics.append(metrics)
+        try:
+            metrics = provider.get_metrics_cached(zipcode)
+        except ProviderOutOfService as e:
+            logger.exception('%s unable to provide metrics for %s: %s', provider, zipcode, e)
+        else:
+            if metrics:
+                all_metrics.append(metrics)
     return all_metrics
 
 
