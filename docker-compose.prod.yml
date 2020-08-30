@@ -12,8 +12,6 @@ services:
     environment:
       - FLASK_APP=airq/__init__.py
       - FLASK_ENV=production
-    env_file:
-      - ./.env.prod
     logging:
       driver: awslogs
       options:
