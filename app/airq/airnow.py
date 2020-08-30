@@ -4,6 +4,9 @@ import os
 import requests
 
 
+logger = logging.getLogger(__name__)
+
+
 AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
 
 
@@ -33,5 +36,7 @@ def get_by_zipcode(zipcode):
     except requests.RequestException as e:
         logger.exception("Failed to retrieve data from airnow: %s", e)
         return
-
-    return resp.json()
+    else:
+        resp_json = resp.json()
+        logger.info("Airnow response: %s", resp_json)
+        return resp_json
