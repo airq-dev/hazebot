@@ -1,6 +1,6 @@
 {
     "taskDefinition": {
-        "taskDefinitionArn": "arn:aws:ecs:us-west-1:146486422038:task-definition/app:6",
+        "taskDefinitionArn": "",
         "containerDefinitions": [
             {
                 "name": "app",
@@ -21,10 +21,6 @@
                     "airq:app"
                 ],
                 "environment": [
-                    {
-                        "name": "AIRNOW_API_KEY",
-                        "value": "D60E16EA-5FDF-4CC1-B3B7-CAEC2C84132C"
-                    },
                     {
                         "name": "FLASK_APP",
                         "value": "project/__init__.py"
