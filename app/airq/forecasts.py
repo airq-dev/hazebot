@@ -25,8 +25,10 @@ class Forecast:
         if self.category_number == 7:
             return "Unavailable"
 
-    @classmethod
-    def from_airnow_response(cls, airnow_response):
+
+def get_forecast_for_zipcode(zipcode):
+    response = airnow.get_by_zipcode(zipcode)
+    if response is not None:
         combined_aqi = 0
         total_forecasts = 0
         aqi_categories = collections.Counter()
@@ -38,12 +40,4 @@ class Forecast:
                 total_forecasts += 1
         if total_forecasts:
             average_aqi = round(combined_aqi / total_forecasts)
-            return cls(average_aqi, aqi_categories.most_common(1)[0][0])
-
-
-def get_forecast_for_zipcode(zipcode):
-    response = airnow.get_by_zipcode(zipcode)
-    if response is not None:
-        forecast = Forecast.from_airnow_response(response)
-        if forecast:
-            return forecast
+            return Forecast(average_aqi, aqi_categories.most_common(1)[0][0])

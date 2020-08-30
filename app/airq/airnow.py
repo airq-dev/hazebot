@@ -35,7 +35,6 @@ def get_by_zipcode(zipcode):
         resp.raise_for_status()
     except requests.RequestException as e:
         logger.exception("Failed to retrieve data from airnow: %s", e)
-        return
     else:
         resp_json = resp.json()
         logger.info("Airnow response: %s", resp_json)
