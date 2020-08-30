@@ -1,0 +1,63 @@
+name: Deploy
+
+env:
+  ECR_ROOT: "146486422038.dkr.ecr.us-west-1.amazonaws.com"
+
+on: push
+
+jobs:
+    # check:
+    #     name: Check
+    #     runs-on: ubuntu-latest
+    #     steps: 
+    #         - name: Checkout
+    #           uses: actions/checkout@v2
+    #           with: 
+    #             ref: ${{ github.event.pull_request.head.sha }}
+    #         - name: Setup Python
+    #           uses: actions/setup-python@v1
+    #           with:
+    #             python-version: 3.8
+    #         - name: Install Requirements
+    #           run: |
+    #               python -m pip install --upgrade pip
+    #               pip install 'black==19.10b0'
+    #         - name: Lint Check
+    #           run: |
+    #               black . --check
+    #         - name: Static Analysis
+    #           uses: jpetrucciani/mypy-check@master
+    #           with:
+    #             path: 'app'
+    deploy: 
+        name: Deploy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                ref: ${{ github.event.pull_request.head.sha }}
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: us-west-1
+            - name: Build
+              run: |
+                docker-compose -f docker-compose.prod.yml build
+            - name: Login
+              run: |
+                aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_ROOT
+            - name: Push
+              run: |
+                docker-compose -f docker-compose.prod.yml push
+            - name: Update Images
+              run: |
+                aws ecs update-service \
+                  --service app \
+                  --cluster airq \
+                  --region us-west-1 \
+                  --force-new-deployment \
+                  --desired-count 2 \
+                  --deployment-configuration minimumHealthyPercent=50,maximumPercent=100 \
