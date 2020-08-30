@@ -1,19 +1,27 @@
-import enum
+import typing
 
-from airq.providers import airnow
-from airq.providers import purpleair
-
-
-class ProviderType(str, enum.Enum):
-    AIRNOW = "airnow"
-    PURPLEAIR = "purpleair"
+from airq.providers.base import Provider, ProviderType
+from airq.providers.airnow import AirnowProvider
+from airq.providers.purpleair import PurpleairProvider
 
 
-def get_message_for_zipcode(zipcode, provider_type=None):
-    if not provider_type:
-        provider_type = ProviderType.AIRNOW
+PROVIDERS = [AirnowProvider(), PurpleairProvider()]
 
-    if provider_type == ProviderType.AIRNOW:
-        return airnow.get_message_for_zipcode(zipcode)
-    elif provider_type == ProviderType.PURPLEAIR:
-        return purpleair.get_message_for_zipcode(zipcode)
+
+def get_providers(provider_types: typing.List[str]) -> typing.List[Provider]:
+    # Coerce to list of provider types
+    provider_types = list(filter(bool, provider_types))
+
+    if not provider_types:
+        return PROVIDERS
+    else:
+        providers = []
+        for provider_type in provider_types:
+            for provider in PROVIDERS:
+                if provider.TYPE == provider_type:
+                    providers.append(provider)
+
+        if providers:
+            return providers
+
+    return []

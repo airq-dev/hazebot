@@ -3,7 +3,7 @@ version: '3.7'
 services:
   app:
     build: ./app
-    command: python manage.py run -h 0.0.0.0
+    command: flask run --host=0.0.0.0
     volumes:
       - ./app/:/usr/src/app/
     ports:

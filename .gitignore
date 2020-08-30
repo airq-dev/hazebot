@@ -6,3 +6,4 @@ __pycache__
 *.db
 *.zip
 data/purpleair.json
+.mypy_cache

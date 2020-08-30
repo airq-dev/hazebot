@@ -1,53 +1,54 @@
 import collections
 import datetime
-import logging
 import os
 import requests
+import typing
+
+from airq.providers.base import Metrics, Provider, ProviderType
 
 
-logger = logging.getLogger(__name__)
+class AirnowProvider(Provider):
+    TYPE = ProviderType.AIRNOW
 
+    API_KEY = os.getenv("AIRNOW_API_KEY")
 
-AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
-
-
-AIRNOW_BASE_URL = (
-    "http://www.airnowapi.org/aq/forecast/zipCode/"
-    "?format=application/json"
-    "&zipCode={zipcode}"
-    "&date={date}"
-    "&distance={distance}"
-    "&API_KEY={api_key}"
-)
-
-
-def _get_url(zipcode):
-    return AIRNOW_BASE_URL.format(
-        zipcode=zipcode,
-        date=datetime.datetime.now().strftime("%Y-%m-%d"),
-        distance=5,
-        api_key=AIRNOW_API_KEY,
+    BASE_URL = (
+        "http://www.airnowapi.org/aq/forecast/zipCode/"
+        "?format=application/json"
+        "&zipCode={zipcode}"
+        "&date={date}"
+        "&distance={distance}"
+        "&API_KEY={api_key}"
     )
 
+    def _get_url(self, zipcode: str) -> str:
+        return self.BASE_URL.format(
+            zipcode=zipcode,
+            date=datetime.datetime.now().strftime("%Y-%m-%d"),
+            distance=5,
+            api_key=self.API_KEY,
+        )
 
-def _get_by_zipcode(zipcode):
-    try:
-        resp = requests.get(_get_url(zipcode))
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.exception("Failed to retrieve data from airnow: %s", e)
-    else:
-        resp_json = resp.json()
-        logger.info("Airnow response: %s", resp_json)
-        return resp_json
+    def _get_by_zipcode(self, zipcode: str) -> typing.List[dict]:
+        try:
+            resp = requests.get(self._get_url(zipcode))
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            self.logger.exception("Failed to retrieve data from airnow: %s", e)
+            return []
+        else:
+            resp_json = resp.json()
+            self.logger.info("Airnow response: %s", resp_json)
+            return resp_json
 
+    def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
+        response = self._get_by_zipcode(zipcode)
+        if not response:
+            return None
 
-def get_message_for_zipcode(zipcode):
-    response = _get_by_zipcode(zipcode)
-    if response is not None:
         combined_aqi = 0
         total_forecasts = 0
-        aqi_categories = collections.Counter()
+        aqi_categories: typing.Counter[int] = collections.Counter()
         category_number_to_category_name = {}
         for datum in response:
             # -1 indicates that airnow doesn't know the AQI
@@ -58,15 +59,15 @@ def get_message_for_zipcode(zipcode):
                 ]["Name"]
                 combined_aqi += datum["AQI"]
                 total_forecasts += 1
-        if total_forecasts:
-            average_aqi = round(combined_aqi / total_forecasts)
-            category_number = aqi_categories.most_common(1)[0][0]
-            category_name = category_number_to_category_name[category_number]
-            return (
-                "Air quality near {zipcode}:\n"
-                "\n"
-                "Summary: {category_name}\n"
-                "Average AQI: {air_quality}\n"
-            ).format(
-                zipcode=zipcode, category_name=category_name, air_quality=average_aqi,
-            )
+
+        if not total_forecasts:
+            return None
+
+        average_aqi = round(combined_aqi / total_forecasts)
+        category_number = aqi_categories.most_common(1)[0][0]
+        category_name = category_number_to_category_name[category_number]
+        return Metrics(
+            [("Summary", category_name), ("Average AQI", average_aqi)],
+            zipcode,
+            self.TYPE,
+        )
