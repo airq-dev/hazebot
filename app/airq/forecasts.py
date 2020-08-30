@@ -33,14 +33,16 @@ class Forecast:
     @classmethod
     def from_airnow_response(cls, airnow_response):
         combined_aqi = 0
+        total_forecasts = 0
         aqi_categories = collections.Counter()
         for datum in airnow_response:
             # -1 indicates that airnow doesn't know the AQI
             if datum["AQI"] != -1:
                 aqi_categories[datum["Category"]["Number"]] += 1
                 combined_aqi += datum["AQI"]
-        if aqi_categories:
-            average_aqi = round(combined_aqi / len(airnow_response))
+                total_forecasts += 1
+        if total_forecasts:
+            average_aqi = round(combined_aqi / total_forecasts)
             return cls(average_aqi, aqi_categories.most_common(1)[0][0])
 
 
