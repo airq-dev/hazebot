@@ -4,7 +4,7 @@ services:
   app:
     build: ./app
     image: 146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/app
-    command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 manage:app
+    command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 airq:app
     expose:
       - 5000
     env_file:
