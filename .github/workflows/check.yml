@@ -23,4 +23,4 @@ jobs:
             - name: Static Analysis
               uses: jpetrucciani/mypy-check@master
               with:
-                path: '.app'
+                path: 'app'
