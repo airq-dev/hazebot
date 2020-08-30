@@ -49,18 +49,18 @@ class Sqlite3Zipcode:
 class PurpleairProvider(Provider):
     TYPE = ProviderType.PURPLEAIR
 
-    RADIUS = 15
+    RADIUS = 5
 
     def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect("airq/providers/purpleair.db")
         conn.row_factory = sqlite3.Row
         return conn
 
-    def _find_neighboring_sensor_ids(self, zipcode: Sqlite3Zipcode) -> typing.List[int]:
+    def _find_neighboring_sensor_ids(self, zipcode: Sqlite3Zipcode) -> typing.Set[int]:
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
-        sensor_ids = []
+        sensor_ids = set()
         while gh:
             sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
                 " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
@@ -68,19 +68,21 @@ class PurpleairProvider(Provider):
             cursor.execute(sql, tuple(gh))
             rows = cursor.fetchall()
             if rows:
-                conn.close()
-                sensor_ids = [
-                    row["id"]
-                    for row in rows
-                    if haversine_distance(
+                # Add all sensors within the allowed radius.
+                # If there are none, we've gone too far and can stop.
+                should_continue = False
+                for row in rows:
+                    # If we haven't seen this sensor before, check if it's within the radius.
+                    if row['id'] not in sensor_ids and haversine_distance(
                         zipcode.longitude,
                         zipcode.latitude,
                         row["longitude"],
                         row["latitude"],
-                    )
-                    <= self.RADIUS
-                ]
-                break
+                    ) <= self.RADIUS:
+                        sensor_ids.add(row['id'])
+                        should_continue = True
+                if not should_continue:
+                    break
             gh.pop()
         return sensor_ids
 
