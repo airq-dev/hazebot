@@ -93,9 +93,7 @@
     "family": "app",
     "executionRoleArn": "arn:aws:iam::146486422038:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 6,
     "volumes": [],
-    "status": "ACTIVE",
     "requiresAttributes": [
         {
             "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
@@ -123,13 +121,6 @@
         }
     ],
     "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-        "FARGATE"
-    ],
-    "requiresCompatibilities": [
-        "FARGATE"
-    ],
     "cpu": "256",
     "memory": "512"
 }

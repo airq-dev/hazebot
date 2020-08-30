@@ -43,8 +43,8 @@ jobs:
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
-            - name: Build, tag, and push image to Amazon ECR
-              id: build-image
+            - name: Build, tag, and push app image to Amazon ECR
+              id: build-app-image
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                 ECR_REPOSITORY: airq/app
@@ -53,20 +53,30 @@ jobs:
                 docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f app/Dockerfile.prod app
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+            - name: Build, tag, and push nginx image to Amazon ECR
+              id: build-nginx-image
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: airq/nginx
+                IMAGE_TAG: ${{ github.sha }}
+              run: |
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f nginx/Dockerfile.prod nginx
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             - name: Fill in the new app image ID in the Amazon ECS task definition
               id: render-app-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: deploy/app-task-definition.json
                 container-name: app
-                image: ${{ steps.build-image.outputs.image }}
+                image: ${{ steps.build-app-image.outputs.image }}
             - name: Fill in the new nginx image ID in the Amazon ECS task definition
               id: render-nginx-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: ${{ steps.render-app-container.outputs.task-definition }}
                 container-name: nginx
-                image: ${{ steps.build-image.outputs.image }}
+                image: ${{ steps.build-nginx-image.outputs.image }}
             - name: Deploy Amazon ECS task definition
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
