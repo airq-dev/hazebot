@@ -2,7 +2,9 @@ version: '3'
 
 services:
   app:
-    build: ./app
+    build: 
+      context: ./app
+      dockerfile: Dockerfile.prod
     image: "146486422038.dkr.ecr.us-west-1.amazonaws.com/airq/app:${TAG}"
     command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 4 airq:app
     expose:

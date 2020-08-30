@@ -47,10 +47,9 @@ jobs:
             - name: Calculate Docker image name
               run: | 
                 echo "::set-env name=TAG::`git rev-parse --short HEAD`"
-                echo $TAG
             - name: Build
               run: |
-                docker-compose -f docker-compose.prod.yml build -e AIRNOW_API_KEY=${{ secrets.AIRNOW_API_KEY }}
+                docker-compose -f docker-compose.prod.yml build --build-arg AIRNOW_API_KEY=${{ secrets.AIRNOW_API_KEY }}
             - name: Login
               run: |
                 aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_ROOT
