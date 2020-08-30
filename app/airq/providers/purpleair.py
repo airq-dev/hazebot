@@ -132,12 +132,11 @@ class PurpleairProvider(Provider):
             sum(float(s["PM2_5Value"]) for s in sensors) / len(sensors), ndigits=3
         )
 
-        return Metrics(
+        return self._generate_metrics(
             [
                 ("Average pm25", average_pm_25),
                 ("Sensor IDs", ", ".join([str(s["ID"]) for s in sensors])),
                 ("Radius", f"{self.RADIUS}km"),
             ],
             zipcode,
-            self.TYPE,
         )

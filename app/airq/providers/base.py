@@ -71,6 +71,9 @@ class Provider(IProvider):
     def __init__(self):
         self._logger = logging.getLogger(f"airq.providers.{self.TYPE}")
 
+    def _generate_metrics(self, metrics: TMetrics, zipcode: str) -> Metrics:
+        return Metrics(metrics, zipcode, self.TYPE)
+
     @property
     def logger(self) -> logging.Logger:
         return self._logger

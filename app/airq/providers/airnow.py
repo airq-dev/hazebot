@@ -9,9 +9,7 @@ from airq.providers.base import Metrics, Provider, ProviderType
 
 class AirnowProvider(Provider):
     TYPE = ProviderType.AIRNOW
-
     API_KEY = os.getenv("AIRNOW_API_KEY")
-
     BASE_URL = (
         "http://www.airnowapi.org/aq/forecast/zipCode/"
         "?format=application/json"
@@ -20,12 +18,13 @@ class AirnowProvider(Provider):
         "&distance={distance}"
         "&API_KEY={api_key}"
     )
+    RADIUS = 5
 
     def _get_url(self, zipcode: str) -> str:
         return self.BASE_URL.format(
             zipcode=zipcode,
             date=datetime.datetime.now().strftime("%Y-%m-%d"),
-            distance=5,
+            distance=self.RADIUS,
             api_key=self.API_KEY,
         )
 
@@ -66,8 +65,11 @@ class AirnowProvider(Provider):
         average_aqi = round(combined_aqi / total_forecasts)
         category_number = aqi_categories.most_common(1)[0][0]
         category_name = category_number_to_category_name[category_number]
-        return Metrics(
-            [("Summary", category_name), ("Average AQI", average_aqi)],
+        return self._generate_metrics(
+            [
+                ("Summary", category_name),
+                ("Average AQI", average_aqi),
+                ("Radius", f"{self.RADIUS} miles"),
+            ],
             zipcode,
-            self.TYPE,
         )
