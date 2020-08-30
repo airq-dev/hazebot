@@ -64,11 +64,13 @@ def quality() -> str:
     provider_type = request.args.get("provider", "").strip()
     return _get_metrics_message_for_zipcode(zipcode, provider_type, separator="<br>")
 
+
 #
 # Metrics
 #
 # TODO: Make this its own module and figure out caching depedencies
 #
+
 
 def _get_metrics_message_for_zipcode(
     zipcode: str, provider_type: str, separator: str = "\n"
