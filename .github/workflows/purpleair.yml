@@ -2,7 +2,7 @@ name: Purpleair Sync
 
 on:
     schedule:
-      - cron: "30 * * * *"
+      - cron: "48 * * * *"
 
 jobs:
     create_pr:
@@ -12,11 +12,10 @@ jobs:
             with:
               ref: purpleair_sync
           - name: Create PR
-            uses: peter-evans/create-pull-request@v3
+            uses: repo-sync/pull-request@v2
             with:
-              title: "Purpleair Sync"
-              body: ""
-              branch: purpleair_sync_merge
-              author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-              committer: GitHub <noreply@github.com>
-              commit-message: Update Purpleair DB
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                pr_title: "Purpleair Sync"
+                pr_body: "Automated PR" 
+                source_branch: "purpleair_sync"
+
