@@ -80,7 +80,7 @@ class Provider(abc.ABC):
     def _get_identifier(self, prefix: str = "") -> str:
         return f"{prefix}airq.providers.{self.TYPE}"
 
-    @cache.memoize(timeout=60 * 60)
+    # @cache.memoize(timeout=60 * 60)
     def get_metrics_cached(self, zipcode: str) -> typing.Optional[Metrics]:
         return self.get_metrics(zipcode)
 
