@@ -83,12 +83,12 @@ class PurpleairProvider(Provider):
     @cache.memoize()
     def _find_neighboring_sensors(
         self, zipcode: Sqlite3Zipcode
-    ) -> typing.OrderedDict[int, float]:
+    ) -> "collections.OrderedDict[int, float]":
         self.logger.info("Finding nearby sensors for %s", zipcode)
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
-        distances = collections.OrderedDict()
+        distances: "collections.OrderedDict[int, float]" = collections.OrderedDict()
         while gh:
             sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
                 " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
@@ -114,7 +114,6 @@ class PurpleairProvider(Provider):
                     ],
                     key=lambda t: t[1],
                 )
-                print(sensors)
                 while sensors:
                     sensor_id, distance = sensors.pop()
                     if distance > self.MAX_RADIUS:
