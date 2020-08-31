@@ -83,7 +83,7 @@ class PurpleairProvider(Provider):
     @cache.memoize()
     def _find_neighboring_sensors(
         self, zipcode: Sqlite3Zipcode
-    ) -> "collections.OrderedDict[int, float]":
+    ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
         self.logger.info("Finding nearby sensors for %s", zipcode)
         conn = self._get_connection()
         cursor = conn.cursor()
