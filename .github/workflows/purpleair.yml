@@ -2,7 +2,7 @@ name: Purpleair Sync
 
 on:
     schedule:
-      - cron: "0 */3 * * *"
+      - cron: "0 2 * * *"
 
 jobs:
     create_pr:
