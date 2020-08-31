@@ -130,13 +130,11 @@ class PurpleairProvider(Provider):
                 )
             )
         except requests.RequestException as e:
-            self.logger.exception(
-                "Error retrieving data for sensors %s and zipcode %s: %s",
-                ", ".join(map(str, sensor_ids)),
-                zipcode,
-                e,
+            raise ProviderOutOfService(
+                "Error retrieving data for sensors {} and zipcode {}: {}".format(
+                    ", ".join(map(str, sensor_ids)), zipcode, e,
+                )
             )
-            return []
         else:
             return [
                 s

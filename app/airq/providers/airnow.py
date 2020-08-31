@@ -4,7 +4,7 @@ import os
 import requests
 import typing
 
-from airq.providers.base import Metrics, Provider, ProviderType
+from airq.providers.base import Metrics, Provider, ProviderOutOfService, ProviderType
 
 
 class AirnowProvider(Provider):
@@ -33,8 +33,7 @@ class AirnowProvider(Provider):
             resp = requests.get(self._get_url(zipcode))
             resp.raise_for_status()
         except requests.RequestException as e:
-            self.logger.exception("Failed to retrieve data from airnow: %s", e)
-            return []
+            raise ProviderOutOfService("Failed to retrieve data from airnow: {e}")
         else:
             resp_json = resp.json()
             self.logger.info("Airnow response: %s", resp_json)
