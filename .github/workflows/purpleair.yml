@@ -1,0 +1,22 @@
+name: Purpleair Sync
+
+on:
+    schedule:
+        cron: "25 * * * *"
+
+jobs:
+    create_pr:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v2
+            with:
+              ref: purpleair_sync
+          - name: Create PR
+            uses: peter-evans/create-pull-request@v3
+            with:
+              title: "Purpleair Sync"
+              body: ""
+              branch: purpleair_sync_merge
+              author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+              committer: GitHub <noreply@github.com>
+              commit-message: Update Purpleair DB
