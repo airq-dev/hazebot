@@ -1,7 +1,6 @@
 import logging
 import typing
 
-from airq.cache import cache
 from airq.providers import get_providers
 from airq.providers.base import Metrics, Provider, ProviderOutOfService
 
@@ -26,15 +25,17 @@ def _aggregate_metrics(
 ) -> typing.List[Metrics]:
     all_metrics = []
     for provider in providers:
-        try:
-            metrics = provider.get_metrics_cached(zipcode)
-        except ProviderOutOfService as e:
-            logger.exception(
-                "%s unable to provide metrics for %s: %s", provider, zipcode, e
-            )
-        else:
-            if metrics:
-                all_metrics.append(metrics)
+        if not provider.is_out_of_service:
+            try:
+                metrics = provider.get_metrics_cached(zipcode)
+            except ProviderOutOfService as e:
+                logger.exception(
+                    "%s unable to provide metrics for %s: %s", provider, zipcode, e
+                )
+                provider.mark_out_of_service()
+            else:
+                if metrics:
+                    all_metrics.append(metrics)
     return all_metrics
 
 

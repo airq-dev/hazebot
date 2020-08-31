@@ -69,13 +69,16 @@ class Provider(abc.ABC):
     TYPE: ProviderType
 
     def __init__(self):
-        self._logger = logging.getLogger(f"airq.providers.{self.TYPE}")
+        self._logger = logging.getLogger(self._get_identifier())
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
 
     def _generate_metrics(self, metrics: TMetrics, zipcode: str) -> Metrics:
         return Metrics(metrics, zipcode, self.TYPE)
+
+    def _get_identifier(self, prefix: str = "") -> str:
+        return f"{prefix}airq.providers.{self.TYPE}"
 
     @cache.memoize(timeout=60 * 60)
     def get_metrics_cached(self, zipcode: str) -> typing.Optional[Metrics]:
@@ -88,3 +91,17 @@ class Provider(abc.ABC):
     @property
     def logger(self) -> logging.Logger:
         return self._logger
+
+    @property
+    def is_out_of_service(self) -> bool:
+        key = self._get_identifier("down-")
+        return bool(cache.get(key))
+
+    def mark_out_of_service(
+        self,
+        timeout: int = (
+            60 * 2
+        ),  # Default timeout of 2 minutes in case the problem is rate-limiting
+    ):
+        key = self._get_identifier("down-")
+        cache.set(key, True, timeout=timeout)
