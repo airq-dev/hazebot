@@ -1,3 +1,4 @@
+import collections
 import dataclasses
 import math
 import os
@@ -51,9 +52,17 @@ class Sqlite3Zipcode:
         )
 
 
+@dataclasses.dataclass(frozen=True)
+class Sensor:
+    id: int
+    distance: float
+    pm_25: float
+
+
 class PurpleairProvider(Provider):
     TYPE = ProviderType.PURPLEAIR
-    RADIUS = 5
+    MAX_RADIUS = 25
+    MAX_SENSORS = 10
     DB_PATH = "airq/providers/purpleair.db"
 
     def _check_database(self):
@@ -72,12 +81,14 @@ class PurpleairProvider(Provider):
         return conn
 
     @cache.memoize()
-    def _find_neighboring_sensor_ids(self, zipcode: Sqlite3Zipcode) -> typing.Set[int]:
+    def _find_neighboring_sensors(
+        self, zipcode: Sqlite3Zipcode
+    ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
         self.logger.info("Finding nearby sensors for %s", zipcode)
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
-        sensor_ids: typing.Set[int] = set()
+        distances: "collections.OrderedDict[int, float]" = collections.OrderedDict()
         while gh:
             sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
                 " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
@@ -85,29 +96,35 @@ class PurpleairProvider(Provider):
             cursor.execute(sql, tuple(gh))
             rows = cursor.fetchall()
             if rows:
-                # Add all sensors within the allowed radius.
-                # If there are none, we've gone too far and can stop.
-                should_continue = False
-                for row in rows:
-                    # If we haven't seen this sensor before, check if it's within the radius.
-                    if (
-                        row["id"] not in sensor_ids
-                        and haversine_distance(
-                            zipcode.longitude,
-                            zipcode.latitude,
-                            row["longitude"],
-                            row["latitude"],
+                # We will sort the sensors by distance and add them until we have MAX_SENSORS
+                # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
+                sensors = sorted(
+                    [
+                        (
+                            row["id"],
+                            haversine_distance(
+                                zipcode.longitude,
+                                zipcode.latitude,
+                                row["longitude"],
+                                row["latitude"],
+                            ),
                         )
-                        <= self.RADIUS
-                    ):
-                        sensor_ids.add(row["id"])
-                        should_continue = True
-                if not should_continue:
-                    break
+                        for row in rows
+                        if row["id"] not in distances
+                    ],
+                    key=lambda t: t[1],
+                )
+                while sensors:
+                    sensor_id, distance = sensors.pop()
+                    if distance > self.MAX_RADIUS:
+                        return distances
+                    distances[sensor_id] = distance
+                    if len(distances) >= self.MAX_SENSORS:
+                        return distances
             gh.pop()
-        return sensor_ids
+        return distances
 
-    def _get_sensors_for_zipcode(self, zipcode: str) -> typing.List[dict]:
+    def _get_sensors_for_zipcode(self, zipcode: str) -> typing.List[Sensor]:
         conn = self._get_connection()
         cursor = conn.cursor()
 
@@ -119,30 +136,41 @@ class PurpleairProvider(Provider):
 
         # Now get the closest sensors
         sqlite3_zip = Sqlite3Zipcode.from_row(row)
-        sensor_ids = self._find_neighboring_sensor_ids(sqlite3_zip)
-        if not sensor_ids:
+        distances = self._find_neighboring_sensors(sqlite3_zip)
+        if not distances:
             return []
 
         try:
             resp = requests.get(
                 "https://www.purpleair.com/json?show={}".format(
-                    "|".join(map(str, sensor_ids))
+                    "|".join(map(str, distances.keys()))
                 )
             )
         except requests.RequestException as e:
             raise ProviderOutOfService(
                 "Error retrieving data for sensors {} and zipcode {}: {}".format(
-                    ", ".join(map(str, sensor_ids)), zipcode, e,
+                    ", ".join(map(str, distances.keys())), zipcode, e,
                 )
             )
         else:
-            return [
-                s
-                for s in resp.json().get("results")
-                # Less than 0 or greater than 500 is, we hope, some kind of fluke.
-                # I've seen it in the data...
-                if 0 < float(s.get("PM2_5Value", 0)) < 500
-            ]
+            sensors = []
+            missing_ids = set(distances.keys())
+            for r in resp.json().get("results"):
+                if not r.get("ParentID"):
+                    pm_25 = float(r.get("PM2_5Value", 0))
+                    if 0 < pm_25 < 500:
+                        distance = distances.get(r["ID"])
+                        if distance is None:
+                            self.logger.warning(
+                                "Mismatch: sensor %s has no corresponding distance",
+                                r["ID"],
+                            )
+                        else:
+                            missing_ids.discard(r["ID"])
+                            sensors.append(Sensor(r["ID"], distance, pm_25))
+            if missing_ids:
+                self.logger.warning("No results for ids: %s", missing_ids)
+            return sorted(sensors, key=lambda s: s.pm_25)
 
     def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
         self._check_database()
@@ -151,15 +179,14 @@ class PurpleairProvider(Provider):
         if not sensors:
             return None
 
-        average_pm_25 = round(
-            sum(float(s["PM2_5Value"]) for s in sensors) / len(sensors), ndigits=3
-        )
+        average_pm_25 = round(sum(s.pm_25 for s in sensors) / len(sensors), ndigits=3)
+        max_sensor_distance = sensors[-1].distance
 
         return self._generate_metrics(
             [
                 ("Average pm25", average_pm_25),
-                ("Sensor IDs", ", ".join([str(s["ID"]) for s in sensors])),
-                ("Radius", f"{self.RADIUS}km"),
+                ("Sensor IDs", ", ".join([str(s.id) for s in sensors])),
+                ("Max sensor distance", f"{max_sensor_distance}km"),
             ],
             zipcode,
         )
