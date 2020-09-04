@@ -148,7 +148,7 @@ class PurpleairProvider:
             neighboring_sensors.update(
                 self._refresh_sensor_distances(zipcode, exclude, num_desired)
             )
-            cache.set(key, distances, timeout=60 * 60)
+            cache.set(key, neighboring_sensors, timeout=60 * 60)
 
         return neighboring_sensors
 
@@ -221,25 +221,20 @@ class PurpleairProvider:
                             )
                             self._mark_sensor_dead(r["ID"])
                         else:
-                            distance = sensors_without_known_pm25.get(r["ID"])
-                            if distance is None:
-                                logger.warning(
-                                    "Mismatch: sensor %s has no corresponding distance",
-                                    r["ID"],
-                                )
-                            else:
-                                del sensors_without_known_pm25[r["ID"]]
-                                cache.set(
-                                    self._make_purpleair_pm25_key(r["ID"]),
-                                    pm25,
-                                    timeout=60 * 10,
-                                )  # 10 minutes
-                                sensors.append(Sensor(r["ID"], distance, pm25))
+                            distance = sensors_without_known_pm25.pop(r["ID"])
+                            cache.set(
+                                self._make_purpleair_pm25_key(r["ID"]),
+                                pm25,
+                                timeout=60 * 10,
+                            )  # 10 minutes
+                            sensors.append(Sensor(r["ID"], distance, pm25))
 
                 # This should be empty now if we've gotten pm25 info
                 # for every sensor.
                 if sensors_without_known_pm25:
-                    logger.warning("No results for ids: %s", set(sensors_without_known_pm25))
+                    logger.warning(
+                        "No results for ids: %s", set(sensors_without_known_pm25)
+                    )
 
         return sorted(sensors, key=lambda s: s.distance)
 
