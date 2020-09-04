@@ -54,7 +54,7 @@ class Sensor:
     pm25: float
 
 
-class PurpleairProvider:
+class Purpleair:
     MAX_RADIUS = 25
     MAX_SENSORS = 10
     DB_PATH = "airq/purpleair.db"
@@ -70,7 +70,7 @@ class PurpleairProvider:
                 f"Database unexecpectedly absent at {self.DB_PATH}"
                 f"(cwd: {cwd}, contents: {listdir})"
             )
-            raise ProviderOutOfService(msg)
+            raise RuntimeError(msg)
 
     def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.DB_PATH)
@@ -97,32 +97,31 @@ class PurpleairProvider:
                 sql += " AND id NOT IN ({})".format(", ".join("?" for _ in exclude))
             cursor.execute(sql, tuple(gh) + tuple(exclude))
             rows = cursor.fetchall()
-            if rows:
-                # We will sort the sensors by distance and add them until we have MAX_SENSORS
-                # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
-                sensors = sorted(
-                    [
-                        (
-                            row["id"],
-                            util.haversine_distance(
-                                zipcode.longitude,
-                                zipcode.latitude,
-                                row["longitude"],
-                                row["latitude"],
-                            ),
-                        )
-                        for row in rows
-                        if row["id"] not in distances
-                    ],
-                    key=lambda t: t[1],
-                )
-                while sensors:
-                    sensor_id, distance = sensors.pop()
-                    if distance > self.MAX_RADIUS:
-                        return distances
-                    distances[sensor_id] = distance
-                    if len(distances) >= num_desired:
-                        return distances
+            # We will sort the sensors by distance and add them until we have MAX_SENSORS
+            # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
+            sensors = sorted(
+                [
+                    (
+                        row["id"],
+                        util.haversine_distance(
+                            zipcode.longitude,
+                            zipcode.latitude,
+                            row["longitude"],
+                            row["latitude"],
+                        ),
+                    )
+                    for row in rows
+                    if row["id"] not in distances
+                ],
+                key=lambda t: t[1],
+            )
+            while sensors:
+                sensor_id, distance = sensors.pop()
+                if distance > self.MAX_RADIUS:
+                    return distances
+                distances[sensor_id] = distance
+                if len(distances) >= num_desired:
+                    return distances
             gh.pop()
         return distances
 
@@ -255,4 +254,4 @@ class PurpleairProvider:
         )
 
 
-PURPLEAIR_PROVIDER = PurpleairProvider()
+PURPLEAIR = Purpleair()

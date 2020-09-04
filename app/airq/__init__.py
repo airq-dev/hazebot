@@ -30,7 +30,7 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 
 from airq.cache import cache
-from airq.purpleair import PURPLEAIR_PROVIDER
+from airq.purpleair import PURPLEAIR
 
 
 app = Flask(__name__)
@@ -65,7 +65,7 @@ def quality() -> str:
 
 def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
     if zipcode.isdigit() and len(zipcode) == 5:
-        metrics = PURPLEAIR_PROVIDER.get_metrics(zipcode)
+        metrics = PURPLEAIR.get_metrics(zipcode)
         if metrics:
             return separator.join(
                 [
