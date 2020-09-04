@@ -1,4 +1,3 @@
-import collections
 import dataclasses
 import logging
 import typing
