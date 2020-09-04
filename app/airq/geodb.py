@@ -24,9 +24,7 @@ def get_sensor_distances(
     num_desired: int,
     max_radius: int,
 ) -> typing.Dict[int, float]:
-    logger.info(
-        "Retrieving distances for %s sensors near %s", num_desired, zipcode
-    )
+    logger.info("Retrieving distances for %s sensors near %s", num_desired, zipcode)
 
     sensor_to_distance: typing.Dict[int, float] = {}
 
