@@ -18,6 +18,7 @@ class Metrics:
     pm25: float
     num_sensors: int
     max_sensor_distance: float
+    readings: typing.List[float]
 
     @property
     def pm25_display(self) -> str:
@@ -245,6 +246,7 @@ class PurpleairProvider:
             pm25=average_pm25,
             num_sensors=len(sensors),
             max_sensor_distance=round(sensors[-1].distance, ndigits=3),
+            readings=[round(s.pm25, ndigits=3) for s in sensors],
         )
 
 
