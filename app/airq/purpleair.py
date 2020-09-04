@@ -148,7 +148,9 @@ class PurpleairProvider:
                 del distances[sensor_id]
 
         if distances:
-            logger.info("Retrieving pm25 data from purpleair for %s sensors", len(distances))
+            logger.info(
+                "Retrieving pm25 data from purpleair for %s sensors", len(distances)
+            )
             try:
                 resp = requests.get(
                     "https://www.purpleair.com/json?show={}".format(
