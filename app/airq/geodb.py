@@ -17,7 +17,7 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
-def get_sensor_distances(
+def get_distances(
     zipcode: str,
     *,
     exclude_ids: typing.Sequence[int],
