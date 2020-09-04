@@ -71,7 +71,7 @@ def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
                         f"{metrics.num_sensors} sensors"
                         if metrics.num_sensors > 1
                         else "1 sensor",
-                        metrics.max_sensor_distance
+                        metrics.max_sensor_distance,
                     ),
                 ]
             )
