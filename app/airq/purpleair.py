@@ -50,7 +50,7 @@ class Sqlite3Zipcode:
 class Sensor:
     id: int
     distance: float
-    pm_25: float
+    pm25: float
 
 
 class PurpleairProvider:
@@ -76,11 +76,14 @@ class PurpleairProvider:
         conn.row_factory = sqlite3.Row
         return conn
 
-    @cache.memoize()
-    def _find_neighboring_sensors(
-        self, zipcode: Sqlite3Zipcode
+    def _refresh_sensor_distances(
+        self, zipcode: Sqlite3Zipcode, exclude: typing.Set[int], num_desired: int
     ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
-        logger.info("Finding nearby sensors for %s", zipcode)
+        logger.info(
+            "Refreshing sensor coordinates for %s for %s sensors",
+            zipcode.zipcode,
+            num_desired,
+        )
         conn = self._get_connection()
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
@@ -89,7 +92,9 @@ class PurpleairProvider:
             sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
                 " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
             )
-            cursor.execute(sql, tuple(gh))
+            if exclude:
+                sql += " AND id NOT IN ({})".format(", ".join("?" for _ in exclude))
+            cursor.execute(sql, tuple(gh) + tuple(exclude))
             rows = cursor.fetchall()
             if rows:
                 # We will sort the sensors by distance and add them until we have MAX_SENSORS
@@ -115,14 +120,42 @@ class PurpleairProvider:
                     if distance > self.MAX_RADIUS:
                         return distances
                     distances[sensor_id] = distance
-                    if len(distances) >= self.MAX_SENSORS:
+                    if len(distances) >= num_desired:
                         return distances
             gh.pop()
         return distances
 
+    def _find_neighboring_sensors(
+        self, zipcode: Sqlite3Zipcode
+    ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
+        logger.info("Finding nearby sensors for %s", zipcode)
+
+        key = f"purpleair-distances-{zipcode.zipcode}"
+        distances = cache.get(key) or collections.OrderedDict()
+        exclude = set(distances)
+        for sensor_id in list(distances):
+            if self._is_dead(sensor_id):
+                del distances[sensor_id]
+        num_desired = self.MAX_SENSORS - len(distances)
+        if num_desired:
+            distances.update(
+                self._refresh_sensor_distances(zipcode, exclude, num_desired)
+            )
+            cache.set(key, distances, timeout=60 * 60)
+
+        return distances
+
     @staticmethod
-    def _make_purpleair_sensor_key(sensor_id: int) -> str:
-        return f"purpleair-sensor-{sensor_id}"
+    def _make_purpleair_pm25_key(sensor_id: int) -> str:
+        return f"purpleair-pm25-sensor-{sensor_id}"
+
+    @staticmethod
+    def _mark_sensor_dead(sensor_id: int):
+        cache.set(f"purpleair-pm25-sensor-dead-{sensor_id}", True, timeout=60 * 60)
+
+    @staticmethod
+    def _is_dead(sensor_id: int) -> bool:
+        return bool(cache.get(f"purpleair-pm25-sensor-dead-{sensor_id}"))
 
     def _get_sensors_for_zipcode(self, zipcode: str) -> typing.List[Sensor]:
         conn = self._get_connection()
@@ -142,18 +175,22 @@ class PurpleairProvider:
 
         sensors = []
         for sensor_id in list(distances):
-            sensor = cache.get(self._make_purpleair_sensor_key(sensor_id))
-            if sensor:
-                sensors.append(sensor)
+            pm25 = cache.get(self._make_purpleair_pm25_key(sensor_id))
+            if pm25:
+                sensors.append(Sensor(sensor_id, pm25, distances[sensor_id]))
                 del distances[sensor_id]
 
         if distances:
+            logger.info(
+                "Retrieving pm25 data from purpleair for %s sensors", len(distances)
+            )
             try:
                 resp = requests.get(
                     "https://www.purpleair.com/json?show={}".format(
                         "|".join(map(str, distances.keys()))
                     )
                 )
+                resp.raise_for_status()
             except requests.RequestException as e:
                 logger.exception(
                     "Error retrieving data for sensors %s and zipcode %s: %s",
@@ -165,8 +202,15 @@ class PurpleairProvider:
                 missing_ids = set(distances.keys())
                 for r in resp.json().get("results"):
                     if not r.get("ParentID"):
-                        pm_25 = float(r.get("PM2_5Value", 0))
-                        if 0 < pm_25 < 500:
+                        pm25 = float(r.get("PM2_5Value", 0))
+                        if pm25 < 0 or pm25 > 500:
+                            logger.warning(
+                                "Marking sensor %s dead because its pm25 is %s",
+                                r["ID"],
+                                pm25,
+                            )
+                            self._mark_sensor_dead(r["ID"])
+                        else:
                             distance = distances.get(r["ID"])
                             if distance is None:
                                 logger.warning(
@@ -175,17 +219,16 @@ class PurpleairProvider:
                                 )
                             else:
                                 missing_ids.discard(r["ID"])
-                                sensor = Sensor(r["ID"], distance, pm_25)
                                 cache.set(
-                                    self._make_purpleair_sensor_key(sensor.id),
-                                    sensor,
+                                    self._make_purpleair_pm25_key(r["ID"]),
+                                    pm25,
                                     timeout=60 * 10,
                                 )  # 10 minutes
-                                sensors.append(sensor)
+                                sensors.append(Sensor(r["ID"], distance, pm25))
                 if missing_ids:
                     logger.warning("No results for ids: %s", missing_ids)
 
-        return sorted(sensors, key=lambda s: s.pm_25)
+        return sorted(sensors, key=lambda s: s.distance)
 
     def get_metrics(self, zipcode: str) -> typing.Optional[Metrics]:
         self._check_database()
@@ -194,11 +237,11 @@ class PurpleairProvider:
         if not sensors:
             return None
 
-        average_pm_25 = round(sum(s.pm_25 for s in sensors) / len(sensors), ndigits=3)
-        aqi_display = util.get_pm25_display(average_pm_25)
+        average_pm25 = round(sum(s.pm25 for s in sensors) / len(sensors), ndigits=3)
+        aqi_display = util.get_pm25_display(average_pm25)
 
         return Metrics(
-            pm25=average_pm_25,
+            pm25=average_pm25,
             num_sensors=len(sensors),
             max_sensor_distance=round(sensors[-1].distance, ndigits=3),
         )
