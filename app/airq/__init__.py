@@ -29,8 +29,8 @@ dictConfig(
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 
-from airq.cache import cache
-from airq.purpleair import PURPLEAIR
+from airq import cache
+from airq import air_quality
 
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ config = {
     "CACHE_MEMCACHED_SERVERS": os.getenv("MEMCACHED_SERVERS", "").split(","),
 }
 app.config.from_mapping(config)
-cache.init_app(app)
+cache.init(app)
 
 
 @app.route("/", methods=["GET"])
@@ -65,7 +65,7 @@ def quality() -> str:
 
 def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
     if zipcode.isdigit() and len(zipcode) == 5:
-        metrics = PURPLEAIR.get_metrics(zipcode)
+        metrics = air_quality.get_metrics(zipcode)
         if metrics:
             return separator.join(
                 [
