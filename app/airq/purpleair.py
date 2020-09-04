@@ -26,7 +26,7 @@ class Metrics:
 
 
 @dataclasses.dataclass(frozen=True)
-class Sqlite3Zipcode:
+class Zipcode:
     id: int
     zipcode: str
     latitude: float
@@ -37,7 +37,7 @@ class Sqlite3Zipcode:
         return hash(self.id)
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> "Sqlite3Zipcode":
+    def hydrate(cls, row: sqlite3.Row) -> "Zipcode":
         return cls(
             id=row["ID"],
             zipcode=row["zipcode"],
@@ -59,9 +59,6 @@ class Purpleair:
     MAX_SENSORS = 10
     DB_PATH = "airq/purpleair.db"
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}()"
-
     def _check_database(self):
         if not os.path.exists(self.DB_PATH):
             cwd = os.getcwd()
@@ -78,7 +75,7 @@ class Purpleair:
         return conn
 
     def _refresh_sensor_distances(
-        self, zipcode: Sqlite3Zipcode, exclude: typing.Set[int], num_desired: int
+        self, zipcode: Zipcode, exclude: typing.Set[int], num_desired: int
     ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
         logger.info(
             "Refreshing sensor coordinates for %s for %s sensors",
@@ -89,44 +86,48 @@ class Purpleair:
         cursor = conn.cursor()
         gh = list(zipcode.geohash)
         distances: "collections.OrderedDict[int, float]" = collections.OrderedDict()
-        while gh:
-            sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
-                " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
-            )
-            if exclude:
-                sql += " AND id NOT IN ({})".format(", ".join("?" for _ in exclude))
-            cursor.execute(sql, tuple(gh) + tuple(exclude))
-            rows = cursor.fetchall()
-            # We will sort the sensors by distance and add them until we have MAX_SENSORS
-            # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
-            sensors = sorted(
-                [
-                    (
-                        row["id"],
-                        util.haversine_distance(
-                            zipcode.longitude,
-                            zipcode.latitude,
-                            row["longitude"],
-                            row["latitude"],
-                        ),
-                    )
-                    for row in rows
-                    if row["id"] not in distances
-                ],
-                key=lambda t: t[1],
-            )
-            while sensors:
+        sensors: typing.List[typing.Tuple[int, float]] = []
+        while gh or sensors:
+            if sensors:
                 sensor_id, distance = sensors.pop()
                 if distance > self.MAX_RADIUS:
-                    return distances
+                    break
                 distances[sensor_id] = distance
                 if len(distances) >= num_desired:
-                    return distances
-            gh.pop()
+                    break
+            else:
+                sql = "SELECT id, latitude, longitude FROM sensors WHERE {}".format(
+                    " AND ".join([f"geohash_bit_{i}=?" for i in range(1, len(gh) + 1)])
+                )
+                if exclude:
+                    sql += " AND id NOT IN ({})".format(", ".join("?" for _ in exclude))
+                cursor.execute(sql, tuple(gh) + tuple(exclude))
+                rows = cursor.fetchall()
+                # We will sort the sensors by distance and add them until we have MAX_SENSORS
+                # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
+                sensors = sorted(
+                    [
+                        (
+                            row["id"],
+                            util.haversine_distance(
+                                zipcode.longitude,
+                                zipcode.latitude,
+                                row["longitude"],
+                                row["latitude"],
+                            ),
+                        )
+                        for row in rows
+                        if row["id"] not in distances
+                    ],
+                    key=lambda t: t[1],
+                )
+                gh.pop()
+
+        conn.close()
         return distances
 
     def _find_neighboring_sensors(
-        self, zipcode: Sqlite3Zipcode
+        self, zipcode: Zipcode
     ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
         logger.info("Finding nearby sensors for %s", zipcode.zipcode)
 
@@ -174,10 +175,9 @@ class Purpleair:
             return []
 
         # Now get the closest sensors, mapped to their distance
-        sqlite3_zip = Sqlite3Zipcode.from_row(row)
-        sensors_without_known_pm25 = self._find_neighboring_sensors(sqlite3_zip)
-        if not sensors_without_known_pm25:
-            return []
+        sensors_without_known_pm25 = self._find_neighboring_sensors(
+            Zipcode.hydrate(row)
+        )
 
         # Get a list of sensors for which we already have good pm25 data.
         # We won't be needing to get these from the cache.
