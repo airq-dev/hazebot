@@ -1,4 +1,3 @@
-import collections
 import dataclasses
 import logging
 import typing
@@ -28,9 +27,9 @@ PM25_CACHE: cache.Cache[int, float] = cache.Cache(
 )
 
 
-SENSOR_DISTANCE_CACHE: cache.Cache[
-    str, "collections.OrderedDict[int, float]"
-] = cache.Cache(prefix="purpleair-sensor-distance", timeout=24 * 60 * 60)
+SENSOR_DISTANCE_CACHE: cache.Cache[str, typing.Dict[int, float]] = cache.Cache(
+    prefix="purpleair-sensor-distance", timeout=24 * 60 * 60
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,20 +51,16 @@ class Sensor:
     pm25: float
 
 
-def _get_sensor_distances(
-    zipcode: str,
-) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
+def _get_sensor_distances(zipcode: str,) -> typing.Dict[int, float]:
 
     #
-    # This is an OrderedDict from sensor ids to their distance from this zip.
+    # This is a map from sensor ids to their distance from this zip.
     # We exclude them if they're "dead"; that is, not returning a valid reading.
     # If we do have dead sensors, we query the DB for other nearby sensors
     # so that we can (hopefully) find 10 active nearby sensors to read from.
     #
 
-    sensor_to_distance: "collections.OrderedDict[int, float]" = SENSOR_DISTANCE_CACHE.get(
-        zipcode, collections.OrderedDict()
-    )
+    sensor_to_distance: typing.Dict[int, float] = SENSOR_DISTANCE_CACHE.get(zipcode, {})
 
     already_seen_sensor_ids = set(sensor_to_distance)
     for sensor_id in already_seen_sensor_ids:
