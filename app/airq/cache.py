@@ -52,9 +52,7 @@ class Cache(typing.Generic[TKey, TVal]):
         )
 
 
-DEAD: Cache[int, bool] = Cache(
-    prefix="purpleair-pm25-sensor-dead-", timeout=60 * 60
-)
+DEAD: Cache[int, bool] = Cache(prefix="purpleair-pm25-sensor-dead-", timeout=60 * 60)
 
 
 DISTANCE: Cache[str, typing.Dict[int, float]] = Cache(

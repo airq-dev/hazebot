@@ -67,9 +67,7 @@ def _get_readings(sensor_ids: typing.Iterable[int]) -> typing.Dict[int, float]:
         for sensor_id, pm25 in purpleair.get_readings(missing_sensor_ids).items():
             if pm25 <= 0 or pm25 > 500:
                 logger.warning(
-                    "Marking sensor %s dead because its pm25 is %s",
-                    sensor_id,
-                    pm25,
+                    "Marking sensor %s dead because its pm25 is %s", sensor_id, pm25,
                 )
                 dead_sensors[sensor_id] = True
             else:
@@ -86,7 +84,7 @@ def _get_readings(sensor_ids: typing.Iterable[int]) -> typing.Dict[int, float]:
         if missing_sensor_ids:
             # This should be empty now if we've gotten pm25 info for every sensor.
             logger.warning("No results for ids: %s", missing_sensor_ids)
-    
+
     return readings
 
 
