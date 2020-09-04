@@ -175,8 +175,9 @@ class Purpleair:
             return []
 
         # Now get the closest sensors, mapped to their distance
-        zipcode = Zipcode.hydrate(row)
-        sensors_without_known_pm25 = self._find_neighboring_sensors(zipcode)
+        sensors_without_known_pm25 = self._find_neighboring_sensors(
+            Zipcode.hydrate(row)
+        )
 
         # Get a list of sensors for which we already have good pm25 data.
         # We won't be needing to get these from the cache.
@@ -204,7 +205,7 @@ class Purpleair:
                 logger.exception(
                     "Error retrieving data for sensors %s and zipcode %s: %s",
                     set(sensors_without_known_pm25),
-                    zipcode.zipcode,
+                    zipcode,
                     e,
                 )
             else:
