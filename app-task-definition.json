@@ -30,7 +30,7 @@
                 },
                 {
                     "name": "MEMCACHED_SERVER",
-                    "value": "0.0.0.0"
+                    "value": "localhost"
                 }
             ],
             "secrets": [
