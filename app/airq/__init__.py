@@ -28,8 +28,8 @@ dictConfig(
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 
-from airq import metrics
 from airq.cache import cache
+from airq.purpleair import PURPLEAIR_PROVIDER
 
 
 app = Flask(__name__)
@@ -48,16 +48,32 @@ def sms_reply() -> str:
     resp = MessagingResponse()
     body = request.values.get("Body", "").strip()
     parts = body.split()
-    if len(parts) == 2:
-        body, provider_type = parts
-    else:
-        provider_type = ""
-    resp.message(metrics.get_message_for_zipcode(body, provider_type))
+    resp.message(_get_message_for_zipcode(body))
     return str(resp)
 
 
 @app.route("/quality", methods=["GET"])
 def quality() -> str:
     zipcode = request.args.get("zipcode", "").strip()
-    provider_type = request.args.get("provider", "").strip()
-    return metrics.get_message_for_zipcode(zipcode, provider_type, separator="<br>")
+    return _get_message_for_zipcode(zipcode, separator="<br>")
+
+
+def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
+    if zipcode.isdigit() and len(zipcode) == 5:
+        metrics = PURPLEAIR_PROVIDER.get_metrics(zipcode)
+        if metrics:
+            return separator.join(
+                [
+                    f"Air quality near {zipcode}:",
+                    metrics.pm25_display.upper(),
+                    f"Average PM25: {metrics.pm25}",
+                    "({} reporting; max distance: {})".format(
+                        f"{metrics.num_sensors} sensors"
+                        if metrics.num_sensors > 1
+                        else "1 sensor",
+                        metrics.max_sensor_distance,
+                    ),
+                ]
+            )
+
+    return f'Oops! We couldn\'t determine the air quality for "{zipcode}". Please try a different zip code.'
