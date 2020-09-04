@@ -47,7 +47,7 @@ class Metrics:
 
 @dataclasses.dataclass(frozen=True)
 class Sensor:
-    id: int
+    sensor_id: int
     distance: float
     pm25: float
 
@@ -67,15 +67,20 @@ def _get_sensor_distances(
         zipcode, collections.OrderedDict()
     )
 
-    exclude = set(sensor_to_distance)
-    for sensor_id in exclude:
+    already_seen_sensor_ids = set(sensor_to_distance)
+    for sensor_id in already_seen_sensor_ids:
         if DEAD_SENSOR_CACHE.get(sensor_id):
             del sensor_to_distance[sensor_id]
 
     num_missing = DESIRED_NUM_SENSORS - len(sensor_to_distance)
     if num_missing:
         sensor_to_distance.update(
-            geodb.get_sensor_distances(zipcode, exclude, num_missing, MAX_SENSOR_RADIUS)
+            geodb.get_sensor_distances(
+                zipcode,
+                exclude_ids=already_seen_sensor_ids,
+                num_desired=num_missing,
+                max_radius=MAX_SENSOR_RADIUS,
+            )
         )
         SENSOR_DISTANCE_CACHE.set(zipcode, sensor_to_distance)
 
@@ -86,21 +91,25 @@ def _get_sensors(zipcode: str) -> typing.List[Sensor]:
     sensor_to_distance = _get_sensor_distances(zipcode)
 
     # Get a list of sensors for which we already have good pm25 data.
-    # We won't be needing to get these from the cache.
+    # We won't be needing to read these from purpleair.
     sensors = []
-    for sensor_id, distance in list(sensor_to_distance.items()):
+    missing_sensor_ids = set()
+    for sensor_id, distance in sensor_to_distance.items():
         pm25 = PM25_CACHE.get(sensor_id)
         if pm25:
             sensors.append(Sensor(sensor_id, distance, pm25))
-            del sensor_to_distance[sensor_id]
+        else:
+            missing_sensor_ids.add(sensor_id)
 
-    if sensor_to_distance:
+    if missing_sensor_ids:
+        # There are some sensors for which we lack pm25 data.
+        # Read their data from purpleair.
         try:
-            readings = purpleair.get_readings(set(sensor_to_distance))
+            readings = purpleair.get_readings(missing_sensor_ids)
         except purpleair.ApiException as e:
             logger.exception(
                 "Error retrieving data for sensors %s and zipcode %s: %s",
-                set(sensor_to_distance),
+                missing_sensor_ids,
                 zipcode,
                 e,
             )
@@ -114,13 +123,15 @@ def _get_sensors(zipcode: str) -> typing.List[Sensor]:
                     )
                     DEAD_SENSOR_CACHE.set(sensor_id, True)
                 else:
-                    distance = sensor_to_distance.pop(sensor_id)
+                    missing_sensor_ids.remove(sensor_id)
                     PM25_CACHE.set(sensor_id, pm25)
-                    sensors.append(Sensor(sensor_id, distance, pm25))
+                    sensors.append(
+                        Sensor(sensor_id, sensor_to_distance[sensor_id], pm25)
+                    )
 
     # This should be empty now if we've gotten pm25 info for every sensor.
-    if sensor_to_distance:
-        logger.warning("No results for ids: %s", set(sensor_to_distance))
+    if missing_sensor_ids:
+        logger.warning("No results for ids: %s", missing_sensor_ids)
 
     return sorted(sensors, key=lambda s: s.distance)
 
