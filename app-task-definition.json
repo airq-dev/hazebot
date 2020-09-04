@@ -30,7 +30,7 @@
                 },
                 {
                     "name": "MEMCACHED_SERVER",
-                    "value": "clusterairq-memcached.k74xvs.cfg.usw1.cache.amazonaws.com"
+                    "value": "0.0.0.0"
                 }
             ],
             "secrets": [

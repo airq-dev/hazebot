@@ -72,12 +72,8 @@ def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
                     f"Air quality near {zipcode}:",
                     metrics.pm25_display.upper(),
                     f"Average pm2.5: {metrics.pm25}",
-                    "({} reporting; max distance: {})".format(
-                        f"{metrics.num_sensors} sensors"
-                        if metrics.num_sensors > 1
-                        else "1 sensor",
-                        metrics.max_sensor_distance,
-                    ),
+                    "All readngs: {}".format(", ".join(map(str, metrics.readings))),
+                    "(max distance: {})".format(metrics.max_sensor_distance,),
                 ]
             )
 
