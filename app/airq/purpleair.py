@@ -186,7 +186,7 @@ class PurpleairProvider:
         for sensor_id, distance in list(sensors_without_known_pm25.items()):
             pm25 = cache.get(self._make_purpleair_pm25_key(sensor_id))
             if pm25:
-                sensors.append(Sensor(sensor_id, pm25, distance))
+                sensors.append(Sensor(sensor_id, distance, pm25))
                 del sensors_without_known_pm25[sensor_id]
 
         if sensors_without_known_pm25:
