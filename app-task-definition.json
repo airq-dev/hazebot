@@ -30,7 +30,7 @@
                 },
                 {
                     "name": "MEMCACHED_SERVER",
-                    "value": "localhost"
+                    "value": "airq-memcached.k74xvs.0001.usw1.cache.amazonaws.com"
                 }
             ],
             "secrets": [
