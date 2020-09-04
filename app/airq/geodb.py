@@ -20,12 +20,12 @@ def _get_connection() -> sqlite3.Connection:
 
 def get_sensor_distances(
     zipcode: str, *, exclude_ids: typing.Set[int], num_desired: int, max_radius: int
-) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
+) -> typing.Dict[int, float]:
     logger.info(
         "get_nearby_sensors for %s for %s sensors", zipcode, num_desired,
     )
 
-    sensor_to_distance: "collections.OrderedDict[int, float]" = collections.OrderedDict()
+    sensor_to_distance: typing.Dict[int, float] = {}
 
     conn = _get_connection()
     cursor = conn.cursor()
