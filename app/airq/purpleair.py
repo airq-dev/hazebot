@@ -54,7 +54,7 @@ class Sensor:
     pm25: float
 
 
-class PurpleairProvider:
+class Purpleair:
     MAX_RADIUS = 25
     MAX_SENSORS = 10
     DB_PATH = "airq/purpleair.db"
@@ -255,4 +255,4 @@ class PurpleairProvider:
         )
 
 
-PURPLEAIR_PROVIDER = PurpleairProvider()
+PURPLEAIR = Purpleair()
