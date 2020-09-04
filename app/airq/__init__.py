@@ -37,7 +37,7 @@ app = Flask(__name__)
 config = {
     "CACHE_TYPE": "memcached",
     "CACHE_DEFAULT_TIMEOUT": 300,
-    "CACHE_MEMCACHED_SERVERS": (os.getenv("MEMCACHED_SERVER"),),
+    "CACHE_MEMCACHED_SERVERS": os.getenv("MEMCACHED_SERVERS", "").split(","),
 }
 app.config.from_mapping(config)
 cache.init_app(app)

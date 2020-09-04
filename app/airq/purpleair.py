@@ -132,19 +132,25 @@ class PurpleairProvider:
         logger.info("Finding nearby sensors for %s", zipcode.zipcode)
 
         key = f"purpleair-distances-{zipcode.zipcode}"
-        distances = cache.get(key) or collections.OrderedDict()
-        exclude = set(distances)
-        for sensor_id in list(distances):
+        #
+        # This is an OrderedDict from sensor ids to their distance from this zip.
+        # We exclude them if they're "dead"; that is, not returning a valid reading.
+        # If we do have dead sensors, we query the DB for other nearby sensors
+        # so that we can (hopefully) find 10 active nearby sensors to read from.
+        #
+        neighboring_sensors = cache.get(key) or collections.OrderedDict()
+        exclude = set(neighboring_sensors)
+        for sensor_id in exclude:
             if self._is_dead(sensor_id):
-                del distances[sensor_id]
-        num_desired = self.MAX_SENSORS - len(distances)
+                del neighboring_sensors[sensor_id]
+        num_desired = self.MAX_SENSORS - len(neighboring_sensors)
         if num_desired:
-            distances.update(
+            neighboring_sensors.update(
                 self._refresh_sensor_distances(zipcode, exclude, num_desired)
             )
-            cache.set(key, distances, timeout=60 * 60)
+            cache.set(key, neighboring_sensors, timeout=60 * 60)
 
-        return distances
+        return neighboring_sensors
 
     @staticmethod
     def _make_purpleair_pm25_key(sensor_id: int) -> str:
@@ -168,36 +174,38 @@ class PurpleairProvider:
         if not row:
             return []
 
-        # Now get the closest sensors
+        # Now get the closest sensors, mapped to their distance
         sqlite3_zip = Sqlite3Zipcode.from_row(row)
-        distances = self._find_neighboring_sensors(sqlite3_zip)
-        if not distances:
+        sensors_without_known_pm25 = self._find_neighboring_sensors(sqlite3_zip)
+        if not sensors_without_known_pm25:
             return []
 
+        # Get a list of sensors for which we already have good pm25 data.
+        # We won't be needing to get these from the cache.
         sensors = []
-        for sensor_id in list(distances):
+        for sensor_id, distance in list(sensors_without_known_pm25.items()):
             pm25 = cache.get(self._make_purpleair_pm25_key(sensor_id))
             if pm25:
-                sensors.append(Sensor(sensor_id, pm25, distances[sensor_id]))
-                del distances[sensor_id]
+                sensors.append(Sensor(sensor_id, distance, pm25))
+                del sensors_without_known_pm25[sensor_id]
 
-        if distances:
+        if sensors_without_known_pm25:
             logger.info(
                 "Retrieving pm25 data from purpleair for %s sensors: %s",
-                len(distances),
-                ", ".join(map(str, distances)),
+                len(sensors_without_known_pm25),
+                set(sensors_without_known_pm25),
             )
             try:
                 resp = requests.get(
                     "https://www.purpleair.com/json?show={}".format(
-                        "|".join(map(str, distances))
+                        "|".join(map(str, sensors_without_known_pm25))
                     )
                 )
                 resp.raise_for_status()
             except requests.RequestException as e:
                 logger.exception(
                     "Error retrieving data for sensors %s and zipcode %s: %s",
-                    ", ".join(map(str, distances.keys())),
+                    set(sensors_without_known_pm25),
                     zipcode,
                     e,
                 )
@@ -213,22 +221,20 @@ class PurpleairProvider:
                             )
                             self._mark_sensor_dead(r["ID"])
                         else:
-                            distance = distances.get(r["ID"])
-                            if distance is None:
-                                logger.warning(
-                                    "Mismatch: sensor %s has no corresponding distance",
-                                    r["ID"],
-                                )
-                            else:
-                                del distances[r["ID"]]
-                                cache.set(
-                                    self._make_purpleair_pm25_key(r["ID"]),
-                                    pm25,
-                                    timeout=60 * 10,
-                                )  # 10 minutes
-                                sensors.append(Sensor(r["ID"], distance, pm25))
-                if distances:
-                    logger.warning("No results for ids: %s", set(distances))
+                            distance = sensors_without_known_pm25.pop(r["ID"])
+                            cache.set(
+                                self._make_purpleair_pm25_key(r["ID"]),
+                                pm25,
+                                timeout=60 * 10,
+                            )  # 10 minutes
+                            sensors.append(Sensor(r["ID"], distance, pm25))
+
+                # This should be empty now if we've gotten pm25 info
+                # for every sensor.
+                if sensors_without_known_pm25:
+                    logger.warning(
+                        "No results for ids: %s", set(sensors_without_known_pm25)
+                    )
 
         return sorted(sensors, key=lambda s: s.distance)
 
@@ -240,7 +246,6 @@ class PurpleairProvider:
             return None
 
         average_pm25 = round(sum(s.pm25 for s in sensors) / len(sensors), ndigits=3)
-        aqi_display = util.get_pm25_display(average_pm25)
 
         return Metrics(
             pm25=average_pm25,

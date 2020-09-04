@@ -29,7 +29,7 @@
                     "value": "production"
                 },
                 {
-                    "name": "MEMCACHED_SERVER",
+                    "name": "MEMCACHED_SERVERS",
                     "value": "airq-memcached.k74xvs.0001.usw1.cache.amazonaws.com"
                 }
             ],
