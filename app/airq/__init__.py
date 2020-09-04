@@ -31,7 +31,6 @@ from twilio.twiml.messaging_response import MessagingResponse
 from airq.cache import cache
 from airq.purpleair import PURPLEAIR_PROVIDER
 
-
 app = Flask(__name__)
 config = {"CACHE_TYPE": "simple", "CACHE_DEFAULT_TIMEOUT": 300}
 app.config.from_mapping(config)
