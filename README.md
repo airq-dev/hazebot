@@ -7,7 +7,7 @@ Airq allows you to recieve information about the air quality near you simply by 
 
 ## Features
 
-Right now, Airq returns reading from two different air quality APIs: [airnow](https://docs.airnowapi.org/) and [purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing). We are still deciding which combination of APIs is most optimal for our needs, or if just using one API is sufficient.
+Airq aggregates sensor readings from nearby [Purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing) sensors. These sensors are updated every 10 minutes so the results should be fairly accurate, generally. We will soon have a publicly available number to which you can text your zipcode to recieve air quality metrics.
 
 
 ## TODOs
