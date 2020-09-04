@@ -128,7 +128,7 @@ class PurpleairProvider:
     def _find_neighboring_sensors(
         self, zipcode: Sqlite3Zipcode
     ) -> "collections.OrderedDict[int, float]":  # See https://stackoverflow.com/a/52626233
-        logger.info("Finding nearby sensors for %s", zipcode)
+        logger.info("Finding nearby sensors for %s", zipcode.zipcode)
 
         key = f"purpleair-distances-{zipcode.zipcode}"
         distances = cache.get(key) or collections.OrderedDict()
@@ -182,12 +182,12 @@ class PurpleairProvider:
 
         if distances:
             logger.info(
-                "Retrieving pm25 data from purpleair for %s sensors", len(distances)
+                "Retrieving pm25 data from purpleair for %s sensors: %s", len(distances), ', '.join(map(str, distances))
             )
             try:
                 resp = requests.get(
                     "https://www.purpleair.com/json?show={}".format(
-                        "|".join(map(str, distances.keys()))
+                        "|".join(map(str, distances))
                     )
                 )
                 resp.raise_for_status()
@@ -199,11 +199,10 @@ class PurpleairProvider:
                     e,
                 )
             else:
-                missing_ids = set(distances.keys())
                 for r in resp.json().get("results"):
                     if not r.get("ParentID"):
                         pm25 = float(r.get("PM2_5Value", 0))
-                        if pm25 < 0 or pm25 > 500:
+                        if pm25 <= 0 or pm25 > 500:
                             logger.warning(
                                 "Marking sensor %s dead because its pm25 is %s",
                                 r["ID"],
@@ -218,15 +217,15 @@ class PurpleairProvider:
                                     r["ID"],
                                 )
                             else:
-                                missing_ids.discard(r["ID"])
+                                del distances[r["ID"]]
                                 cache.set(
                                     self._make_purpleair_pm25_key(r["ID"]),
                                     pm25,
                                     timeout=60 * 10,
                                 )  # 10 minutes
                                 sensors.append(Sensor(r["ID"], distance, pm25))
-                if missing_ids:
-                    logger.warning("No results for ids: %s", missing_ids)
+                if distances:
+                    logger.warning("No results for ids: %s", set(distances))
 
         return sorted(sensors, key=lambda s: s.distance)
 

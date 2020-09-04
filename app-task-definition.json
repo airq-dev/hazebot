@@ -22,11 +22,15 @@
             "environment": [
                 {
                     "name": "FLASK_APP",
-                    "value": "project/__init__.py"
+                    "value": "airq/__init__.py"
                 },
                 {
                     "name": "FLASK_ENV",
                     "value": "production"
+                },
+                {
+                    "name": "MEMCACHED_SERVER",
+                    "value": "clusterairq-memcached.k74xvs.cfg.usw1.cache.amazonaws.com"
                 }
             ],
             "secrets": [

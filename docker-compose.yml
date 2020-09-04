@@ -5,8 +5,16 @@ services:
     build: ./app
     command: flask run --host=0.0.0.0
     volumes:
-      - ./app/:/usr/src/app/
+      - ./app/:/home/app/app
     ports:
       - 5000:5000
     env_file:
       - ./.env.dev
+    depends_on:
+      - memcached
+  memcached:
+    image: memcached:latest
+    ports:
+      - 11211:11211
+    command: ["-m", "512m"]
+

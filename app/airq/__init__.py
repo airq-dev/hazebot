@@ -1,3 +1,4 @@
+import os
 import typing
 from logging.config import dictConfig
 
@@ -31,8 +32,13 @@ from twilio.twiml.messaging_response import MessagingResponse
 from airq.cache import cache
 from airq.purpleair import PURPLEAIR_PROVIDER
 
+
 app = Flask(__name__)
-config = {"CACHE_TYPE": "simple", "CACHE_DEFAULT_TIMEOUT": 300}
+config = {
+    "CACHE_TYPE": "memcached",
+    "CACHE_DEFAULT_TIMEOUT": 300,
+    "CACHE_MEMCACHED_SERVERS": (os.getenv("MEMCACHED_SERVER"),),
+}
 app.config.from_mapping(config)
 cache.init_app(app)
 
