@@ -182,7 +182,9 @@ class PurpleairProvider:
 
         if distances:
             logger.info(
-                "Retrieving pm25 data from purpleair for %s sensors: %s", len(distances), ', '.join(map(str, distances))
+                "Retrieving pm25 data from purpleair for %s sensors: %s",
+                len(distances),
+                ", ".join(map(str, distances)),
             )
             try:
                 resp = requests.get(
