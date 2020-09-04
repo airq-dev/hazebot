@@ -70,7 +70,7 @@ class PurpleairProvider:
                 f"Database unexecpectedly absent at {self.DB_PATH}"
                 f"(cwd: {cwd}, contents: {listdir})"
             )
-            raise ProviderOutOfService(msg)
+            raise RuntimeError(msg)
 
     def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.DB_PATH)
