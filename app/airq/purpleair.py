@@ -16,6 +16,9 @@ def get_readings(sensor_ids: typing.Set[int]) -> typing.Dict[int, float]:
         len(sensor_ids),
         sensor_ids,
     )
+
+    readings = {}
+
     try:
         resp = requests.get(
             "https://www.purpleair.com/json?show={}".format(
@@ -24,11 +27,14 @@ def get_readings(sensor_ids: typing.Set[int]) -> typing.Dict[int, float]:
         )
         resp.raise_for_status()
     except requests.RequestException as e:
-        raise ApiException(e)
+        logger.exception(
+            "Error retrieving data for sensors %s: %s", sensor_ids, e,
+        )
     else:
-        sensors = {}
         for r in resp.json().get("results"):
             if not r.get("ParentID"):
+                sensor_id = r["ID"]
                 pm25 = float(r.get("PM2_5Value", 0))
-                sensors[r["ID"]] = pm25
-        return sensors
+                readings[sensor_id] = pm25
+
+    return readings

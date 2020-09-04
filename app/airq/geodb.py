@@ -17,12 +17,14 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
-def get_sensor_distances(
-    zipcode: str, *, exclude_ids: typing.Set[int], num_desired: int, max_radius: int
+def get_distances(
+    zipcode: str,
+    *,
+    exclude_ids: typing.Sequence[int],
+    num_desired: int,
+    max_radius: int,
 ) -> typing.Dict[int, float]:
-    logger.info(
-        "get_nearby_sensors for %s for %s sensors", zipcode, num_desired,
-    )
+    logger.info("Retrieving distances for %s sensors near %s", num_desired, zipcode)
 
     sensor_to_distance: typing.Dict[int, float] = {}
 
@@ -55,8 +57,6 @@ def get_sensor_distances(
             if exclude_ids:
                 sql += " AND id NOT IN ({})".format(", ".join("?" for _ in exclude_ids))
             cursor.execute(sql, tuple(gh) + tuple(exclude_ids))
-            # We will sort the sensors by distance and add them until we have MAX_SENSORS
-            # sensors. As soon as we see a sensor further away than MAX_RADIUS, we're done.
             unprocessed_sensors = sorted(
                 [
                     (

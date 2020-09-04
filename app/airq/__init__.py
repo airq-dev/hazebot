@@ -29,11 +29,13 @@ dictConfig(
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 
-from airq import cache
 from airq import air_quality
+from airq import cache
+from airq import middleware
 
 
 app = Flask(__name__)
+app.wsgi_app = middleware.LoggingMiddleware(app.wsgi_app)  # type: ignore
 config = {
     "CACHE_TYPE": "memcached",
     "CACHE_DEFAULT_TIMEOUT": 300,
