@@ -77,26 +77,26 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
         return f'Oops! We couldn\'t determine the air quality for "{target_zipcode}". Please try a different zip code.'
     else:
         pm25_display = util.PM25.from_measurement(
-            target_metrics["avg_pm25"]
+            target_metrics.average_pm25
         ).display.upper()
         message = separator.join(
             [
                 f"Air quality near {target_zipcode} is {pm25_display}.",
                 "",
-                f"PM2.5: {target_metrics['avg_pm25']} ({target_metrics['num_readings']} sensors reporting)",
-                f"Min sensor distance: {target_metrics['closest_reading']}km",
-                f"Max sensor distance: {target_metrics['farthest_reading']}km",
-                f"All readings: {target_metrics['readings']}",
+                f"PM2.5: {target_metrics.average_pm25} ({target_metrics.num_readings} sensors reporting)",
+                f"Min sensor distance: {target_metrics.closest_reading}km",
+                f"Max sensor distance: {target_metrics.farthest_reading}km",
+                f"All readings: {target_metrics.readings}",
             ]
         )
-        if target_metrics["avg_pm25"] >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+        if target_metrics.average_pm25 >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
             num_desired = 3
             low_pm25_metrics: typing.List[typing.Tuple[str, float, float]] = []
             good_pm25_metrics = sorted(
                 [
-                    (zipcode, m["avg_pm25"], m["distance"])
+                    (zipcode, m.average_pm25, m.distance)
                     for zipcode, m in metrics.items()
-                    if zipcode != target_zipcode and m["avg_pm25"] < util.PM25.MODERATE
+                    if zipcode != target_zipcode and m.average_pm25 < util.PM25.MODERATE
                 ],
                 key=lambda t: t[2],
             )
@@ -106,10 +106,10 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
             if num_desired:
                 moderate_pm25_metrics = sorted(
                     [
-                        (zipcode, m["avg_pm25"], m["distance"])
+                        (zipcode, m.average_pm25, m.distance)
                         for zipcode, m in metrics.items()
                         if zipcode != target_zipcode
-                        and m["avg_pm25"]
+                        and m.average_pm25
                         < util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
                     ],
                     key=lambda t: t[2],

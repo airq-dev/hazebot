@@ -11,9 +11,17 @@ DESIRED_NUM_SENSORS = 10
 MAX_SENSOR_RADIUS = 25
 
 
-def get_metrics_for_zipcode(
-    target_zipcode: str,
-) -> typing.Dict[str, typing.Dict[str, typing.Union[float, int]]]:
+@dataclasses.dataclass
+class Metrics:
+    average_pm25: float
+    num_readings: int
+    closest_reading: float
+    farthest_reading: float
+    distance: float
+    readings: typing.Optional[typing.List[float]] = None
+
+
+def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     # Get a all zipcodes (inclusive) within 25km
     zipcodes = geodb.get_nearby_zipcodes(target_zipcode, MAX_SENSOR_RADIUS)
 
@@ -41,16 +49,16 @@ def get_metrics_for_zipcode(
                     distances.append(distance)
         if nearby_readings:
             zipcode, distance = zipcodes[zipcode_id]
-            metrics[zipcode] = {
-                "avg_pm25": round(
+            metrics[zipcode] = Metrics(
+                average_pm25=round(
                     sum(nearby_readings) / len(nearby_readings), ndigits=3
                 ),
-                "num_readings": len(nearby_readings),
-                "closest_reading": round(distances[0], ndigits=3),
-                "farthest_reading": round(distances[-1], ndigits=3),
-                "distance": round(distance, ndigits=3),
-            }
+                num_readings=len(nearby_readings),
+                closest_reading=round(distances[0], ndigits=3),
+                farthest_reading=round(distances[-1], ndigits=3),
+                distance=round(distance, ndigits=3),
+            )
             if zipcode == target_zipcode:
-                metrics[zipcode]['readings'] = nearby_readings
+                metrics[zipcode].readings = nearby_readings
 
     return metrics
