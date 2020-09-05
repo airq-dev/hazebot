@@ -12,12 +12,13 @@ Airq aggregates sensor readings from nearby [Purpleair](https://docs.google.com/
 
 ## TODOs
 
-* Register a domain and setup SES to email admins whenever Flask throws an exception.
-* Determine which air quality data should actually be public-facing.
-* Understand why there are large differences in the air quality as calculated by purpleair and airnow.
+* setup a PostGres database in RDS to store phone numbers and zipcodes.
+* Email logging for alerts/errors
+* Come up with behavior recs for air quality based on pm2.5 
 * Create a task worker (somewhere? EC2?) to send alerts when air quality changes by a certain amount.
-* As a prerequisite to the above task, setup a database in RDS to store phone numbers and zipcodes.
 * Write tests (!).
+* Push notification
+* Slack app 
 
 
 ## Contributing
