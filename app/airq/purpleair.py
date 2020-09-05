@@ -8,10 +8,6 @@ from airq import cache
 logger = logging.getLogger(__name__)
 
 
-class ApiException(Exception):
-    pass
-
-
 def _call_purpleair_api(
     sensor_ids: typing.Set[int],
 ) -> typing.List[typing.Dict[str, typing.Any]]:

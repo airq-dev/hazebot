@@ -1,5 +1,5 @@
 import collections
-import logging
+import dataclasses
 import sqlite3
 import typing
 
@@ -10,7 +10,14 @@ from airq import util
 DB_PATH = "airq/purpleair.db"
 
 
-logger = logging.getLogger(__name__)
+class Zipcode(typing.NamedTuple):
+    zipcode: str
+    distance: float
+
+
+class Sensor(typing.NamedTuple):
+    sensor_id: int
+    distance: float
 
 
 def _get_connection() -> sqlite3.Connection:
@@ -19,16 +26,13 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
-@cache.CACHE.memoize(timeout=24 * 60 * 60)
 def get_nearby_zipcodes(
-    zipcode: str, radius: int
-) -> typing.Dict[int, typing.Tuple[str, float]]:
-    logger.info("Retrieving zipcodes within %s of %s", radius, zipcode)
-
+    zipcode: str, *, max_radius: int, num_desired: int
+) -> typing.Dict[int, Zipcode]:
     conn = _get_connection()
     cursor = conn.cursor()
 
-    zipcodes: typing.Dict[int, typing.Tuple[str, float]] = {}
+    zipcodes: typing.Dict[int, Zipcode] = {}
 
     cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
     row = cursor.fetchone()
@@ -36,7 +40,7 @@ def get_nearby_zipcodes(
         conn.close()
         return zipcodes
 
-    zipcodes[row["id"]] = (zipcode, 0)
+    zipcodes[row["id"]] = Zipcode(zipcode, 0)
     latitude = row["latitude"]
     longitude = row["longitude"]
     gh = [row[f"geohash_bit_{i + 1}"] for i in range(12)]
@@ -63,10 +67,11 @@ def get_nearby_zipcodes(
             ],
             key=lambda t: t[1],
         ):
-            if distance > radius:
+            if distance <= max_radius:
+                zipcodes[zipcode_id] = Zipcode(zipcode, distance)
+            if len(zipcodes) >= num_desired:
                 conn.close()
                 return zipcodes
-            zipcodes[zipcode_id] = (zipcode, distance)
         gh.pop()
 
     conn.close()
@@ -75,7 +80,7 @@ def get_nearby_zipcodes(
 
 def get_sensors_for_zipcodes(
     zipcode_ids: typing.Set[int],
-) -> typing.Dict[str, typing.List[typing.Tuple[int, float]]]:
+) -> typing.Dict[int, typing.List[Sensor]]:
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -85,10 +90,10 @@ def get_sensors_for_zipcodes(
         tuple(zipcode_ids),
     )
     zipcodes_to_sensors: typing.Mapping[
-        str, typing.List[typing.Tuple[int, float]]
+        int, typing.List[Sensor]
     ] = collections.defaultdict(list)
     for row in cursor.fetchall():
         zipcodes_to_sensors[row["zipcode_id"]].append(
-            (row["sensor_id"], row["distance"])
+            Sensor(row["sensor_id"], row["distance"])
         )
     return dict(zipcodes_to_sensors)
