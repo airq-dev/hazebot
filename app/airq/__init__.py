@@ -76,11 +76,16 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
     if not target_metrics:
         return f'Oops! We couldn\'t determine the air quality for "{target_zipcode}". Please try a different zip code.'
     else:
+        pm25_display = util.PM25.from_measurement(
+            target_metrics["avg_pm25"]
+        ).display.upper()
         message = separator.join(
             [
-                f"Air quality near {target_zipcode}:",
-                util.PM25.from_measurement(target_metrics["avg_pm25"]).display.upper(),
-                f"Average pm2.5: {target_metrics['avg_pm25']}",
+                f"Air quality near {target_zipcode} is {pm25_display}.",
+                "",
+                f"PM2.5: {target_metrics['avg_pm25']} (Average of {target_metrics['num_readings']} sensors)",
+                f"Min sensor distance: {target_metrics['closest_reading']}",
+                f"Max sensor distance: {target_metrics['farthest_reading']}",
             ]
         )
         if target_metrics["avg_pm25"] >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
@@ -115,9 +120,6 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
                 message += "Here are some nearby locations with better air quality:"
                 for zipcode, avg_pm25, distance in low_pm25_metrics:
                     message += separator
-                    pm25_display = util.PM25.from_measurement(avg_pm25).display
-                    message += f" > {zipcode}: {pm25_display} (average pm2.5: {avg_pm25}) — {distance} from {target_zipcode}"
-        else:
-            message += separator
-            message += "That's not bad!"
+                    pm25_display = util.PM25.from_measurement(avg_pm25).display.upper()
+                    message += f" > {zipcode}: {pm25_display} (Average PM2.5: {avg_pm25} / {distance}km from {target_zipcode})"
         return message
