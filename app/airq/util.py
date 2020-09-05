@@ -1,19 +1,45 @@
+import enum
 import math
 
 
-def get_pm25_display(pm25: float) -> str:
-    if pm25 <= 12:
-        return "Good"
-    elif pm25 <= 35:
-        return "Moderate"
-    elif pm25 <= 55:
-        return "Unhealthy for Sensitive Individuals"
-    elif pm25 <= 150:
-        return "Unhealthy"
-    elif pm25 <= 250:
-        return "Very Unhealthy"
-    else:
-        return "Hazardous"
+@enum.unique
+class PM25(enum.IntEnum):
+    GOOD = 0
+    MODERATE = 12
+    UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS = 35
+    UNHEALTHY = 55
+    VERY_UNHEALTHY = 150
+    HAZARDOUS = 250
+
+    @classmethod
+    def from_measurement(cls, measurement: float) -> "PM25":
+        if measurement < cls.MODERATE:
+            return cls.GOOD
+        if measurement < cls.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+            return cls.MODERATE
+        if measurement < cls.UNHEALTHY:
+            return cls.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
+        if measurement < cls.VERY_UNHEALTHY:
+            return cls.VERY_UNHEALTHY
+        if measurement < cls.HAZARDOUS:
+            return cls.VERY_UNHEALTHY
+
+        return cls.HAZARDOUS
+
+    @property
+    def display(self) -> str:
+        if self == self.GOOD:
+            return "Good"
+        elif self == self.MODERATE:
+            return "Moderate"
+        elif self == self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+            return "Unhealthy for Sensitive Individuals"
+        elif self == self.UNHEALTHY:
+            return "Unhealthy"
+        elif self == self.VERY_UNHEALTHY:
+            return "Very Unhealthy"
+        else:
+            return "Hazardous"
 
 
 def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
