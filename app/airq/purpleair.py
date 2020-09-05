@@ -12,8 +12,7 @@ def _call_purpleair_api(
     sensor_ids: typing.Set[int],
 ) -> typing.List[typing.Dict[str, typing.Any]]:
     logger.info(
-        "Retrieving pm25 data from purpleair for %s sensors",
-        len(sensor_ids),
+        "Retrieving pm25 data from purpleair for %s sensors", len(sensor_ids),
     )
     try:
         resp = requests.get(
