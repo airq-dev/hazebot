@@ -83,9 +83,10 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
             [
                 f"Air quality near {target_zipcode} is {pm25_display}.",
                 "",
-                f"PM2.5: {target_metrics['avg_pm25']} (Average of {target_metrics['num_readings']} sensors)",
-                f"Min sensor distance: {target_metrics['closest_reading']}",
-                f"Max sensor distance: {target_metrics['farthest_reading']}",
+                f"PM2.5: {target_metrics['avg_pm25']} ({target_metrics['num_readings']} sensors reporting)",
+                f"Min sensor distance: {target_metrics['closest_reading']}km",
+                f"Max sensor distance: {target_metrics['farthest_reading']}km",
+                f"All readings: {target_metrics['readings']}",
             ]
         )
         if target_metrics["avg_pm25"] >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:

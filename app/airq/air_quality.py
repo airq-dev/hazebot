@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 
 from airq import geodb
@@ -11,10 +12,10 @@ MAX_SENSOR_RADIUS = 25
 
 
 def get_metrics_for_zipcode(
-    zipcode: str,
+    target_zipcode: str,
 ) -> typing.Dict[str, typing.Dict[str, typing.Union[float, int]]]:
     # Get a all zipcodes (inclusive) within 25km
-    zipcodes = geodb.get_nearby_zipcodes(zipcode, MAX_SENSOR_RADIUS)
+    zipcodes = geodb.get_nearby_zipcodes(target_zipcode, MAX_SENSOR_RADIUS)
 
     # Now get all sensors for each of these zipcodes
     zipcodes_to_sensors = geodb.get_sensors_for_zipcodes(set(zipcodes))
@@ -45,9 +46,11 @@ def get_metrics_for_zipcode(
                     sum(nearby_readings) / len(nearby_readings), ndigits=3
                 ),
                 "num_readings": len(nearby_readings),
-                "closest_reading": distances[0],
-                "farthest_reading": distances[-1],
+                "closest_reading": round(distances[0], ndigits=3),
+                "farthest_reading": round(distances[-1], ndigits=3),
                 "distance": round(distance, ndigits=3),
             }
+            if zipcode == target_zipcode:
+                metrics[zipcode]['readings'] = nearby_readings
 
     return metrics
