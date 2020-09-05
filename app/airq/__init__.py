@@ -80,10 +80,7 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
             [
                 f"Air quality near {target_zipcode} is {target_metrics.pm25_level.display.upper()}.",
                 "",
-                f"PM2.5: {target_metrics.average_pm25} ({target_metrics.num_readings} sensors reporting)",
-                f"Min sensor distance: {target_metrics.closest_reading}km",
-                f"Max sensor distance: {target_metrics.farthest_reading}km",
-                f"All readings: {target_metrics.readings}",
+                f"Average PM2.5 from {target_metrics.num_readings} sensor(s) in your area is {target_metrics.average_pm25} µg/m³",
             ]
         )
 
@@ -101,15 +98,12 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
         if lower_pm25_metrics:
             message += separator
             message += separator
-            message += "Here are some nearby locations with better air quality:"
+            message += "Try these other places near you for better air quality:"
             for m in lower_pm25_metrics:
                 message += separator
-                message += " > {}: {} (Average PM2.5: {} / {}km from {})".format(
-                    m.zipcode,
-                    m.pm25_level.display.upper(),
-                    m.average_pm25,
-                    m.distance,
-                    target_zipcode,
+                # TODO: add city when availible
+                message += " > {}: {} (Average PM2.5: {})".format(
+                    m.zipcode, m.pm25_level.display.upper(), m.average_pm25
                 )
 
         return message

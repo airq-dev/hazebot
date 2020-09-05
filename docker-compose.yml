@@ -12,8 +12,6 @@ services:
       - MEMCACHED_SERVERS=memcached
     ports:
       - 5000:5000
-    env_file:
-      - ./.env.dev
     depends_on:
       - memcached
   memcached:
