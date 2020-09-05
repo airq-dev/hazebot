@@ -31,7 +31,7 @@ class Metrics:
     closest_reading: float
     farthest_reading: float
     distance: float
-    readings: typing.Optional[typing.List[float]] = None
+    readings: typing.List[float]
 
     @property
     def pm25_level(self) -> util.PM25:
@@ -88,8 +88,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
                 closest_reading=round(closest_reading, ndigits=3),
                 farthest_reading=round(farthest_reading, ndigits=3),
                 distance=round(distance, ndigits=3),
+                readings=readings
             )
-            if zipcode == target_zipcode:
-                metrics[zipcode].readings = readings
 
     return metrics

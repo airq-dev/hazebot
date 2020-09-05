@@ -12,9 +12,8 @@ def _call_purpleair_api(
     sensor_ids: typing.Set[int],
 ) -> typing.List[typing.Dict[str, typing.Any]]:
     logger.info(
-        "Retrieving pm25 data from purpleair for %s sensors: %s",
+        "Retrieving pm25 data from purpleair for %s sensors",
         len(sensor_ids),
-        sensor_ids,
     )
     try:
         resp = requests.get(
@@ -42,9 +41,6 @@ def _get_pm25_readings_from_api(sensor_ids: typing.Set[int]) -> typing.Dict[int,
             sensor_id = r["ID"]
             pm25 = float(r.get("PM2_5Value", 0))
             if pm25 <= 0 or pm25 > 500:
-                logger.warning(
-                    "Marking sensor %s dead because its pm25 is %s", sensor_id, pm25,
-                )
                 dead_sensors[sensor_id] = True
             else:
                 sensor_ids.remove(sensor_id)
