@@ -9,11 +9,7 @@ TVal = typing.TypeVar("TVal")
 TFallback = typing.TypeVar("TFallback")
 
 
-_ROOT_CACHE = flask_caching.Cache()
-
-
-def init(app: flask.Flask):
-    _ROOT_CACHE.init_app(app)
+CACHE = flask_caching.Cache()
 
 
 class Cache(typing.Generic[TKey, TVal]):
@@ -33,20 +29,20 @@ class Cache(typing.Generic[TKey, TVal]):
         ...
 
     def get(self, key, default=None):
-        res = _ROOT_CACHE.get(self._make_key(key))
+        res = CACHE.get(self._make_key(key))
         if res is None:
             return default
         return res
 
     def get_many(self, keys: typing.Iterable[TKey]) -> typing.Dict[TKey, TVal]:
-        values = _ROOT_CACHE.get_many(*[self._make_key(key) for key in keys])
+        values = CACHE.get_many(*[self._make_key(key) for key in keys])
         return {k: v for k, v in zip(keys, values) if v is not None}
 
     def set(self, key: TKey, value: TVal):
-        _ROOT_CACHE.set(self._make_key(key), value, self._timeout)
+        CACHE.set(self._make_key(key), value, self._timeout)
 
     def set_many(self, mapping: typing.Dict[TKey, TVal]):
-        _ROOT_CACHE.set_many(
+        CACHE.set_many(
             {self._make_key(key): value for key, value in mapping.items()},
             timeout=self._timeout,
         )
@@ -55,11 +51,6 @@ class Cache(typing.Generic[TKey, TVal]):
 DEAD: Cache[int, bool] = Cache(prefix="purpleair-pm25-sensor-dead-", timeout=60 * 60)
 
 
-DISTANCE: Cache[str, typing.Dict[int, float]] = Cache(
-    prefix="purpleair-sensor-distance", timeout=24 * 60 * 60
-)
-
-
-PM25: Cache[int, float] = Cache(
+READINGS: Cache[int, float] = Cache(
     prefix="purpleair-pm25-sensor-reading-", timeout=60 * 10
 )

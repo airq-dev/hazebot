@@ -32,6 +32,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from airq import air_quality
 from airq import cache
 from airq import middleware
+from airq import util
 
 
 app = Flask(__name__)
@@ -42,7 +43,7 @@ config = {
     "CACHE_MEMCACHED_SERVERS": os.getenv("MEMCACHED_SERVERS", "").split(","),
 }
 app.config.from_mapping(config)
-cache.init(app)
+cache.CACHE.init_app(app)
 
 
 @app.route("/", methods=["GET"])
@@ -65,18 +66,60 @@ def quality() -> str:
     return _get_message_for_zipcode(zipcode, separator="<br>")
 
 
-def _get_message_for_zipcode(zipcode: str, separator: str = "\n") -> str:
-    if zipcode.isdigit() and len(zipcode) == 5:
-        metrics = air_quality.get_metrics(zipcode)
-        if metrics:
-            return separator.join(
-                [
-                    f"Air quality near {zipcode}:",
-                    metrics.pm25_display.upper(),
-                    f"Average pm2.5: {metrics.pm25}",
-                    "All readngs: {}".format(", ".join(map(str, metrics.readings))),
-                    "(max distance: {})".format(metrics.max_sensor_distance,),
-                ]
-            )
+def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
+    if target_zipcode.isdigit() and len(target_zipcode) == 5:
+        metrics = air_quality.get_metrics_for_zipcode(target_zipcode) or {}
+    else:
+        metrics = {}
 
-    return f'Oops! We couldn\'t determine the air quality for "{zipcode}". Please try a different zip code.'
+    target_metrics = metrics.get(target_zipcode)
+    if not target_metrics:
+        return f'Oops! We couldn\'t determine the air quality for "{target_zipcode}". Please try a different zip code.'
+    else:
+        pm25_display = util.PM25.from_measurement(
+            target_metrics["avg_pm25"]
+        ).display.upper()
+        message = separator.join(
+            [
+                f"Air quality near {target_zipcode} is {pm25_display}.",
+                "",
+                f"PM2.5: {target_metrics['avg_pm25']} (Average of {target_metrics['num_readings']} sensors)",
+                f"Min sensor distance: {target_metrics['closest_reading']}",
+                f"Max sensor distance: {target_metrics['farthest_reading']}",
+            ]
+        )
+        if target_metrics["avg_pm25"] >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+            num_desired = 3
+            low_pm25_metrics: typing.List[typing.Tuple[str, float, float]] = []
+            good_pm25_metrics = sorted(
+                [
+                    (zipcode, m["avg_pm25"], m["distance"])
+                    for zipcode, m in metrics.items()
+                    if zipcode != target_zipcode and m["avg_pm25"] < util.PM25.MODERATE
+                ],
+                key=lambda t: t[2],
+            )
+            if good_pm25_metrics:
+                low_pm25_metrics += good_pm25_metrics[:num_desired]
+                num_desired -= len(low_pm25_metrics)
+            if num_desired:
+                moderate_pm25_metrics = sorted(
+                    [
+                        (zipcode, m["avg_pm25"], m["distance"])
+                        for zipcode, m in metrics.items()
+                        if zipcode != target_zipcode
+                        and m["avg_pm25"]
+                        < util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
+                    ],
+                    key=lambda t: t[2],
+                )
+                low_pm25_metrics += moderate_pm25_metrics[:num_desired]
+            if low_pm25_metrics:
+                message += separator
+                message += separator
+                message += "Here are some nearby locations with better air quality:"
+                for zipcode, avg_pm25, distance in low_pm25_metrics:
+                    message += separator
+                    pm25_display = util.PM25.from_measurement(avg_pm25).display.upper()
+                    message += f" > {zipcode}: {pm25_display} (Average PM2.5: {avg_pm25} / {distance}km from {target_zipcode})"
+        return message
