@@ -1,4 +1,4 @@
-# Airq
+# Airq - TEXT your ZIP to 26AQISAFE2 for local, up-to-date air quality
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
@@ -9,6 +9,7 @@ Airq allows you to recieve information about the air quality near you simply by 
 
 Airq aggregates sensor readings from nearby [Purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing) sensors. These sensors are updated every 10 minutes so the results should be fairly accurate, generally. We will soon have a publicly available number to which you can text your zipcode to recieve air quality metrics.
 
+ Text a zipcode to 26AQISAFE2 or (262)747-2332 for aggregate pm2.5 measures and recommendations for places near you with better AQI. 
 
 ## TODOs
 
