@@ -75,7 +75,7 @@ def get_nearby_zipcodes(
 
 def get_sensors_for_zipcodes(
     zipcode_ids: typing.Set[int],
-) -> typing.Dict[int, typing.List[typing.Tuple[int, float]]]:
+) -> typing.Dict[str, typing.List[typing.Tuple[int, float]]]:
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -84,7 +84,9 @@ def get_sensors_for_zipcodes(
         ),
         tuple(zipcode_ids),
     )
-    zipcodes_to_sensors = collections.defaultdict(list)
+    zipcodes_to_sensors: typing.Mapping[
+        str, typing.List[typing.Tuple[int, float]]
+    ] = collections.defaultdict(list)
     for row in cursor.fetchall():
         zipcodes_to_sensors[row["zipcode_id"]].append(
             (row["sensor_id"], row["distance"])

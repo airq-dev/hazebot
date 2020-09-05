@@ -90,7 +90,7 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
         )
         if target_metrics["avg_pm25"] >= util.PM25.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
             num_desired = 3
-            low_pm25_metrics = []
+            low_pm25_metrics: typing.List[typing.Tuple[str, float, float]] = []
             good_pm25_metrics = sorted(
                 [
                     (zipcode, m["avg_pm25"], m["distance"])
