@@ -64,5 +64,5 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
 
         message += separator
         message += separator
-        message += f"Average PM2.5 from {target_metrics.num_readings} sensor(s) in your area is {target_metrics.average_pm25} µg/m³."
+        message += f"Average PM2.5 from {target_metrics.num_readings} sensor(s) in near {target_zipcode} is {target_metrics.average_pm25} µg/m³."
         return message
