@@ -39,7 +39,14 @@ from airq import middleware
 
 app = flask.Flask(__name__)
 
-app.wsgi_app = middleware.LoggingMiddleware(app.wsgi_app)  # type: ignore
+# We have to use this `setattr` hack here or Mypy gets really confused.
+# See https://github.com/python/mypy/issues/2427 for details.
+setattr(app, "wsgi_app", middleware.LoggingMiddleware(app.wsgi_app))
+if os.getenv("FLASK_ENV") == "development":
+    setattr(
+        app, "wsgi_app", middleware.ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+    )
+
 config = {
     "CACHE_TYPE": "memcached",
     "CACHE_DEFAULT_TIMEOUT": 300,
