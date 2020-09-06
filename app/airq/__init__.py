@@ -2,7 +2,7 @@ import typing
 from flask import request
 from twilio.twiml.messaging_response import MessagingResponse
 
-from airq import settings # Do this first, it initializes everything
+from airq import settings  # Do this first, it initializes everything
 from airq import air_quality
 from airq import db
 from airq import util
@@ -29,7 +29,6 @@ def sms_reply() -> str:
 @app.route("/quality", methods=["GET"])
 def quality() -> str:
     zipcode = request.args.get("zipcode", "").strip()
-    db.insert_request('5106797990', zipcode)
     return _get_message_for_zipcode(zipcode, separator="<br>")
 
 

@@ -44,8 +44,8 @@ config = {
     "CACHE_TYPE": "memcached",
     "CACHE_DEFAULT_TIMEOUT": 300,
     "CACHE_MEMCACHED_SERVERS": os.getenv("MEMCACHED_SERVERS", "").split(","),
-    "SQLALCHEMY_DATABASE_URI": f'postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}',
-    "SQLALCHEMY_TRACK_MODIFICATIONS": False
+    "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
+    "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
 app.config.from_mapping(config)
 cache.CACHE.init_app(app)
