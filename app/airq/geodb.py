@@ -26,19 +26,25 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
+def get_zipcode_raw(zipcode: str) -> typing.Dict[str, typing.Any]:
+    conn = _get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+
 def get_nearby_zipcodes(
     zipcode: str, *, max_radius: int, num_desired: int
 ) -> typing.Dict[int, Zipcode]:
+    zipcodes: typing.Dict[int, Zipcode] = {}
+    row = get_zipcode_raw(zipcode)
+    if not row:
+        return zipcodes
+
     conn = _get_connection()
     cursor = conn.cursor()
-
-    zipcodes: typing.Dict[int, Zipcode] = {}
-
-    cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        return zipcodes
 
     zipcodes[row["id"]] = Zipcode(zipcode, 0)
     latitude = row["latitude"]
