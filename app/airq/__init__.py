@@ -22,14 +22,16 @@ def sms_reply() -> str:
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     resp.message(_get_message_for_zipcode(zipcode))
-    db.insert_request(phone_number, zipcode)
+    db.insert_request(zipcode, phone_number, db.ClientIdentifierType.PHONE_NUMBER)
     return str(resp)
 
 
 @app.route("/quality", methods=["GET"])
 def quality() -> str:
     zipcode = request.args.get("zipcode", "").strip()
-    return _get_message_for_zipcode(zipcode, separator="<br>")
+    message = _get_message_for_zipcode(zipcode, separator="<br>")
+    db.insert_request(zipcode, request.remote_addr, db.ClientIdentifierType.IP)
+    return message
 
 
 def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
