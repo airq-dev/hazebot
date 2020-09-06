@@ -9,11 +9,6 @@ from airq import util
 DB_PATH = "airq/purpleair.db"
 
 
-class City(typing.NamedTuple):
-    name: str
-    state_code: str
-
-
 class Sensor(typing.NamedTuple):
     sensor_id: int
     distance: float
@@ -31,19 +26,21 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
-def get_cities(city_ids: typing.Set[int]) -> typing.Dict[int, City]:
+def get_city_names(city_ids: typing.Set[int]) -> typing.Dict[int, str]:
     conn = _get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, state_code FROM cities WHERE id IN ({})".format(", ".join(["?" for _ in city_ids])), tuple(city_ids))
-    return {
-        row['id']: City(row['name'], row['state_code'])
-        for row in cursor.fetchall()
-    }
+    cursor.execute(
+        "SELECT id, name FROM cities WHERE id IN ({})".format(
+            ", ".join(["?" for _ in city_ids])
+        ),
+        tuple(city_ids),
+    )
+    return {row["id"]: row["name"] for row in cursor.fetchall()}
 
 
 def get_zipcode_raw(zipcode: str) -> typing.Optional[typing.Dict[str, typing.Any]]:
     if not zipcode.isdigit() or len(zipcode) != 5:
-        return
+        return None
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
@@ -60,7 +57,7 @@ def get_nearby_zipcodes(
     if not row:
         return zipcodes
 
-    zipcodes[row["id"]] = Zipcode(row['zipcode'], row['city_id'], 0)
+    zipcodes[row["id"]] = Zipcode(row["zipcode"], row["city_id"], 0)
     latitude = row["latitude"]
     longitude = row["longitude"]
     gh = [row[f"geohash_bit_{i + 1}"] for i in range(12)]

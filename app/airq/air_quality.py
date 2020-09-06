@@ -49,10 +49,9 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     )
 
     # Get the cities each of these zipcodes are in
-    city_ids: typing.Set[int] = set()
-    for zipcode in zipcodes.values():
-        city_ids.add(zipcode.city_id)
-    cities = geodb.get_cities(city_ids)
+    city_names = geodb.get_city_names(
+        {zipcode.city_id for zipcode in zipcodes.values()}
+    )
 
     # Now get all sensors for each of these zipcodes
     logger.info("Retrieving sensors for %s zipcodes", len(zipcodes))
@@ -90,7 +89,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
             zipcode, city_id, distance = zipcodes[zipcode_id]
             metrics[zipcode] = Metrics(
                 zipcode=zipcode,
-                city_name=cities[city_id].name,
+                city_name=city_names[city_id],
                 average_pm25=round(sum(readings) / len(readings), ndigits=3),
                 num_readings=len(readings),
                 closest_reading=round(closest_reading, ndigits=3),
