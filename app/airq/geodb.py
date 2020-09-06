@@ -27,6 +27,8 @@ def _get_connection() -> sqlite3.Connection:
 
 
 def get_city_names(city_ids: typing.Set[int]) -> typing.Dict[int, str]:
+    if not city_ids:
+        return {}
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute(
