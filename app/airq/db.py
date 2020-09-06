@@ -14,16 +14,17 @@ class Request(db.Model):  # type: ignore
     __tablename__ = "requests"
 
     id = db.Column(db.Integer, primary_key=True)
+    zipcode = db.Column(db.String(5), index=True, nullable=False)
     client_identifier = db.Column(db.String(100), nullable=False)
     client_identifier_type = db.Column(db.Enum(ClientIdentifierType), nullable=False)
-    zipcode = db.Column(db.String(5), index=True, nullable=False)
     count = db.Column(db.Integer, nullable=False)
     first_ts = db.Column(db.Integer, nullable=False)
     last_ts = db.Column(db.Integer, nullable=False)
 
     __table_args__ = (
         db.Index(
-            "_client_identifier_client_identifier_type_index",
+            "_zipcode_client_identifier_client_identifier_type_index",
+            "zipcode",
             "client_identifier",
             "client_identifier_type",
             unique=True,
