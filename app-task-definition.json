@@ -35,8 +35,24 @@
             ],
             "secrets": [
                 {
-                    "name": "AIRNOW_API_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:airnow-api-key-5zQSRd"
+                    "name": "POSTGRES_DB",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_DB-kOFRmm"
+                },
+                {
+                    "name": "POSTGRES_HOST",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_HOST-kpKktD"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_PASSWORD-BoPjFm"
+                },
+                {
+                    "name": "POSTGRES_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_PORT-mHGraD"
+                },
+                {
+                    "name": "POSTGRES_USER",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_USER-1EVSsZ"
                 }
             ],
             "mountPoints": [],
