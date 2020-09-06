@@ -78,7 +78,7 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
     else:
         message = separator.join(
             [
-                f"Air quality near {target_zipcode} is {target_metrics.pm25_level.display.upper()}.",
+                f"Air quality near {target_metrics.city_name} {target_zipcode} is {target_metrics.pm25_level.display.upper()}.",
                 "",
                 f"Average PM2.5 from {target_metrics.num_readings} sensor(s) in your area is {target_metrics.average_pm25} µg/m³",
             ]
@@ -102,8 +102,8 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
             for m in lower_pm25_metrics:
                 message += separator
                 # TODO: add city when availible
-                message += " > {}: {} (Average PM2.5: {})".format(
-                    m.zipcode, m.pm25_level.display.upper(), m.average_pm25
+                message += " > {} {}: {} (Average PM2.5: {})".format(
+                    m.city_name, m.zipcode, m.pm25_level.display.upper(), m.average_pm25
                 )
 
         return message
