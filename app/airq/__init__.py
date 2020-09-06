@@ -33,22 +33,12 @@ def quality() -> str:
 
 
 def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
-    if target_zipcode.isdigit() and len(target_zipcode) == 5:
-        metrics = air_quality.get_metrics_for_zipcode(target_zipcode)
-    else:
-        metrics = {}
-
+    metrics = air_quality.get_metrics_for_zipcode(target_zipcode)
     target_metrics = metrics.get(target_zipcode)
     if not target_metrics:
         return f'Oops! We couldn\'t determine the air quality for "{target_zipcode}". Please try a different zip code.'
     else:
-        message = separator.join(
-            [
-                f"Air quality near {target_zipcode} is {target_metrics.pm25_level.display.upper()}.",
-                "",
-                f"Average PM2.5 from {target_metrics.num_readings} sensor(s) is {target_metrics.average_pm25} µg/m³",
-            ]
-        )
+        message = f"Air quality near {target_metrics.city_name} {target_zipcode} is {target_metrics.pm25_level.display.upper()}."
 
         num_desired = 3
         lower_pm25_metrics = sorted(
@@ -68,8 +58,11 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
             for m in lower_pm25_metrics:
                 message += separator
                 # TODO: add city when availible
-                message += " > {}: {} (Average PM2.5: {})".format(
-                    m.zipcode, m.pm25_level.display.upper(), m.average_pm25
+                message += " - {} {}: {}".format(
+                    m.city_name, m.zipcode, m.pm25_level.display
                 )
 
+        message += separator
+        message += separator
+        message += f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {target_zipcode} is {target_metrics.average_pm25} µg/m³."
         return message

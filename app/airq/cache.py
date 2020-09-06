@@ -35,6 +35,8 @@ class Cache(typing.Generic[TKey, TVal]):
         return res
 
     def get_many(self, keys: typing.Iterable[TKey]) -> typing.Dict[TKey, TVal]:
+        if not keys:
+            return {}
         values = CACHE.get_many(*[self._make_key(key) for key in keys])
         return {k: v for k, v in zip(keys, values) if v is not None}
 
@@ -42,6 +44,8 @@ class Cache(typing.Generic[TKey, TVal]):
         CACHE.set(self._make_key(key), value, self._timeout)
 
     def set_many(self, mapping: typing.Dict[TKey, TVal]):
+        if not mapping:
+            return
         CACHE.set_many(
             {self._make_key(key): value for key, value in mapping.items()},
             timeout=self._timeout,
