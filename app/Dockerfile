@@ -26,3 +26,6 @@ RUN pip install -r requirements.txt
 
 # copy project
 COPY . $APP_HOME
+
+# do pre-init stuff
+ENTRYPOINT ["/home/app/app/entrypoint.sh"]

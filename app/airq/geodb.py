@@ -41,25 +41,32 @@ def get_cities(city_ids: typing.Set[int]) -> typing.Dict[int, City]:
     }
 
 
+def get_zipcode_raw(zipcode: str) -> typing.Optional[typing.Dict[str, typing.Any]]:
+    if not zipcode.isdigit() or len(zipcode) != 5:
+        return
+    conn = _get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
 
 def get_nearby_zipcodes(
     zipcode: str, *, max_radius: int, num_desired: int
 ) -> typing.Dict[int, Zipcode]:
-    conn = _get_connection()
-    cursor = conn.cursor()
-
     zipcodes: typing.Dict[int, Zipcode] = {}
-
-    cursor.execute("SELECT * FROM zipcodes WHERE zipcode=?", (zipcode,))
-    row = cursor.fetchone()
+    row = get_zipcode_raw(zipcode)
     if not row:
-        conn.close()
         return zipcodes
 
     zipcodes[row["id"]] = Zipcode(row['zipcode'], row['city_id'], 0)
     latitude = row["latitude"]
     longitude = row["longitude"]
     gh = [row[f"geohash_bit_{i + 1}"] for i in range(12)]
+
+    conn = _get_connection()
+    cursor = conn.cursor()
 
     while gh:
         sql = "SELECT id, zipcode, city_id, latitude, longitude FROM zipcodes WHERE {} AND id NOT IN ({})".format(
