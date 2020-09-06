@@ -50,7 +50,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
 
     # Get the cities each of these zipcodes are in
     city_ids: typing.Set[int] = set()
-    for zipcode in zipcodes:
+    for zipcode in zipcodes.values():
         city_ids.add(zipcode.city_id)
     cities = geodb.get_cities(city_ids)
 
