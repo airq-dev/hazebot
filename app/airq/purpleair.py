@@ -8,6 +8,16 @@ from airq import cache
 logger = logging.getLogger(__name__)
 
 
+DEAD: cache.Cache[int, bool] = cache.Cache(
+    prefix="purpleair-pm25-sensor-dead-", timeout=60 * 60
+)
+
+
+READINGS: cache.Cache[int, float] = cache.Cache(
+    prefix="purpleair-pm25-sensor-reading-", timeout=60 * 10
+)
+
+
 def _call_purpleair_api(
     sensor_ids: typing.Set[int],
 ) -> typing.List[typing.Dict[str, typing.Any]]:
@@ -46,23 +56,23 @@ def _get_pm25_readings_from_api(sensor_ids: typing.Set[int]) -> typing.Dict[int,
                 readings[sensor_id] = pm25
 
     if dead_sensors:
-        cache.DEAD.set_many(dead_sensors)
+        DEAD.set_many(dead_sensors)
 
     if sensor_ids:
         # This should be empty now if we've gotten pm25 info for every sensor.
         logger.warning("No results for ids: %s", sensor_ids)
 
     if readings:
-        cache.READINGS.set_many(readings)
+        READINGS.set_many(readings)
 
     return readings
 
 
 def get_pm25_readings(sensor_ids: typing.Set[int]) -> typing.Dict[int, float]:
-    dead_sensors = cache.DEAD.get_many(sensor_ids)
+    dead_sensors = DEAD.get_many(sensor_ids)
     sensor_ids -= set(dead_sensors)
 
-    readings = cache.READINGS.get_many(sensor_ids)
+    readings = READINGS.get_many(sensor_ids)
     sensor_ids -= set(readings)
 
     if sensor_ids:

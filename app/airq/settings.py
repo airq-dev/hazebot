@@ -55,7 +55,7 @@ config = {
     "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
 app.config.from_mapping(config)
-cache.CACHE.init_app(app)
+cache.init(app)
 
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
