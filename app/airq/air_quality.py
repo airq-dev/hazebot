@@ -23,9 +23,10 @@ MAX_NEARBY_ZIPCODE_RADIUS_KM = 150
 MAX_NUM_NEARBY_ZIPCODES = 200
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Metrics:
     zipcode: str
+    city_name: str
     average_pm25: float
     num_readings: int
     closest_reading: float
@@ -45,6 +46,11 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
         target_zipcode,
         max_radius=MAX_NEARBY_ZIPCODE_RADIUS_KM,
         num_desired=MAX_NUM_NEARBY_ZIPCODES,
+    )
+
+    # Get the cities each of these zipcodes are in
+    city_names = geodb.get_city_names(
+        {zipcode.city_id for zipcode in zipcodes.values()}
     )
 
     # Now get all sensors for each of these zipcodes
@@ -80,9 +86,10 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
                     break
 
         if readings:
-            zipcode, distance = zipcodes[zipcode_id]
+            zipcode, city_id, distance = zipcodes[zipcode_id]
             metrics[zipcode] = Metrics(
                 zipcode=zipcode,
+                city_name=city_names[city_id],
                 average_pm25=round(sum(readings) / len(readings), ndigits=3),
                 num_readings=len(readings),
                 closest_reading=round(closest_reading, ndigits=3),
