@@ -45,7 +45,7 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
         aqi = util.pm25_to_aqi(target_metrics.average_pm25)
         if aqi:
             message += f" (AQI: {aqi})"
-        message += '.'
+        message += "."
 
         num_desired = 3
         lower_pm25_metrics = sorted(
