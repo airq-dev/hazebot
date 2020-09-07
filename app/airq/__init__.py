@@ -44,7 +44,11 @@ def _get_message_for_zipcode(target_zipcode: str, separator: str = "\n") -> str:
     if not target_metrics:
         return f'Oops! We couldn\'t determine the air quality for "{target_zipcode}". Please try a different zip code.'
     else:
-        message = f"Air quality near {target_metrics.city_name} {target_zipcode} is {target_metrics.pm25_level.display.upper()}."
+        message = f"Air quality near {target_metrics.city_name} {target_zipcode} is {target_metrics.pm25_level.display.upper()}"
+        aqi = util.pm25_to_aqi(target_metrics.average_pm25)
+        if aqi:
+            message += f" (AQI: {aqi})"
+        message += "."
 
         num_desired = 3
         lower_pm25_metrics = sorted(
