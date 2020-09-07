@@ -22,7 +22,7 @@ def sms_reply() -> str:
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     resp.message(_get_message_for_zipcode(zipcode))
-    db.insert_request(phone_number, zipcode)
+    # db.insert_request(phone_number, zipcode)
     return str(resp)
 
 
