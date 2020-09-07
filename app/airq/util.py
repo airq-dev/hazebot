@@ -20,7 +20,7 @@ class PM25(enum.IntEnum):
         if measurement < cls.UNHEALTHY:
             return cls.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
         if measurement < cls.VERY_UNHEALTHY:
-            return cls.VERY_UNHEALTHY
+            return cls.UNHEALTHY
         if measurement < cls.HAZARDOUS:
             return cls.VERY_UNHEALTHY
 
