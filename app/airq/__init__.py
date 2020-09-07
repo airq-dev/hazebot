@@ -30,8 +30,11 @@ def sms_reply() -> str:
 def quality() -> str:
     zipcode = request.args.get("zipcode", "").strip()
     message = _get_message_for_zipcode(zipcode, separator="<br>")
-    ip_addr = request.headers.get("X-Forwarded-For", request.remote_addr)
-    db.insert_request(zipcode, ip_addr, db.ClientIdentifierType.IP)
+    if request.headers.getlist("X-Forwarded-For"):
+        ip = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        ip = request.remote_addr
+    db.insert_request(zipcode, ip, db.ClientIdentifierType.IP)
     return message
 
 
