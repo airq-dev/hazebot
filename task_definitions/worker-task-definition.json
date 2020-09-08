@@ -2,7 +2,7 @@
     "taskDefinitionArn": "",
     "containerDefinitions": [
         {
-            "name": "worker",
+            "name": "app",
             "image": "",
             "cpu": 0,
             "links": [],

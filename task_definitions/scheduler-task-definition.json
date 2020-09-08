@@ -2,7 +2,7 @@
     "taskDefinitionArn": "",
     "containerDefinitions": [
         {
-            "name": "scheduler",
+            "name": "app",
             "image": "",
             "cpu": 0,
             "links": [],
