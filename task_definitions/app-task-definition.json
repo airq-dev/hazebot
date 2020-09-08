@@ -35,6 +35,14 @@
             ],
             "secrets": [
                 {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:AWS_ACCESS_KEY_ID-hPCpxF"
+                },
+                {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:AWS_SECRET_ACCESS_KEY-DkV3XH"
+                },
+                {
                     "name": "POSTGRES_DB",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_DB-kOFRmm"
                 },
