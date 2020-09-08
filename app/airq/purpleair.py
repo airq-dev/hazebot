@@ -3,6 +3,7 @@ import requests
 import typing
 
 from airq import cache
+from airq.models.sensors import is_valid_reading
 
 
 logger = logging.getLogger(__name__)
@@ -38,11 +39,11 @@ def _get_pm25_readings_from_api(sensor_ids: typing.Set[int]) -> typing.Dict[int,
     for r in results:
         if not r.get("ParentID"):
             sensor_id = r["ID"]
-            pm25 = float(r.get("PM2_5Value", 0))
-            if pm25 <= 0 or pm25 > 500:
+            if not is_valid_reading(r):
                 dead_sensors[sensor_id] = True
             else:
                 sensor_ids.remove(sensor_id)
+                pm25 = float(r["PM2_5Value"])
                 readings[sensor_id] = pm25
 
     if dead_sensors:

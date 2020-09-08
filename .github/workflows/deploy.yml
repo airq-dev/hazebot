@@ -45,24 +45,52 @@ jobs:
                 docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG nginx
                 docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-            - name: Fill in the new app image ID in the Amazon ECS task definition
+            - name: Fill in the new app image ID in the app ECS task definition
               id: render-app-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                task-definition: app-task-definition.json
+                task-definition: task_definitions/app-task-definition.json
                 container-name: app
                 image: ${{ steps.build-app-image.outputs.image }}
-            - name: Fill in the new nginx image ID in the Amazon ECS task definition
+            - name: Fill in the new nginx image ID in the app ECS task definition
               id: render-nginx-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                 task-definition: ${{ steps.render-app-container.outputs.task-definition }}
                 container-name: nginx
                 image: ${{ steps.build-nginx-image.outputs.image }}
-            - name: Deploy Amazon ECS task definition
+            - name: Deploy app ECS task definition
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                 task-definition: ${{ steps.render-nginx-container.outputs.task-definition }}
                 service: app
+                cluster: airq
+                wait-for-service-stability: true
+            - name: Fill in the new app image ID in the scheduler ECS task definition
+              id: render-scheduler-container
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                task-definition: task_definitions/scheduler-task-definition.json
+                container-name: app
+                image: ${{ steps.build-app-image.outputs.image }}
+            - name: Deploy scheduler ECS task definition
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                task-definition: ${{ steps.render-scheduler-container.outputs.task-definition }}
+                service: scheduler
+                cluster: airq
+                wait-for-service-stability: true
+            - name: Fill in the new app image ID in the worker ECS task definition
+              id: render-worker-container
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                task-definition: task_definitions/worker-task-definition.json
+                container-name: app
+                image: ${{ steps.build-app-image.outputs.image }}
+            - name: Deploy worker ECS task definition
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                task-definition: ${{ steps.render-worker-container.outputs.task-definition }}
+                service: worker
                 cluster: airq
                 wait-for-service-stability: true

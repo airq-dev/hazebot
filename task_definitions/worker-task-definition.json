@@ -1,0 +1,94 @@
+{
+    "taskDefinitionArn": "",
+    "containerDefinitions": [
+        {
+            "name": "worker",
+            "image": "",
+            "cpu": 0,
+            "links": [],
+            "portMappings": [],
+            "essential": true,
+            "entryPoint": [],
+            "command": [
+                "celery",
+                "-A",
+                "airq.celery",
+                "worker",
+                "-l",
+                "info"
+            ],
+            "environment": [
+                {
+                    "name": "FLASK_APP",
+                    "value": "airq/__init__.py"
+                },
+                {
+                    "name": "FLASK_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "MEMCACHED_SERVERS",
+                    "value": "airq-memcached-small.k74xvs.0001.usw1.cache.amazonaws.com"
+                }
+            ],
+            "secrets": [
+                {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:AWS_ACCESS_KEY_ID-hPCpxF"
+                },
+                {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:AWS_SECRET_ACCESS_KEY-DkV3XH"
+                },
+                {
+                    "name": "POSTGRES_DB",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_DB-kOFRmm"
+                },
+                {
+                    "name": "POSTGRES_HOST",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_HOST-kpKktD"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_PASSWORD-BoPjFm"
+                },
+                {
+                    "name": "POSTGRES_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_PORT-mHGraD"
+                },
+                {
+                    "name": "POSTGRES_USER",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_USER-1EVSsZ"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "linuxParameters": {
+                "capabilities": {},
+                "devices": []
+            },
+            "privileged": false,
+            "readonlyRootFilesystem": false,
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "pseudoTerminal": false,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "airq",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "worker"
+                }
+            }
+        }
+    ],
+    "family": "worker",
+    "executionRoleArn": "arn:aws:iam::146486422038:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "volumes": [],
+    "placementConstraints": [],
+    "cpu": "256",
+    "memory": "512"
+}

@@ -5,6 +5,7 @@ import typing
 from airq import geodb
 from airq import purpleair
 from airq import util
+from airq.models.sensors import get_sensors
 
 
 logger = logging.getLogger(__name__)
@@ -61,9 +62,20 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
         for sensor in sensors:
             sensor_ids.add(sensor.sensor_id)
 
-    # Now get the pm25 readings for all present sensors
     logger.info("Retrieving readings for %s sensors", len(sensor_ids))
-    pm25_readings = purpleair.get_pm25_readings(sensor_ids)
+    pm25_readings = {}
+
+    # Try to read from the DB first
+    for s in get_sensors(sensor_ids):
+        pm25_readings[s.id] = s.reading
+        sensor_ids.remove(s.id)
+
+    # If we failed to get some readings from postgres, fall back to making a live query.
+    if sensor_ids:
+        logger.info(
+            "Retrieving readings for %s sensors from purpleair", len(sensor_ids)
+        )
+        pm25_readings.update(purpleair.get_pm25_readings(sensor_ids))
 
     # Now construct our metrics
     logger.info("Constructing metrics from %s readings", len(pm25_readings))
