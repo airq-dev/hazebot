@@ -6,14 +6,31 @@ services:
     command: flask run --host=0.0.0.0
     volumes:
       - ./app/:/home/app/app
-    environment:
-      - FLASK_APP=airq/__init__.py
-      - FLASK_ENV=development
-      - MEMCACHED_SERVERS=memcached
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
+    env_file:
+      - ./.env.dev
+      - ./.env.dev.secrets
     ports:
       - 5000:5000
+    depends_on:
+      - db
+      - memcached
+    stdin_open: true
+    tty: true
+  scheduler:
+    build: ./app
+    command: celery -A airq.celery beat -l info
+    env_file:
+      - ./.env.dev
+      - ./.env.dev.secrets
+    depends_on:
+      - db
+      - memcached
+  worker:
+    build: ./app
+    command: celery -A airq.celery worker -l info
+    env_file:
+      - ./.env.dev
+      - ./.env.dev.secrets
     depends_on:
       - db
       - memcached

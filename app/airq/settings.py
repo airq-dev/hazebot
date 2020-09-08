@@ -2,6 +2,11 @@ import os
 from logging.config import dictConfig
 
 
+FLASK_ENV = os.getenv("FLAS_ENV", "development")
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+
 PG_DB = os.getenv("POSTGRES_DB", "postgres")
 PG_HOST = os.getenv("POSTGRES_HOST", "db")
 PG_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
@@ -12,24 +17,23 @@ PG_USER = os.getenv("POSTGRES_USER", "postgres")
 # Init logging before doing anything else.
 #
 # TODO: Send errors to admins as emails
-dictConfig(
-    {
-        "version": 1,
-        "formatters": {
-            "default": {
-                "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-            }
-        },
-        "handlers": {
-            "wsgi": {
-                "class": "logging.StreamHandler",
-                "stream": "ext://flask.logging.wsgi_errors_stream",
-                "formatter": "default",
-            }
-        },
-        "root": {"level": "INFO", "handlers": ["wsgi"]},
-    }
-)
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "default": {"format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",}
+    },
+    "handlers": {
+        "wsgi": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://flask.logging.wsgi_errors_stream",
+            "formatter": "default",
+        }
+    },
+    "root": {"level": "INFO", "handlers": ["wsgi"]},
+    # "celery": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+}
+dictConfig(LOGGING_CONFIG)
 
 import flask
 import flask_migrate

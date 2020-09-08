@@ -1,11 +1,12 @@
-import typing
 from flask import request
 from twilio.twiml.messaging_response import MessagingResponse
 
 from airq import settings  # Do this first, it initializes everything
+from airq.celery import celery  # This is necesary to start celery
+
 from airq import air_quality
-from airq import db
 from airq import util
+from airq.models.requests import ClientIdentifierType, insert_request
 
 
 app = settings.app
@@ -22,7 +23,7 @@ def sms_reply() -> str:
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     resp.message(_get_message_for_zipcode(zipcode))
-    db.insert_request(zipcode, phone_number, db.ClientIdentifierType.PHONE_NUMBER)
+    insert_request(zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER)
     return str(resp)
 
 
@@ -34,7 +35,7 @@ def quality() -> str:
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    db.insert_request(zipcode, ip, db.ClientIdentifierType.IP)
+    insert_request(zipcode, ip, ClientIdentifierType.IP)
     return message
 
 
