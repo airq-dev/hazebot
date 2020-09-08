@@ -65,7 +65,6 @@ jobs:
                 task-definition: ${{ steps.render-nginx-container.outputs.task-definition }}
                 service: app
                 cluster: airq
-                wait-for-service-stability: true
             - name: Fill in the new app image ID in the scheduler ECS task definition
               id: render-scheduler-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -79,7 +78,6 @@ jobs:
                 task-definition: ${{ steps.render-scheduler-container.outputs.task-definition }}
                 service: scheduler
                 cluster: airq
-                wait-for-service-stability: true
             - name: Fill in the new app image ID in the worker ECS task definition
               id: render-worker-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -93,4 +91,3 @@ jobs:
                 task-definition: ${{ steps.render-worker-container.outputs.task-definition }}
                 service: worker
                 cluster: airq
-                wait-for-service-stability: true
