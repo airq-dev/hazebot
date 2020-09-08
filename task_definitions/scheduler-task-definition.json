@@ -12,7 +12,7 @@
             "command": [
                 "celery",
                 "-A",
-                "airq.scheduler",
+                "airq.celery",
                 "beat",
                 "-l",
                 "info"
