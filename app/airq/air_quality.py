@@ -43,15 +43,15 @@ class Metrics:
 
 
 def get_nearby_zipcodes(
-    zipcode: str
+    zipcode: str,
 ) -> typing.Dict[int, typing.Tuple[str, str, float]]:
-    zipcodes: typing.Dict[int, Zipcode] = {}
-    zipcode = Zipcode.query.filter_by(zipcode=zipcode).first()
-    if not zipcode:
+    zipcodes: typing.Dict[int, typing.Tuple[str, str, float]] = {}
+    obj = Zipcode.query.filter_by(zipcode=zipcode).first()
+    if not obj:
         return zipcodes
 
-    zipcodes[zipcode.id] = (zipcode.zipcode, zipcode.city.name, 0)
-    gh = list(zipcode.geohash)
+    zipcodes[obj.id] = (obj.zipcode, obj.city.name, 0)
+    gh = list(obj.geohash)
 
     while gh:
         query = Zipcode.query.with_entities(
@@ -62,14 +62,14 @@ def get_nearby_zipcodes(
             query = query.filter(col == c)
         if zipcodes:
             query = query.filter(~Zipcode.id.in_(zipcodes.keys()))
-        for zipcode_id, _zipcode, city_name, distance in sorted(
+        for zipcode_id, zipcode, city_name, distance in sorted(
             [
                 (
                     r[0],
                     r[1],
                     r[2],
                     util.haversine_distance(
-                        r[3], r[4], zipcode.longitude, zipcode.latitude,
+                        r[3], r[4], obj.longitude, obj.latitude,
                     ),
                 )
                 for r in query.all()
@@ -80,7 +80,7 @@ def get_nearby_zipcodes(
                 return zipcodes
             if len(zipcodes) >= MAX_NUM_NEARBY_ZIPCODES:
                 return zipcodes
-            zipcodes[zipcode_id] = (_zipcode, city_name, distance)
+            zipcodes[zipcode_id] = (zipcode, city_name, distance)
         gh.pop()
 
     return zipcodes
@@ -89,9 +89,7 @@ def get_nearby_zipcodes(
 def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     # Get a all zipcodes (inclusive) within 25km
     logger.info("Retrieving metrics for zipcode %s", target_zipcode)
-    zipcodes_map = get_nearby_zipcodes(
-        target_zipcode
-    )
+    zipcodes_map = get_nearby_zipcodes(target_zipcode)
 
     num_readings = 0
     zipcodes_to_sensors = collections.defaultdict(list)
@@ -111,7 +109,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     # Now construct our metrics
     metrics = {}
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
-        readings = []
+        readings: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
         for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
