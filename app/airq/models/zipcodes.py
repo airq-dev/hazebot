@@ -1,3 +1,6 @@
+import typing
+
+from airq.models.cities import City
 from airq.settings import db
 
 
@@ -28,3 +31,7 @@ class Zipcode(db.Model):  # type: ignore
     @property
     def geohash(self) -> str:
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
+
+    @property
+    def city(self) -> City:
+        return City.query.filter_by(id=self.city_id).one()

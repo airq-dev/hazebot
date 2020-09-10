@@ -8,7 +8,6 @@ apt-get -y install --no-install-recommends \
     gcc \
     g++ \
     libcurl4-openssl-dev \
-    libmemcached-dev \
     libpq-dev \
     libssl-dev \
     libz-dev \

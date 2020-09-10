@@ -103,7 +103,6 @@ def geonames_sync():
 
 
 def purpleair_sync():
-    from airq import purpleair
     from airq import util
     from airq.models import sensors
     from airq.models.relations import SensorZipcodeRelation
@@ -115,9 +114,18 @@ def purpleair_sync():
     logger.info("Fetching sensor from purpleair")
 
     results = purpleair.get_all_sensor_data()
+    try:
+        resp = requests.get("https://www.purpleair.com/json")
+        resp.raise_for_status()
+    except requests.RequestException:
+        logger.exception("Error updating purpleair data")
+        results = []
+    else:
+        results = resp.json().get("results", [])
+
     logger.info("Recieved %s sensors", len(results))
 
-    existing_sensor_map = sensors.get_all_sensors_map()
+    existing_sensor_map = {s.id: sensor for s in Sensor.query.all()}
     updates = []
     new_sensors = []
     moved_sensor_ids = []

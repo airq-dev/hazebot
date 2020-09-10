@@ -38,7 +38,6 @@ dictConfig(LOGGING_CONFIG)
 import flask
 import flask_migrate
 import flask_sqlalchemy
-from airq import cache
 from airq import middleware
 
 app = flask.Flask(__name__)
@@ -52,14 +51,10 @@ if os.getenv("FLASK_ENV") == "development":
     )
 
 config = {
-    "CACHE_TYPE": "memcached",
-    "CACHE_DEFAULT_TIMEOUT": 300,
-    "CACHE_MEMCACHED_SERVERS": os.getenv("MEMCACHED_SERVERS", "").split(","),
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
     "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
 app.config.from_mapping(config)
-cache.CACHE.init_app(app)
 
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
