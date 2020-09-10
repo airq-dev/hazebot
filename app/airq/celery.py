@@ -7,8 +7,8 @@ from airq import settings
 
 
 BEAT_SCHEDULE = {
-    "update_sensor_readings": {
-        "task": "airq.tasks.update_sensor_readings",
+    "models_sync": {
+        "task": "airq.tasks.models_sync",
         "schedule": crontab(minute="*/10"),
     }
 }
