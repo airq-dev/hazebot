@@ -163,7 +163,7 @@ def purpleair_sync():
     if not moved_sensor_ids:
         return
 
-    logger.info("Syncing relations for %s sensors", len(sensor_ids))
+    logger.info("Syncing relations for %s sensors", len(moved_sensor_ids))
 
     trie = {}
     for zipcode in Zipcode.query.all():
@@ -180,7 +180,7 @@ def purpleair_sync():
     new_relations = []
     updates = []
 
-    sensors = Sensor.query.filter(Sensor.id.in_(sensor_ids)).all()
+    sensors = Sensor.query.filter(Sensor.id.in_(moved_sensor_ids)).all()
     for sensor in sensors:
         gh = list(sensor.geohash)
         latitude = sensor.latitude
