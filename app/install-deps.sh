@@ -6,6 +6,7 @@ apt-get update
 apt-get -y upgrade
 apt-get -y install --no-install-recommends \
     gcc \
+    g++ \
     libcurl4-openssl-dev \
     libmemcached-dev \
     libpq-dev \

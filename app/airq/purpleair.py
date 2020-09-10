@@ -9,6 +9,18 @@ from airq.models.sensors import is_valid_reading
 logger = logging.getLogger(__name__)
 
 
+def get_all_sensor_data() -> typing.List[typing.Dict[str, typing.Any]]:
+    try:
+        resp = requests.get("https://www.purpleair.com/json")
+        resp.raise_for_status()
+    except requests.RequestException:
+        logger.exception("Error updating purpleair data")
+        results = []
+    else:
+        results = resp.json().get("results", [])
+    return results
+
+
 def _call_purpleair_api(
     sensor_ids: typing.Set[int],
 ) -> typing.List[typing.Dict[str, typing.Any]]:
