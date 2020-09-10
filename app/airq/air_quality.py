@@ -68,9 +68,7 @@ def get_nearby_zipcodes(
                     r[0],
                     r[1],
                     r[2],
-                    util.haversine_distance(
-                        r[3], r[4], obj.longitude, obj.latitude,
-                    ),
+                    util.haversine_distance(r[3], r[4], obj.longitude, obj.latitude,),
                 )
                 for r in query.all()
             ],
