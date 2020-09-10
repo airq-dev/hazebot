@@ -3,6 +3,7 @@ import datetime
 import decimal
 import geohash
 import requests
+import time
 import typing
 import zipfile
 
@@ -245,11 +246,29 @@ def purpleair_sync():
         db.session.commit()
 
 
-@celery.task()
-def models_sync():
-    # Only update geonames once per hour, as it takes much longer
+def _should_sync_geonames() -> bool:
+    from airq.models.zipcodes import Zipcode
+
+    logger = get_celery_logger()
+
     now = datetime.datetime.now()
     hour = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=now.hour)
     if (now.timestamp() - hour.timestamp()) / 60 < 5:
+        return True
+
+    if Zipcode.query.count() == 0:
+        return True
+
+    logger.info("Skipping geonames sync because the timestamp is %s", now.timestamp())
+    return False
+
+
+@celery.task()
+def models_sync():
+    logger = get_celery_logger()
+    start_ts = time.perf_counter()
+    if _should_sync_geonames():
         geonames_sync()
     purpleair_sync()
+    end_ts = time.perf_counter()
+    logger.info('Completed models_sync in %s seconds', start_ts - end_ts)
