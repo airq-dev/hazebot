@@ -99,7 +99,6 @@ def upgrade():
         sa.Column("sensor_id", sa.Integer(), nullable=False),
         sa.Column("zipcode_id", sa.Integer(), nullable=False),
         sa.Column("distance", sa.Float(), nullable=False),
-        sa.Column("updated_at", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["sensor_id"], ["sensors.id"],),
         sa.ForeignKeyConstraint(["zipcode_id"], ["zipcodes.id"],),
         sa.PrimaryKeyConstraint("sensor_id", "zipcode_id"),
