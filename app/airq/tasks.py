@@ -113,7 +113,6 @@ def purpleair_sync():
     logger = get_celery_logger()
     logger.info("Fetching sensor from purpleair")
 
-    results = purpleair.get_all_sensor_data()
     try:
         resp = requests.get("https://www.purpleair.com/json")
         resp.raise_for_status()
@@ -125,7 +124,7 @@ def purpleair_sync():
 
     logger.info("Recieved %s sensors", len(results))
 
-    existing_sensor_map = {s.id: sensor for s in Sensor.query.all()}
+    existing_sensor_map = {s.id: s for s in Sensor.query.all()}
     updates = []
     new_sensors = []
     moved_sensor_ids = []
@@ -135,7 +134,12 @@ def purpleair_sync():
             latitude = result["Lat"]
             longitude = result["Lon"]
             pm25 = float(result["PM2_5Value"])
-            data: typing.Dict[str, typing.Any] = {}
+            data: typing.Dict[str, typing.Any] = {
+                "id": result["ID"],
+                "latest_reading": pm25,
+                "updated_at": result["LastSeen"],
+            }
+
             if (
                 not sensor
                 or sensor.latitude != latitude
@@ -148,16 +152,11 @@ def purpleair_sync():
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["ID"])
-            if not sensor or sensor.latest_reading != pm25:
-                data["latest_reading"] = pm25
 
-            if data:
-                data["id"] = result["ID"]
-                data["updated_at"] = result["LastSeen"]
-                if sensor:
-                    updates.append(data)
-                else:
-                    new_sensors.append(Sensor(**data))
+            if sensor:
+                updates.append(data)
+            else:
+                new_sensors.append(Sensor(**data))
 
     if new_sensors:
         logger.info("Creating %s sensors", len(new_sensors))
@@ -279,4 +278,4 @@ def models_sync():
         geonames_sync()
     purpleair_sync()
     end_ts = time.perf_counter()
-    logger.info("Completed models_sync in %s seconds", start_ts - end_ts)
+    logger.info("Completed models_sync in %s seconds", end_ts - start_ts)

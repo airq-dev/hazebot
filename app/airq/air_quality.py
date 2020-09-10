@@ -1,5 +1,6 @@
 import collections
 import dataclasses
+import datetime
 import logging
 import typing
 
@@ -90,6 +91,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     zipcodes_map = get_nearby_zipcodes(target_zipcode)
 
     num_readings = 0
+    cutoff = datetime.datetime.now().timestamp() - (60 * 60)
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, distance in (
         SensorZipcodeRelation.query.join(Sensor)
@@ -99,6 +101,7 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
             SensorZipcodeRelation.distance,
         )
         .filter(SensorZipcodeRelation.zipcode_id.in_(zipcodes_map.keys()))
+        .filter(Sensor.latest_reading > cutoff)
     ):
         num_readings += 1
         zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
