@@ -271,4 +271,4 @@ def models_sync():
         geonames_sync()
     purpleair_sync()
     end_ts = time.perf_counter()
-    logger.info('Completed models_sync in %s seconds', start_ts - end_ts)
+    logger.info("Completed models_sync in %s seconds", start_ts - end_ts)
