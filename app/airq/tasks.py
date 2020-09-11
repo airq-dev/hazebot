@@ -125,6 +125,11 @@ def purpleair_sync():
     logger.info("Recieved %s sensors", len(results))
 
     existing_sensor_map = {s.id: s for s in Sensor.query.all()}
+
+    relations_map = collections.defaultdict(dict)
+    for relation in SensorZipcodeRelation.query.all():
+        relations_map[relation.sensor_id][relation.zipcode_id] = relation.distance
+
     updates = []
     new_sensors = []
     moved_sensor_ids = []
@@ -151,6 +156,8 @@ def purpleair_sync():
                     longitude=longitude,
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
+                moved_sensor_ids.append(result["ID"])
+            elif not relations_map.get(result["ID"]):
                 moved_sensor_ids.append(result["ID"])
 
             if sensor:
@@ -182,9 +189,6 @@ def purpleair_sync():
             curr = curr[c]
         curr[zipcode.id] = zipcode
 
-    relations_map = collections.defaultdict(dict)
-    for relation in SensorZipcodeRelation.query.all():
-        relations_map[relation.zipcode_id][relation.sensor_id] = relation.distance
     new_relations = []
     updates = []
 
@@ -229,7 +233,7 @@ def purpleair_sync():
                     done = True
                     break
                 zipcode_ids.add(zipcode_id)
-                current_distance = relations_map.get(zipcode_id, {}).get(sensor.id)
+                current_distance = relations_map.get(sensor.id, {}).get(zipcode_id)
                 if current_distance != distance:
                     data = {
                         "zipcode_id": zipcode_id,

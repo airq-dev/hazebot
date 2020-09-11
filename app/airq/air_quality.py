@@ -69,17 +69,16 @@ def get_nearby_zipcodes(
                     r[0],
                     r[1],
                     r[2],
-                    util.haversine_distance(r[3], r[4], obj.longitude, obj.latitude,),
+                    util.haversine_distance(r[4], r[3], obj.longitude, obj.latitude,),
                 )
                 for r in query.all()
             ],
             key=lambda t: t[3],
         ):
-            if distance > MAX_NEARBY_ZIPCODE_RADIUS_KM:
-                return zipcodes
+            if distance <= MAX_NEARBY_ZIPCODE_RADIUS_KM:
+                zipcodes[zipcode_id] = (zipcode, city_name, distance)
             if len(zipcodes) >= MAX_NUM_NEARBY_ZIPCODES:
                 return zipcodes
-            zipcodes[zipcode_id] = (zipcode, city_name, distance)
         gh.pop()
 
     return zipcodes
@@ -101,29 +100,28 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
             SensorZipcodeRelation.distance,
         )
         .filter(SensorZipcodeRelation.zipcode_id.in_(zipcodes_map.keys()))
-        .filter(Sensor.latest_reading > cutoff)
+        .filter(Sensor.updated_at > cutoff)
     ):
         num_readings += 1
         zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
-    logger.info("Constructing metrics from %s readings", num_readings)
 
     # Now construct our metrics
+    logger.info("Constructing metrics from %s readings", num_readings)
     metrics = {}
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
         for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
-            if reading:
-                if (
-                    len(readings) < DESIRED_NUM_READINGS
-                    or distance < DESIRED_READING_DISTANCE_KM
-                ):
-                    readings.append(reading)
-                    closest_reading = min(distance, closest_reading)
-                    farthest_reading = max(distance, farthest_reading)
-                else:
-                    break
+            if (
+                len(readings) < DESIRED_NUM_READINGS
+                or distance < DESIRED_READING_DISTANCE_KM
+            ):
+                readings.append(reading)
+                closest_reading = min(distance, closest_reading)
+                farthest_reading = max(distance, farthest_reading)
+            else:
+                break
 
         if readings:
             zipcode, city_name, distance = zipcodes_map[zipcode_id]
