@@ -254,7 +254,7 @@ def purpleair_sync():
 
     if updates:
         logger.info("Updating %s relations", len(updates))
-        for chunk in util.chunk_list(new_relations):
+        for chunk in util.chunk_list(updates):
             db.session.bulk_update_mappings(SensorZipcodeRelation, chunk)
             db.session.commit()
 
