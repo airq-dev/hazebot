@@ -57,15 +57,3 @@ def is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
         return False
 
     return True
-
-
-def get_all_sensors_map() -> typing.Dict[int, Sensor]:
-    return {s.id: s for s in Sensor.query.all()}
-
-
-def get_sensor_reading_map(sensor_ids: typing.Iterable[int]) -> typing.Dict[int, float]:
-    cutoff = datetime.datetime.now().timestamp() - (60 * 60)
-    sensors = Sensor.query.filter(Sensor.id.in_(sensor_ids)).filter(
-        Sensor.updated_at >= cutoff
-    )
-    return {s.id: s.latest_reading for s in sensors}

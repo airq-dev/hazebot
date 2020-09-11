@@ -103,7 +103,6 @@ def geonames_sync():
 
 
 def purpleair_sync():
-    from airq import purpleair
     from airq import util
     from airq.models import sensors
     from airq.models.relations import SensorZipcodeRelation
@@ -114,10 +113,23 @@ def purpleair_sync():
     logger = get_celery_logger()
     logger.info("Fetching sensor from purpleair")
 
-    results = purpleair.get_all_sensor_data()
+    try:
+        resp = requests.get("https://www.purpleair.com/json")
+        resp.raise_for_status()
+    except requests.RequestException:
+        logger.exception("Error updating purpleair data")
+        results = []
+    else:
+        results = resp.json().get("results", [])
+
     logger.info("Recieved %s sensors", len(results))
 
-    existing_sensor_map = sensors.get_all_sensors_map()
+    existing_sensor_map = {s.id: s for s in Sensor.query.all()}
+
+    relations_map = collections.defaultdict(dict)
+    for relation in SensorZipcodeRelation.query.all():
+        relations_map[relation.sensor_id][relation.zipcode_id] = relation.distance
+
     updates = []
     new_sensors = []
     moved_sensor_ids = []
@@ -127,7 +139,12 @@ def purpleair_sync():
             latitude = result["Lat"]
             longitude = result["Lon"]
             pm25 = float(result["PM2_5Value"])
-            data: typing.Dict[str, typing.Any] = {}
+            data: typing.Dict[str, typing.Any] = {
+                "id": result["ID"],
+                "latest_reading": pm25,
+                "updated_at": result["LastSeen"],
+            }
+
             if (
                 not sensor
                 or sensor.latitude != latitude
@@ -140,16 +157,13 @@ def purpleair_sync():
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["ID"])
-            if not sensor or sensor.latest_reading != pm25:
-                data["latest_reading"] = pm25
+            elif not relations_map.get(result["ID"]):
+                moved_sensor_ids.append(result["ID"])
 
-            if data:
-                data["id"] = result["ID"]
-                data["updated_at"] = result["LastSeen"]
-                if sensor:
-                    updates.append(data)
-                else:
-                    new_sensors.append(Sensor(**data))
+            if sensor:
+                updates.append(data)
+            else:
+                new_sensors.append(Sensor(**data))
 
     if new_sensors:
         logger.info("Creating %s sensors", len(new_sensors))
@@ -175,9 +189,6 @@ def purpleair_sync():
             curr = curr[c]
         curr[zipcode.id] = zipcode
 
-    relations_map = collections.defaultdict(dict)
-    for relation in SensorZipcodeRelation.query.all():
-        relations_map[relation.zipcode_id][relation.sensor_id] = relation.distance
     new_relations = []
     updates = []
 
@@ -222,7 +233,7 @@ def purpleair_sync():
                     done = True
                     break
                 zipcode_ids.add(zipcode_id)
-                current_distance = relations_map.get(zipcode_id, {}).get(sensor.id)
+                current_distance = relations_map.get(sensor.id, {}).get(zipcode_id)
                 if current_distance != distance:
                     data = {
                         "zipcode_id": zipcode_id,
@@ -271,4 +282,4 @@ def models_sync():
         geonames_sync()
     purpleair_sync()
     end_ts = time.perf_counter()
-    logger.info("Completed models_sync in %s seconds", start_ts - end_ts)
+    logger.info("Completed models_sync in %s seconds", end_ts - start_ts)

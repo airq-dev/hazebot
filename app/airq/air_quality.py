@@ -1,11 +1,14 @@
+import collections
 import dataclasses
+import datetime
 import logging
 import typing
 
-from airq import geodb
-from airq import purpleair
 from airq import util
-from airq.models.sensors import get_sensor_reading_map
+from airq.models.cities import City
+from airq.models.relations import SensorZipcodeRelation
+from airq.models.sensors import Sensor
+from airq.models.zipcodes import Zipcode
 
 
 logger = logging.getLogger(__name__)
@@ -40,65 +43,93 @@ class Metrics:
         return util.PM25.from_measurement(self.average_pm25)
 
 
+def get_nearby_zipcodes(
+    zipcode: str,
+) -> typing.Dict[int, typing.Tuple[str, str, float]]:
+    zipcodes: typing.Dict[int, typing.Tuple[str, str, float]] = {}
+    obj = Zipcode.query.filter_by(zipcode=zipcode).first()
+    if not obj:
+        return zipcodes
+
+    zipcodes[obj.id] = (obj.zipcode, obj.city.name, 0)
+    gh = list(obj.geohash)
+
+    while gh:
+        query = Zipcode.query.with_entities(
+            Zipcode.id, Zipcode.zipcode, City.name, Zipcode.latitude, Zipcode.longitude
+        ).join(City)
+        for i, c in enumerate(gh, start=1):
+            col = getattr(Zipcode, f"geohash_bit_{i}")
+            query = query.filter(col == c)
+        if zipcodes:
+            query = query.filter(~Zipcode.id.in_(zipcodes.keys()))
+        for zipcode_id, zipcode, city_name, distance in sorted(
+            [
+                (
+                    r[0],
+                    r[1],
+                    r[2],
+                    util.haversine_distance(r[4], r[3], obj.longitude, obj.latitude,),
+                )
+                for r in query.all()
+            ],
+            key=lambda t: t[3],
+        ):
+            if distance <= MAX_NEARBY_ZIPCODE_RADIUS_KM:
+                zipcodes[zipcode_id] = (zipcode, city_name, distance)
+            if len(zipcodes) >= MAX_NUM_NEARBY_ZIPCODES:
+                return zipcodes
+        gh.pop()
+
+    return zipcodes
+
+
 def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
     # Get a all zipcodes (inclusive) within 25km
     logger.info("Retrieving metrics for zipcode %s", target_zipcode)
-    zipcodes = geodb.get_nearby_zipcodes(
-        target_zipcode,
-        max_radius=MAX_NEARBY_ZIPCODE_RADIUS_KM,
-        num_desired=MAX_NUM_NEARBY_ZIPCODES,
-    )
+    zipcodes_map = get_nearby_zipcodes(target_zipcode)
 
-    # Get the cities each of these zipcodes are in
-    city_names = geodb.get_city_names(
-        {zipcode.city_id for zipcode in zipcodes.values()}
-    )
-
-    # Now get all sensors for each of these zipcodes
-    logger.info("Retrieving sensors for %s zipcodes", len(zipcodes))
-    zipcodes_to_sensors = geodb.get_sensors_for_zipcodes(set(zipcodes))
-    sensor_ids: typing.Set[int] = set()
-    for sensors in zipcodes_to_sensors.values():
-        for sensor in sensors:
-            sensor_ids.add(sensor.sensor_id)
-
-    logger.info("Retrieving readings for %s sensors", len(sensor_ids))
-    pm25_readings = {}
-    # pm25_readings = get_sensor_reading_map(sensor_ids)
-    # sensor_ids -= pm25_readings.keys()
-
-    # If we failed to get some readings from postgres, fall back to making a live query.
-    if sensor_ids:
-        logger.info(
-            "Retrieving readings for %s sensors from purpleair", len(sensor_ids)
+    num_readings = 0
+    cutoff = datetime.datetime.now().timestamp() - (60 * 60)
+    zipcodes_to_sensors: typing.Dict[
+        int, typing.List[typing.Tuple[float, float]]
+    ] = collections.defaultdict(list)
+    for zipcode_id, latest_reading, distance in (
+        SensorZipcodeRelation.query.join(Sensor)
+        .with_entities(
+            SensorZipcodeRelation.zipcode_id,
+            Sensor.latest_reading,
+            SensorZipcodeRelation.distance,
         )
-        pm25_readings.update(purpleair.get_pm25_readings(sensor_ids))
+        .filter(SensorZipcodeRelation.zipcode_id.in_(zipcodes_map.keys()))
+        .filter(Sensor.updated_at > cutoff)
+    ):
+        num_readings += 1
+        zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
 
     # Now construct our metrics
-    logger.info("Constructing metrics from %s readings", len(pm25_readings))
+    logger.info("Constructing metrics from %s readings", num_readings)
     metrics = {}
-    for zipcode_id, sensors in zipcodes_to_sensors.items():
-        readings = []
+    for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
+        readings: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
-        for sensor in sorted(sensors, key=lambda s: s.distance):
-            pm25 = pm25_readings.get(sensor.sensor_id)
-            if pm25:
-                if (
-                    len(pm25_readings) < DESIRED_NUM_READINGS
-                    or sensor.distance < DESIRED_READING_DISTANCE_KM
-                ):
-                    readings.append(pm25)
-                    closest_reading = min(sensor.distance, closest_reading)
-                    farthest_reading = max(sensor.distance, farthest_reading)
-                else:
-                    break
+        for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
+            if (
+                len(readings) < DESIRED_NUM_READINGS
+                or distance < DESIRED_READING_DISTANCE_KM
+            ):
+                readings.append(reading)
+                closest_reading = min(distance, closest_reading)
+                farthest_reading = max(distance, farthest_reading)
+            else:
+                break
 
         if readings:
-            zipcode, city_id, distance = zipcodes[zipcode_id]
+            zipcode, city_name, distance = zipcodes_map[zipcode_id]
             metrics[zipcode] = Metrics(
                 zipcode=zipcode,
-                city_name=city_names[city_id],
+                city_name=city_name,
                 average_pm25=round(sum(readings) / len(readings), ndigits=3),
                 num_readings=len(readings),
                 closest_reading=round(closest_reading, ndigits=3),

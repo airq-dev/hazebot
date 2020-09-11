@@ -1,8 +1,8 @@
 import datetime
 import enum
 
-from airq import geodb
 from airq.settings import db
+from airq.models.zipcodes import Zipcode
 
 
 class ClientIdentifierType(enum.Enum):
@@ -38,7 +38,7 @@ class Request(db.Model):  # type: ignore
 def insert_request(
     zipcode: str, identifier: str, identifier_type: ClientIdentifierType
 ):
-    if not geodb.get_zipcode_raw(zipcode):
+    if not Zipcode.query.filter_by(zipcode=zipcode).first():
         return
 
     request = Request.query.filter_by(
