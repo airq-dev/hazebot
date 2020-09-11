@@ -2,7 +2,7 @@ import os
 from logging.config import dictConfig
 
 
-FLASK_ENV = os.getenv("FLAS_ENV", "development")
+FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
@@ -31,7 +31,6 @@ LOGGING_CONFIG = {
         }
     },
     "root": {"level": "INFO", "handlers": ["wsgi"]},
-    # "celery": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
 }
 dictConfig(LOGGING_CONFIG)
 
