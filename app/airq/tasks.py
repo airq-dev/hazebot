@@ -248,13 +248,15 @@ def purpleair_sync():
 
     if new_relations:
         logger.info("Creating %s relations", len(new_relations))
-        db.session.bulk_save_objects(new_relations)
-        db.session.commit()
+        for chunk in util.chunk_list(new_relations):
+            db.session.bulk_save_objects(chunk)
+            db.session.commit()
 
     if updates:
         logger.info("Updating %s relations", len(updates))
-        db.session.bulk_update_mappings(SensorZipcodeRelation, updates)
-        db.session.commit()
+        for chunk in util.chunk_list(new_relations):
+            db.session.bulk_update_mappings(SensorZipcodeRelation, chunk)
+            db.session.commit()
 
 
 def _should_sync_geonames() -> bool:

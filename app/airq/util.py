@@ -1,4 +1,6 @@
 import enum
+import gc
+import itertools
 import math
 import typing
 
@@ -90,3 +92,18 @@ def linear(
         ((concentration - conc_low) / (conc_high - conc_low)) * (aqi_high - aqi_low)
         + aqi_low
     )
+
+
+T = typing.TypeVar("T")
+
+
+def chunk_list(
+    iterable: typing.Iterable[T], batch_size: int = 1000
+) -> typing.Iterator[typing.List[T]]:
+    it = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(it, batch_size))
+        if not chunk:
+            return
+        yield chunk
+        gc.collect()
