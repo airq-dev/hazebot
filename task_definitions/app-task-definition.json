@@ -27,10 +27,6 @@
                 {
                     "name": "FLASK_ENV",
                     "value": "production"
-                },
-                {
-                    "name": "MEMCACHED_SERVERS",
-                    "value": "airq-memcached-small.k74xvs.0001.usw1.cache.amazonaws.com"
                 }
             ],
             "secrets": [

@@ -277,10 +277,12 @@ def _should_sync_geonames() -> bool:
 
 
 @celery.task()
-def models_sync():
+def models_sync(force_rebuild_geography: typing.Optional[bool]):
     logger = get_celery_logger()
     start_ts = time.perf_counter()
-    if _should_sync_geonames():
+    if force_rebuild_geography is None:
+        force_rebuild_geography = _should_sync_geonames()
+    if force_rebuild_geography:
         geonames_sync()
     purpleair_sync()
     end_ts = time.perf_counter()

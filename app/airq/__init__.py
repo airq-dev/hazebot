@@ -5,11 +5,14 @@ from airq import settings  # Do this first, it initializes everything
 from airq.celery import celery  # This is necesary to start celery
 
 from airq import air_quality
+from airq import commands
 from airq import util
 from airq.models.requests import ClientIdentifierType, insert_request
 
 
 app = settings.app
+
+app.cli.command("sync")(commands.sync)
 
 
 @app.route("/", methods=["GET"])
