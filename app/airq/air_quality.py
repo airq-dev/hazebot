@@ -91,7 +91,9 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
 
     num_readings = 0
     cutoff = datetime.datetime.now().timestamp() - (60 * 60)
-    zipcodes_to_sensors = collections.defaultdict(list)
+    zipcodes_to_sensors: typing.Dict[
+        int, typing.List[typing.Tuple[float, float]]
+    ] = collections.defaultdict(list)
     for zipcode_id, latest_reading, distance in (
         SensorZipcodeRelation.query.join(Sensor)
         .with_entities(
