@@ -265,8 +265,8 @@ def _should_sync_geonames() -> bool:
     logger = get_celery_logger()
 
     now = datetime.datetime.now()
-    hour = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=now.hour)
-    if (now.timestamp() - hour.timestamp()) / 60 < 5:
+    day = datetime.datetime(year=now.year, month=now.month, day=now.day)
+    if (now.timestamp() - day.timestamp()) / 60 < 5:
         return True
 
     if Zipcode.query.count() == 0:
