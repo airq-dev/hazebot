@@ -44,10 +44,7 @@ app = flask.Flask(__name__)
 # We have to use this `setattr` hack here or Mypy gets really confused.
 # See https://github.com/python/mypy/issues/2427 for details.
 setattr(app, "wsgi_app", middleware.LoggingMiddleware(app.wsgi_app))
-if os.getenv("FLASK_ENV") == "development":
-    setattr(
-        app, "wsgi_app", middleware.ProfilerMiddleware(app.wsgi_app, restrictions=[30])
-    )
+setattr(app, "wsgi_app", middleware.ProfilerMiddleware(app.wsgi_app, restrictions=[30]))
 
 config = {
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
