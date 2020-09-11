@@ -26,7 +26,7 @@ Thus the app has two main components: a worker, which handles synchronizing with
 * Come up with behavior recs for air quality based on pm2.5 
 * Write tests (!).
 * Push notifications.
-* Slack integrations. 
+* Slack integration. 
 
 
 ## Contributing
