@@ -254,7 +254,7 @@ def purpleair_sync():
 
     if updates:
         logger.info("Updating %s relations", len(updates))
-        for chunk in util.chunk_list(new_relations):
+        for chunk in util.chunk_list(updates):
             db.session.bulk_update_mappings(SensorZipcodeRelation, chunk)
             db.session.commit()
 
@@ -277,10 +277,12 @@ def _should_sync_geonames() -> bool:
 
 
 @celery.task()
-def models_sync():
+def models_sync(force_rebuild_geography: typing.Optional[bool] = None):
     logger = get_celery_logger()
     start_ts = time.perf_counter()
-    if _should_sync_geonames():
+    if force_rebuild_geography is None:
+        force_rebuild_geography = _should_sync_geonames()
+    if force_rebuild_geography:
         geonames_sync()
     purpleair_sync()
     end_ts = time.perf_counter()
