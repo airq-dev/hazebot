@@ -4,7 +4,8 @@ import datetime
 import logging
 import typing
 
-from airq import util
+from airq.lib.geo import haversine_distance
+from airq.lib.readings import Pm25
 from airq.models.cities import City
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
@@ -39,11 +40,11 @@ class Metrics:
     readings: typing.List[float]
 
     @property
-    def pm25_level(self) -> util.PM25:
-        return util.PM25.from_measurement(self.average_pm25)
+    def pm25_level(self) -> Pm25:
+        return Pm25.from_measurement(self.average_pm25)
 
 
-def get_nearby_zipcodes(
+def _get_nearby_zipcodes(
     zipcode: str,
 ) -> typing.Dict[int, typing.Tuple[str, str, float]]:
     zipcodes: typing.Dict[int, typing.Tuple[str, str, float]] = {}
@@ -69,7 +70,7 @@ def get_nearby_zipcodes(
                     r[0],
                     r[1],
                     r[2],
-                    util.haversine_distance(r[4], r[3], obj.longitude, obj.latitude,),
+                    haversine_distance(r[4], r[3], obj.longitude, obj.latitude,),
                 )
                 for r in query.all()
             ],
@@ -84,11 +85,9 @@ def get_nearby_zipcodes(
     return zipcodes
 
 
-def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
-    # Get a all zipcodes (inclusive) within 25km
-    logger.info("Retrieving metrics for zipcode %s", target_zipcode)
-    zipcodes_map = get_nearby_zipcodes(target_zipcode)
-
+def _build_zipcodes_to_sensors_map(
+    zipcode_ids: typing.Set[int],
+) -> typing.Tuple[typing.Dict[int, typing.List[typing.Tuple[float, float]]], int]:
     num_readings = 0
     cutoff = datetime.datetime.now().timestamp() - (60 * 60)
     zipcodes_to_sensors: typing.Dict[
@@ -101,14 +100,19 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
             Sensor.latest_reading,
             SensorZipcodeRelation.distance,
         )
-        .filter(SensorZipcodeRelation.zipcode_id.in_(zipcodes_map.keys()))
+        .filter(SensorZipcodeRelation.zipcode_id.in_(zipcode_ids))
         .filter(Sensor.updated_at > cutoff)
     ):
         num_readings += 1
         zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
 
-    # Now construct our metrics
-    logger.info("Constructing metrics from %s readings", num_readings)
+    return zipcodes_to_sensors, num_readings
+
+
+def _construct_metrics(
+    zipcodes_to_sensors: typing.Dict[int, typing.List[typing.Tuple[float, float]]],
+    zipcodes_map: typing.Dict[int, typing.Tuple[str, str, float]],
+) -> typing.Dict[str, Metrics]:
     metrics = {}
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[float] = []
@@ -139,3 +143,16 @@ def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
             )
 
     return metrics
+
+
+def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
+    # Get a all zipcodes (inclusive) within 25km
+    logger.info("Retrieving metrics for zipcode %s", target_zipcode)
+    zipcodes_map = _get_nearby_zipcodes(target_zipcode)
+    zipcodes_to_sensors, num_readings = _build_zipcodes_to_sensors_map(
+        set(zipcodes_map)
+    )
+
+    # Now construct our metrics
+    logger.info("Constructing metrics from %s readings", num_readings)
+    return _construct_metrics(zipcodes_to_sensors, zipcodes_map)

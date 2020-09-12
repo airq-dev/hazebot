@@ -1,7 +1,7 @@
 import typing
 
 from airq.models.cities import City
-from airq.settings import db
+from airq.config import db
 
 
 class Zipcode(db.Model):  # type: ignore
