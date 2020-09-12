@@ -48,7 +48,7 @@ def _get_nearby_zipcodes(
     zipcode: str,
 ) -> typing.Dict[int, typing.Tuple[str, str, float]]:
     zipcodes: typing.Dict[int, typing.Tuple[str, str, float]] = {}
-    obj = Zipcode.query.filter_by(zipcode=zipcode).first()
+    obj = Zipcode.get_by_zipcode(zipcode)
     if not obj:
         return zipcodes
 
@@ -145,10 +145,19 @@ def _construct_metrics(
     return metrics
 
 
-def get_metrics_for_zipcode(target_zipcode: str) -> typing.Dict[str, Metrics]:
+def get_metrics_for_zipcode(
+    target_zipcode: str, details: bool = False
+) -> typing.Dict[str, Metrics]:
     # Get a all zipcodes (inclusive) within 25km
     logger.info("Retrieving metrics for zipcode %s", target_zipcode)
-    zipcodes_map = _get_nearby_zipcodes(target_zipcode)
+    if details:
+        zipcodes_map = _get_nearby_zipcodes(target_zipcode)
+    else:
+        zipcodes_map = {}
+        obj = Zipcode.get_by_zipcode(target_zipcode)
+        if obj:
+            zipcodes_map[obj.id] = (obj.zipcode, obj.city.name, 0)
+
     zipcodes_to_sensors, num_readings = _build_zipcodes_to_sensors_map(
         set(zipcodes_map)
     )

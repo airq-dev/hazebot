@@ -1,5 +1,6 @@
 import datetime
 import enum
+import typing
 
 from airq.config import db
 from airq.models.zipcodes import Zipcode
@@ -61,3 +62,17 @@ def insert_request(
         request.count += 1
         request.last_ts = now
     db.session.commit()
+
+
+def get_last_zipcode(
+    identifier: str, identifier_type: ClientIdentifierType
+) -> typing.Optional[str]:
+    row = (
+        Request.query.with_entities(Request.zipcode)
+        .filter_by(client_identifier=identifier, client_identifier_type=identifier_type)
+        .order_by(Request.last_ts.desc())
+        .first()
+    )
+    if row:
+        return row[0]
+    return None
