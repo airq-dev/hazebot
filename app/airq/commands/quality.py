@@ -153,9 +153,7 @@ class GetQuality(ApiCommand):
         logger.info("Constructing metrics from %s readings", num_readings)
         return self._construct_metrics(zipcodes_to_sensors, zipcodes_map)
 
-    def _get_nearby_zipcodes(
-        self
-    ) -> typing.Dict[int, typing.Tuple[str, str, float]]:
+    def _get_nearby_zipcodes(self) -> typing.Dict[int, typing.Tuple[str, str, float]]:
         zipcodes: typing.Dict[int, typing.Tuple[str, str, float]] = {}
         obj = Zipcode.get_by_zipcode(self.zipcode)
         if not obj:
