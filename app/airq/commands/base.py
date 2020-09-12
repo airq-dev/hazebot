@@ -37,5 +37,6 @@ class ApiCommand(metaclass=CommandMeta):
             "<zipcode> - aqi for the zipcode",
             "r - aqi for the last zipcode you checked",
             "d <zipcode> - aqi details for the zipcode",
+            "d - aqi details for the last zipcode you checked",
             "m - display this menu",
         ]
