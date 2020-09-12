@@ -6,7 +6,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 from airq.lib.readings import pm25_to_aqi
 from airq.air_quality import get_metrics_for_zipcode
-from airq.models.requests import ClientIdentifierType, get_last_zipcode, insert_request
+from airq.models.requests import ClientIdentifierType, Request
 
 
 def healthcheck() -> str:
@@ -48,14 +48,14 @@ def _handle_command(
         elif directive == "m":
             message = _get_menu()
         elif directive == "r":
-            zipcode = get_last_zipcode(identifier, identifier_type)
+            zipcode = Request.get_last_zipcode(identifier, identifier_type)
         else:
             zipcode = command
 
         if zipcode:
             message = _get_message_for_zipcode(zipcode, details=details)
             if message:
-                insert_request(zipcode, identifier, identifier_type)
+                Request.increment(zipcode, identifier, identifier_type)
             else:
                 message = [
                     f'Oops! We couldn\'t determine the air quality for "{zipcode}". Please try a different zip code.'

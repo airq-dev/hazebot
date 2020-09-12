@@ -35,44 +35,46 @@ class Request(db.Model):  # type: ignore
     def __repr__(self) -> str:
         return f"<Request {self.zipcode}>"
 
+    @classmethod
+    def increment(
+        cls, zipcode: str, identifier: str, identifier_type: ClientIdentifierType
+    ):
+        if not Zipcode.get_by_zipcode(zipcode):
+            return
 
-def insert_request(
-    zipcode: str, identifier: str, identifier_type: ClientIdentifierType
-):
-    if not Zipcode.query.filter_by(zipcode=zipcode).first():
-        return
-
-    request = Request.query.filter_by(
-        client_identifier=identifier,
-        client_identifier_type=identifier_type,
-        zipcode=zipcode,
-    ).first()
-    now = datetime.datetime.now().timestamp()
-    if request is None:
-        request = Request(
+        request = cls.query.filter_by(
             client_identifier=identifier,
             client_identifier_type=identifier_type,
             zipcode=zipcode,
-            count=1,
-            first_ts=now,
-            last_ts=now,
+        ).first()
+        now = datetime.datetime.now().timestamp()
+        if request is None:
+            request = cls(
+                client_identifier=identifier,
+                client_identifier_type=identifier_type,
+                zipcode=zipcode,
+                count=1,
+                first_ts=now,
+                last_ts=now,
+            )
+            db.session.add(request)
+        else:
+            request.count += 1
+            request.last_ts = now
+        db.session.commit()
+
+    @classmethod
+    def get_last_zipcode(
+        cls, identifier: str, identifier_type: ClientIdentifierType
+    ) -> typing.Optional[str]:
+        row = (
+            cls.query.with_entities(cls.zipcode)
+            .filter_by(
+                client_identifier=identifier, client_identifier_type=identifier_type
+            )
+            .order_by(cls.last_ts.desc())
+            .first()
         )
-        db.session.add(request)
-    else:
-        request.count += 1
-        request.last_ts = now
-    db.session.commit()
-
-
-def get_last_zipcode(
-    identifier: str, identifier_type: ClientIdentifierType
-) -> typing.Optional[str]:
-    row = (
-        Request.query.with_entities(Request.zipcode)
-        .filter_by(client_identifier=identifier, client_identifier_type=identifier_type)
-        .order_by(Request.last_ts.desc())
-        .first()
-    )
-    if row:
-        return row[0]
-    return None
+        if row:
+            return row[0]
+        return None
