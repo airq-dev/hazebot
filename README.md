@@ -1,13 +1,17 @@
-# Airq - TEXT your ZIP to 26AQISAFE2 for local, up-to-date air quality
+# Hazebot - TEXT your ZIP to 26AQISAFE2 for local, up-to-date air quality.
+
+Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information about air quality to protect your and your community. 
+
+
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
-Airq allows you to recieve information about the air quality near you simply by sending an SMS. While this is FOSS, it does require a bit of setup if you want to run it yourself: you'll need to setup a Twilio account and then deploy this application somewhere. Currently airq is deployed to Amazon ECS, but it could be deployed elsewhere — either way, you'll need to setup the necessary infrastructure.
+Hazebot allows you to recieve information about the air quality near you simply by sending an SMS. While this is FOSS, it does require a bit of setup if you want to run it yourself: you'll need to setup a Twilio account and then deploy this application somewhere. Currently airq is deployed to Amazon ECS, but it could be deployed elsewhere — either way, you'll need to setup the necessary infrastructure.
 
 
 ## Features
 
-Airq aggregates sensor readings from nearby [Purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing) sensors. These sensors are updated every 10 minutes so the results should be fairly accurate, generally. 
+Hazebot aggregates sensor readings from nearby [Purpleair](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit?usp=sharing) sensors. These sensors are updated every 10 minutes so the results should be fairly accurate, generally. 
 
 Text a zipcode to 26AQISAFE2 or (262) 747-2332 for aggregate pm2.5 measures and recommendations for places near you with better AQI. 
 
