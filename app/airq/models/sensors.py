@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from airq.settings import db
+from airq.config import db
 
 
 class Sensor(db.Model):  # type: ignore

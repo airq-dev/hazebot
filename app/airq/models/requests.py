@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from airq.settings import db
+from airq.config import db
 from airq.models.zipcodes import Zipcode
 
 

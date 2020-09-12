@@ -1,4 +1,4 @@
-from airq.settings import db
+from airq.config import db
 
 
 class SensorZipcodeRelation(db.Model):  # type: ignore

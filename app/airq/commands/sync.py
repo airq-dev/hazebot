@@ -1,8 +1,8 @@
 import click
 
 
-@click.option("-g", "--geography")
+@click.option("-g", "--geography", is_flag=True)
 def sync(geography):
-    from airq.tasks import models_sync
+    from airq.sync import models_sync
 
     models_sync(bool(geography))
