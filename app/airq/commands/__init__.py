@@ -8,8 +8,11 @@ from airq.commands.quality import GetQuality
 from airq.models.requests import ClientIdentifierType
 
 
+VALID_COMMANDS = [ShowMenu, GetQuality]
+
+
 def _parse_command(ctx: CommandContext) -> ApiCommand:
-    for command_type in (ShowMenu, GetQuality):
+    for command_type in VALID_COMMANDS:
         command = command_type.parse(ctx)
         if command:
             return command
