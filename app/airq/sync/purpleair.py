@@ -5,8 +5,6 @@ import logging
 import requests
 import typing
 
-from sqlalchemy import func
-
 from airq.config import db
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
