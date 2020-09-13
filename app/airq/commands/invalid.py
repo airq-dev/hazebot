@@ -1,17 +1,12 @@
 import typing
 
-from airq.commands.base import ApiCommand
-from airq.commands.base import CommandContext
+from airq.commands.base import ApiCommandHandler
 
 
-class InvalidInput(ApiCommand):
-    @classmethod
-    def parse(cls, ctx: CommandContext) -> typing.Optional["ApiCommand"]:
-        return cls(ctx)
-
+class InvalidInputHandler(ApiCommandHandler):
     def handle(self) -> typing.List[str]:
         message = [
-            f'Unrecognized option "{self.ctx.user_input}". Try one of these: ',
+            f'Unrecognized option "{self.user_input}". Reply with your zipcode for air quality information.',
             "",
         ]
         message.extend(self._get_menu())
