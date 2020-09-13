@@ -81,8 +81,8 @@ class ApiCommandHandler(abc.ABC):
 
     def _get_menu(self) -> typing.List[str]:
         return [
-            "Reply R for places with better air, "
+            "Reply R for safer places, "
             "D for details, "
-            "L for previous zip, "
-            "and ? for information on hazebot."
+            "L for latest, "
+            "and ? for hazebot info."
         ]
