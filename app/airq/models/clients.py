@@ -28,16 +28,13 @@ class Client(db.Model):  # type: ignore
     @classmethod
     def get_or_create(
         cls, identifier: str, type_code: ClientIdentifierType
-    ) -> typing.Tuple["Client", bool]:
+    ) -> "Client":
         client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
             client = cls(identifier=identifier, type_code=type_code)
             db.session.add(client)
             db.session.commit()
-            was_created = True
-        else:
-            was_created = False
-        return client, was_created
+        return client
 
     def get_last_requested_zipcode(self) -> typing.Optional[str]:
         row = (
