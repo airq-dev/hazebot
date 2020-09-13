@@ -2,7 +2,7 @@ from flask import request
 from twilio.twiml.messaging_response import MessagingResponse
 
 from airq import commands
-from airq.models.requests import ClientIdentifierType
+from airq.models.clients import ClientIdentifierType
 
 
 def healthcheck() -> str:

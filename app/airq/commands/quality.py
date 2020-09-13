@@ -80,7 +80,7 @@ class GetQuality(ApiCommand):
                 repeat = directive == "l"
 
             if repeat:
-                zipcode = Request.get_last_zipcode(ctx.identifier, ctx.identifier_type)
+                zipcode = ctx.client.get_last_requested_zipcode()
                 if zipcode:
                     user_input.append(zipcode)
 
@@ -145,9 +145,7 @@ class GetQuality(ApiCommand):
             message.append("")
             message.extend(self._get_menu())
 
-            Request.increment(
-                self.zipcode, self.ctx.identifier, self.ctx.identifier_type
-            )
+            self.ctx.client.log_request(self.zipcode)
 
             return message
 

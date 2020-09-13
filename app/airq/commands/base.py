@@ -2,13 +2,13 @@ import abc
 import dataclasses
 import typing
 
-from airq.models.requests import ClientIdentifierType
+from airq.models.clients import Client
+from airq.models.clients import ClientIdentifierType
 
 
 @dataclasses.dataclass
 class CommandContext:
-    identifier: str
-    identifier_type: ClientIdentifierType
+    client: Client
     user_input: str
 
 
