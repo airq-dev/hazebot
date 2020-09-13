@@ -1,5 +1,4 @@
 from airq.config import db
-from airq.lib.readings import Pm25
 
 
 class Metric(db.Model):  # type: ignore
@@ -19,7 +18,3 @@ class Metric(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return f"<Metric {self.value} from {self.num_sensors}>"
-
-    @property
-    def pm25_level(self) -> Pm25:
-        return Pm25.from_measurement(self.value)

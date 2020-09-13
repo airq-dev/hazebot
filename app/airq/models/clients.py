@@ -49,11 +49,17 @@ class Client(db.Model):  # type: ignore
         return None
 
     def log_request(self, zipcode: Zipcode):
-        request = Request.query.filter_by(client_id=self.id, zipcode=zipcode.zipcode,).first()
+        request = Request.query.filter_by(
+            client_id=self.id, zipcode=zipcode.zipcode,
+        ).first()
         now = datetime.datetime.now().timestamp()
         if request is None:
             request = Request(
-                client_id=self.id, zipcode=zipcode.zipcode, count=1, first_ts=now, last_ts=now,
+                client_id=self.id,
+                zipcode=zipcode.zipcode,
+                count=1,
+                first_ts=now,
+                last_ts=now,
             )
             db.session.add(request)
         else:

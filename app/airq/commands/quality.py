@@ -41,7 +41,7 @@ MAX_NUM_NEARBY_ZIPCODES = 200
 class AirQualityMetrics:
     zipcode: str
     city_name: str
-    distance: str
+    distance: float
     average_pm25: float
     num_readings: int
 
@@ -70,7 +70,7 @@ class GetQualityHandler(ApiCommandHandler):
 
     def handle(self, zipcode: typing.Optional[str] = None) -> typing.List[str]:
         aqi_metrics = {}
-        target_metrics = {}
+        target_metrics: typing.Optional[AirQualityMetrics] = None
 
         if zipcode is None:
             zipcode = self.client.get_last_requested_zipcode()
@@ -88,7 +88,7 @@ class GetQualityHandler(ApiCommandHandler):
             aqi_metrics = self._get_air_quality_metrics(zipcode)
             target_metrics = aqi_metrics.get(zipcode.id)
 
-        if not target_metrics:
+        if not (target_metrics and zipcode):
             return [
                 f'Oops! We couldn\'t determine the air quality for "{raw_zipcode}". Please try a different zip code.'
             ]
@@ -142,7 +142,10 @@ class GetQualityHandler(ApiCommandHandler):
         return message
 
     def _get_recommendations(
-        self, metrics: typing.Iterable[AirQualityMetrics], zipcode: str, pm25_cutoff: Pm25
+        self,
+        metrics: typing.Iterable[AirQualityMetrics],
+        zipcode: str,
+        pm25_cutoff: Pm25,
     ) -> typing.List[str]:
         message = []
         num_desired = 5
@@ -159,7 +162,9 @@ class GetQualityHandler(ApiCommandHandler):
                 )
         return message
 
-    def _get_air_quality_metrics(self, zipcode: Zipcode) -> typing.Dict[int, AirQualityMetrics]:
+    def _get_air_quality_metrics(
+        self, zipcode: Zipcode
+    ) -> typing.Dict[int, AirQualityMetrics]:
         # Get a all zipcodes (inclusive) within 25km
         logger.info("Retrieving metrics for zipcode %s", zipcode.zipcode)
         if self.recommend:
@@ -169,18 +174,14 @@ class GetQualityHandler(ApiCommandHandler):
             zipcodes_map[zipcode.id] = 0
         return self._get_air_quality_metrics_for_zipcodes(zipcodes_map)
 
-    def _get_nearby_zipcodes(
-        self, zipcode: Zipcode
-    ) -> typing.Dict[int, float]:
+    def _get_nearby_zipcodes(self, zipcode: Zipcode) -> typing.Dict[int, float]:
         zipcodes_map: typing.Dict[int, float] = {}
         zipcodes_map[zipcode.id] = 0
 
         gh = list(zipcode.geohash)
         while gh:
             query = Zipcode.query.with_entities(
-                Zipcode.id,
-                Zipcode.latitude,
-                Zipcode.longitude,
+                Zipcode.id, Zipcode.latitude, Zipcode.longitude,
             )
             for i, c in enumerate(gh, start=1):
                 col = getattr(Zipcode, f"geohash_bit_{i}")
@@ -191,7 +192,9 @@ class GetQualityHandler(ApiCommandHandler):
                 [
                     (
                         r[0],
-                        haversine_distance(r[2], r[1], zipcode.longitude, zipcode.latitude,),
+                        haversine_distance(
+                            r[2], r[1], zipcode.longitude, zipcode.latitude,
+                        ),
                     )
                     for r in query.all()
                 ],
@@ -206,29 +209,34 @@ class GetQualityHandler(ApiCommandHandler):
         return zipcodes_map
 
     def _get_air_quality_metrics_for_zipcodes(
-        self,
-        zipcodes_map: typing.Dict[int, float]
+        self, zipcodes_map: typing.Dict[int, float]
     ) -> typing.Dict[int, AirQualityMetrics]:
-        subquery = Metric.query.with_entities(
-            Metric.zipcode_id, 
-            func.max(Metric.timestamp).label('max_ts')
-        ).group_by(Metric.zipcode_id).subquery('max_ts')
+        subquery = (
+            Metric.query.with_entities(
+                Metric.zipcode_id, func.max(Metric.timestamp).label("max_ts")
+            )
+            .group_by(Metric.zipcode_id)
+            .subquery("max_ts")
+        )
 
-        query = Metric.query.join(
-            subquery,
-            and_(Metric.zipcode_id == subquery.c.zipcode_id, Metric.timestamp == subquery.c.max_ts)
-        ).join(
-            Zipcode
-        ).join(
-            City
-        ).filter(
-            Zipcode.id.in_(zipcodes_map.keys())
-        ).with_entities(
-            Metric.zipcode_id,
-            Metric.value,
-            Metric.num_sensors,
-            Zipcode.zipcode,
-            City.name
+        query = (
+            Metric.query.join(
+                subquery,
+                and_(
+                    Metric.zipcode_id == subquery.c.zipcode_id,
+                    Metric.timestamp == subquery.c.max_ts,
+                ),
+            )
+            .join(Zipcode)
+            .join(City)
+            .filter(Zipcode.id.in_(zipcodes_map.keys()))
+            .with_entities(
+                Metric.zipcode_id,
+                Metric.value,
+                Metric.num_sensors,
+                Zipcode.zipcode,
+                City.name,
+            )
         )
 
         aqi_metrics = {}
@@ -238,7 +246,7 @@ class GetQualityHandler(ApiCommandHandler):
                 city_name=city_name,
                 distance=zipcodes_map[zipcode_id],
                 average_pm25=pm25,
-                num_readings=num_sensors
+                num_readings=num_sensors,
             )
 
         return aqi_metrics
