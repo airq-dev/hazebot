@@ -26,7 +26,9 @@ class Client(db.Model):  # type: ignore
     )
 
     @classmethod
-    def get_or_create(cls, identifier: str, type_code: ClientIdentifierType) -> typing.Tuple["Client", bool]:
+    def get_or_create(
+        cls, identifier: str, type_code: ClientIdentifierType
+    ) -> typing.Tuple["Client", bool]:
         client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
             client = cls(identifier=identifier, type_code=type_code)

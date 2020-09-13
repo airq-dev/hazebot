@@ -24,9 +24,7 @@ def handle_command(
     user_input: str, identifier: str, identifier_type: ClientIdentifierType
 ) -> str:
     client, _ = Client.get_or_create(identifier, identifier_type)
-    ctx = CommandContext(
-        user_input=user_input, client=client
-    )
+    ctx = CommandContext(user_input=user_input, client=client)
     message = _parse_command(ctx).handle()
 
     if identifier_type == ClientIdentifierType.IP:
