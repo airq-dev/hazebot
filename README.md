@@ -44,15 +44,6 @@ You'll also want to install the latest version of [mypy](http://mypy-lang.org/) 
 
 ### Local Setup
 
-To run `airq` locally, you'll need a set of AWS credentials with full SQS permissions (we should consider using redis for local development so this isn't necessary). Provision these for yourself and put them in a file called `.env.dev.secrets` at the root of this repo, as follows:
-
-```
-AWS_ACCESS_KEY_ID=<your access key>
-AWS_SECRET_ACCESS_KEY=<your secret key>
-```
-
-Do not commit this file! (It's in the .gitignore by default.) 
-
-Once you've done that, run `docker-compose up --build`. Then run `flask sync --geography` to build all the tables — this will take some time. Once this is done, you can test the API by navigating to `http://localhost:5000/quality?zipcode<YOUR ZIPCODE>`.
+Clone this repo and run `docker-compose up --build`. Then run `flask sync --geography` to build all the tables — this will take some time. Once this is done, you can test the API by navigating to `http://localhost:5000/quality?zipcode<YOUR ZIPCODE>`.
 
 The `/quality` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.

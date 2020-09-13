@@ -28,6 +28,10 @@ class Zipcode(db.Model):  # type: ignore
     def __repr__(self) -> str:
         return f"<Zipcode {self.zipcode}>"
 
+    @classmethod
+    def get_by_zipcode(cls, zipcode: str) -> typing.Optional["Zipcode"]:
+        return cls.query.filter_by(zipcode=zipcode).first()
+
     @property
     def geohash(self) -> str:
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
