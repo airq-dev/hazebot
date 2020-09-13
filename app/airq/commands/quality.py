@@ -139,7 +139,7 @@ class GetQuality(ApiCommand):
             if self.mode == GetQualityMode.DETAILS:
                 message.append("")
                 message.append(
-                    f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {self.zipcode} is {target_metrics.average_pm25} µg/m³."
+                    f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {self.zipcode} is {target_metrics.average_pm25} micrograms/m^3."
                 )
 
             message.append("")
