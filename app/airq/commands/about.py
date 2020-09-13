@@ -8,7 +8,7 @@ class ShowAbout(ApiCommand):
     @classmethod
     def parse(cls, ctx: CommandContext) -> typing.Optional["ApiCommand"]:
         user_input = ctx.user_input.split()
-        if len(user_input) == 1 and user_input[0] == "?":
+        if len(user_input) == 1 and user_input[0].lower() == "i":
             return cls(ctx)
         return None
 
