@@ -39,6 +39,7 @@ class Route:
     ``GetQualityHandler.Mode.DETAILS``.
 
     """
+
     pattern: str
     factory: CommandHandlerFactoryProtocol
     extra: typing.Dict[str, typing.Any]

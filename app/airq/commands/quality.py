@@ -101,7 +101,13 @@ class GetQualityHandler(ApiCommandHandler):
             recommendations = self._get_recommendations(
                 metrics.values(), zipcode, target_metrics.pm25_level
             )
-            if not recommendations and self.recommend_only:
+            if recommendations:
+                if message:
+                    message.append(
+                        ""
+                    )  # Add a newline if we have other text to display.
+                message.extend(recommendations)
+            elif self.recommend_only:
                 # We couldn't find any recommendations, so display a nice message since we're also
                 # not showing any info about the zipcode.
                 msg = "We couldn't find any zipcodes near {} with better air quality than {}.".format(
@@ -110,12 +116,6 @@ class GetQualityHandler(ApiCommandHandler):
                 if target_metrics.pm25_level >= Pm25.UNHEALTHY:
                     msg += " Time to stay inside!"
                 message.append(msg)
-            else:
-                if message:
-                    message.append(
-                        ""
-                    )  # Add a newline if we have other text to display.
-                message.extend(recommendations)
 
         if self.mode == self.Mode.DETAILS:
             message.append("")

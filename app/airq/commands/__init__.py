@@ -11,13 +11,13 @@ from airq.models.clients import ClientIdentifierType
 ROUTES = [
     GetQualityHandler.route(pattern=r"^(?P<zipcode>\d{5})$"),
     GetQualityHandler.route(
-        pattern=r"^d(?:\s(?P<zipcode>\d{5}))?$", mode=GetQuality.Mode.DETAILS
+        pattern=r"^d(?:\s(?P<zipcode>\d{5}))?$", mode=GetQualityHandler.Mode.DETAILS
     ),
     GetQualityHandler.route(pattern=r"^l$"),
     GetQualityHandler.route(
-        pattern=r"^r(?:\s(?P<zipcode>\d{5}))?$", mode=GetQuality.Mode.RECOMMEND
+        pattern=r"^r(?:\s(?P<zipcode>\d{5}))?$", mode=GetQualityHandler.Mode.RECOMMEND
     ),
-    ShowAboutHandler.route(pattern=r"^?$"),
+    ShowAboutHandler.route(pattern=r"^\?$"),
     ShowMenuHandler.route(pattern=r"^m$"),
 ]
 
