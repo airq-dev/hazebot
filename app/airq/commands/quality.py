@@ -123,13 +123,14 @@ class GetQuality(ApiCommand):
 
             if self.recommend:
                 # We're either in details or recommend mode
-                recommendations = self._get_recommendations(metrics.values(), target_metrics.pm25_level)
+                recommendations = self._get_recommendations(
+                    metrics.values(), target_metrics.pm25_level
+                )
                 if not recommendations and self.recommend_only:
-                    # We couldn't find any recommendations, so display a nice message since we're also 
+                    # We couldn't find any recommendations, so display a nice message since we're also
                     # not showing any info about the zipcode.
-                    msg = "We couldn\'t find any zipcodes near {} with better air quality than {}.".format(
-                        self.zipcode,
-                        target_metrics.pm25_level.display,
+                    msg = "We couldn't find any zipcodes near {} with better air quality than {}.".format(
+                        self.zipcode, target_metrics.pm25_level.display,
                     )
                     if target_metrics.pm25_level >= Pm25.UNHEALTHY:
                         msg += " Time to stay inside!"
@@ -152,29 +153,26 @@ class GetQuality(ApiCommand):
 
             return message
 
-    def _get_recommendations(self, metrics: typing.Iterable[Metrics], pm25_cutoff: Pm25) -> typing.List[str]:
+    def _get_recommendations(
+        self, metrics: typing.Iterable[Metrics], pm25_cutoff: Pm25
+    ) -> typing.List[str]:
         message = []
         num_desired = 5
         lower_pm25_metrics = sorted(
             [
                 m
                 for m in metrics
-                if m.zipcode != self.zipcode
-                and m.pm25_level < pm25_cutoff
+                if m.zipcode != self.zipcode and m.pm25_level < pm25_cutoff
             ],
             # Sort by pm25 level, and then by distance from the desired zip to break ties
             key=lambda m: (m.pm25_level, m.distance),
         )[:num_desired]
         if lower_pm25_metrics:
             message.append("")
-            message.append(
-                "Try these other places near you for better air quality:"
-            )
+            message.append("Try these other places near you for better air quality:")
             for m in lower_pm25_metrics:
                 message.append(
-                    " - {} {}: {}".format(
-                        m.city_name, m.zipcode, m.pm25_level.display
-                    )
+                    " - {} {}: {}".format(m.city_name, m.zipcode, m.pm25_level.display)
                 )
         return message
 
