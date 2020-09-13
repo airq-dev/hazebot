@@ -17,6 +17,12 @@
                 "2",
                 "--threads",
                 "4",
+                "--max-requests",
+                "1000",
+                "--worker-class",
+                "gthread",
+                "--worker-tmp-dir", 
+                "/dev/shm",
                 "airq:app"
             ],
             "environment": [
