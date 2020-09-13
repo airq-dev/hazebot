@@ -32,8 +32,13 @@ class ApiCommand(metaclass=CommandMeta):
 
     def _get_menu(self) -> typing.List[str]:
         return [
-            "Reply R for places with better air, "
+            "Reply R for safer places, "
             "D for details, "
             "L for previous zip, "
-            "and ? for information on hazebot."
+            "and ? for hazebot info."
+        ]
+
+    def _get_about(self) -> typing.List[str]:
+        return [
+            "hazebot runs on PurpleAir sensor data and is a free text service designed to provide accessible local air quality information. Visit hazebot.org to learn more."
         ]
