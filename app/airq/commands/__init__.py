@@ -4,21 +4,31 @@ from airq.commands.invalid import InvalidInputHandler
 from airq.commands.about import ShowAboutHandler
 from airq.commands.menu import ShowMenuHandler
 from airq.commands.quality import GetQualityHandler
+from airq.commands.stop import StopHandler
+from airq.commands.watch import WatchHandler
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
+ZIPCODE_REGEX = "(?P<zipcode>\d{5})"
+
+
 ROUTES = [
-    GetQualityHandler.route(pattern=r"^(?P<zipcode>\d{5})$"),
+    GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
     GetQualityHandler.route(
-        pattern=r"^d(?:\s(?P<zipcode>\d{5}))?$", mode=GetQualityHandler.Mode.DETAILS
+        pattern=r"^d(?:\s{})?$".format(ZIPCODE_REGEX),
+        mode=GetQualityHandler.Mode.DETAILS,
     ),
     GetQualityHandler.route(pattern=r"^l$"),
     GetQualityHandler.route(
-        pattern=r"^r(?:\s(?P<zipcode>\d{5}))?$", mode=GetQualityHandler.Mode.RECOMMEND
+        pattern=r"^r(?:\s{})?$".format(ZIPCODE_REGEX),
+        mode=GetQualityHandler.Mode.RECOMMEND,
     ),
     ShowAboutHandler.route(pattern=r"^\?$"),
     ShowMenuHandler.route(pattern=r"^m$"),
+    StopHandler.route(pattern=r"^stop"),
+    StopHandler.route(pattern=r"^stop\sall", stop_all=True),
+    WatchHandler.route(pattern=r"^w(?:\s{})?$".format(ZIPCODE_REGEX)),
 ]
 
 
