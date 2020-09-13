@@ -10,7 +10,7 @@ from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
-VALID_COMMANDS = [ShowMenu, GetQuality]
+VALID_COMMANDS = [ShowMenu, GetQuality, ShowAbout]
 
 
 def _parse_command(ctx: CommandContext) -> ApiCommand:

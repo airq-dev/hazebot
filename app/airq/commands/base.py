@@ -35,5 +35,5 @@ class ApiCommand(metaclass=CommandMeta):
             "Reply R for safer places, "
             "D for details, "
             "L for latest, "
-            "and I for hazebot info."
+            "and ? for hazebot info."
         ]
