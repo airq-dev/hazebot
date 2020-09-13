@@ -1,13 +1,17 @@
 import collections
+import datetime
 import geohash
 import logging
 import requests
 import typing
 
+from sqlalchemy import func
+
 from airq.config import db
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
+from airq.models.metrics import Metric
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor, is_valid_reading
 from airq.models.zipcodes import Zipcode
@@ -20,6 +24,12 @@ TRelationsMap = typing.Dict[int, typing.Dict[int, float]]
 
 
 PURPLEAIR_URL = "https://www.purpleair.com/json"
+
+# Try to get at least 10 readings per zipcode.
+DESIRED_NUM_READINGS = 10
+
+# Allow any number of readings within 5km from the zipcode centroid.
+DESIRED_READING_DISTANCE_KM = 5
 
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
@@ -160,6 +170,66 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
             db.session.commit()
 
 
+def _metrics_sync():
+    metrics = []
+    timestamp = datetime.datetime.now().timestamp()
+
+    zipcodes_to_sensors = collections.defaultdict(list)
+    for zipcode_id, latest_reading, distance in (
+        Sensor.query.join(SensorZipcodeRelation)
+        .filter(Sensor.updated_at > timestamp - (30 * 60))
+        .with_entities(
+            SensorZipcodeRelation.zipcode_id,
+            Sensor.latest_reading,
+            SensorZipcodeRelation.distance,
+        )
+        .all()
+    ):
+        zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
+
+    for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
+        readings: typing.List[float] = []
+        closest_reading = float("inf")
+        farthest_reading = 0.0
+        for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
+            if (
+                len(readings) < DESIRED_NUM_READINGS
+                or distance < DESIRED_READING_DISTANCE_KM
+            ):
+                readings.append(reading)
+                closest_reading = min(distance, closest_reading)
+                farthest_reading = max(distance, farthest_reading)
+            else:
+                break
+
+        if readings:
+            metrics.append(
+                Metric(
+                    zipcode_id=zipcode_id,
+                    timestamp=timestamp,
+                    value=round(sum(readings) / len(readings), ndigits=3),
+                    num_sensors=len(readings),
+                    min_sensor_distance=round(closest_reading, ndigits=3),
+                    max_sensor_distance=round(farthest_reading, ndigits=3),
+                )
+            )
+
+    logger.info("Inserting %s metrics", len(metrics))
+    for objects in chunk_list(metrics, batch_size=5000):
+        db.session.bulk_save_objects(objects)
+        db.session.commit()
+
+    # Delete all metrics more than two hours old
+    cutoff = timestamp - (2 * 60 * 60)
+    num_deleted = (
+        db.session.query(Metric)
+        .filter(Metric.timestamp <= cutoff)
+        .delete(synchronize_session=False)
+    )
+    db.session.commit()
+    logger.info("Deleting %s stale metrics metrics", num_deleted)
+
+
 def purpleair_sync():
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_data()
@@ -171,3 +241,6 @@ def purpleair_sync():
     if moved_sensor_ids:
         logger.info("Syncing relations for %s sensors", len(moved_sensor_ids))
         _relations_sync(moved_sensor_ids, relations_map)
+
+    logger.info("Syncing metrics")
+    _metrics_sync()
