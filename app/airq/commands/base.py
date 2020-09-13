@@ -37,8 +37,3 @@ class ApiCommand(metaclass=CommandMeta):
             "L for previous zip, "
             "and ? for hazebot info."
         ]
-
-    def _get_about(self) -> typing.List[str]:
-        return [
-            "hazebot runs on PurpleAir sensor data and is a free text service designed to provide accessible local air quality information. Visit hazebot.org to learn more."
-        ]

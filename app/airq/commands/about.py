@@ -13,4 +13,6 @@ class ShowAbout(ApiCommand):
         return None
 
     def handle(self) -> typing.List[str]:
-        return self._get_about()
+        return [
+            "hazebot runs on PurpleAir sensor data and is a free text service designed to provide accessible local air quality information. Visit hazebot.org to learn more."
+        ]
