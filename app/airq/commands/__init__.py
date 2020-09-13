@@ -5,6 +5,7 @@ from airq.commands.base import CommandContext
 from airq.commands.invalid import InvalidInput
 from airq.commands.menu import ShowMenu
 from airq.commands.quality import GetQuality
+from airq.commands.about import ShowAbout
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
