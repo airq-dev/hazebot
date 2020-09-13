@@ -34,9 +34,8 @@ class ApiCommand(metaclass=CommandMeta):
 
     def _get_menu(self) -> typing.List[str]:
         return [
-            "<zipcode> - aqi for the zipcode",
-            "r - aqi for the last zipcode you checked",
-            "d <zipcode> - aqi details for the zipcode",
-            "d - aqi details for the last zipcode you checked",
-            "m - display this menu",
+            "Reply R for places with better air, "
+            "D for details, "
+            "L for previous zip, "
+            "and ? for information on hazebot."
         ]

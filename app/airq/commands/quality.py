@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import datetime
+import enum
 import logging
 import typing
 
@@ -48,34 +49,55 @@ class Metrics:
         return Pm25.from_measurement(self.average_pm25)
 
 
+class GetQualityMode(enum.Enum):
+    DEFAULT = 0
+    DETAILS = 1
+    RECOMMEND = 2
+
+
 class GetQuality(ApiCommand):
     zipcode: str
     details: bool
 
-    def __init__(self, zipcode: str, details: bool, *args):
+    def __init__(self, zipcode: str, mode: GetQualityMode, *args):
         super().__init__(*args)
         self.zipcode = zipcode
-        self.details = details
+        self.mode = mode
 
     @classmethod
     def parse(cls, ctx: CommandContext) -> typing.Optional["ApiCommand"]:
         user_input = ctx.user_input.split()
-        details = False
-        if user_input[0] in ("d", "r"):
-            directive = user_input.pop(0)
-            repeat = directive == "r"
-            details = directive == "d"
-            if details and not user_input:
+        mode = GetQualityMode.DEFAULT
+        directives = ("l", "d", "r")
+        if user_input[0].lower() in directives:
+            directive = user_input.pop(0).lower()
+
+            if directive == "d":
+                mode = GetQualityMode.DETAILS
+            if directive == "r":
+                mode = GetQualityMode.RECOMMEND
+
+            repeat = directive == "l"
+            if not user_input:
                 repeat = True
+
             if repeat:
                 zipcode = Request.get_last_zipcode(ctx.identifier, ctx.identifier_type)
                 if zipcode:
                     user_input.append(zipcode)
 
         if len(user_input) == 1 and len(user_input[0]) == 5 and user_input[0].isdigit():
-            return cls(user_input[0], details, ctx)
+            return cls(user_input[0], mode, ctx)
 
         return None
+
+    @property
+    def recommend(self) -> bool:
+        return self.mode in (GetQualityMode.DETAILS, GetQualityMode.RECOMMEND)
+
+    @property
+    def recommend_only(self) -> bool:
+        return self.mode == GetQualityMode.RECOMMEND
 
     def handle(self) -> typing.List[str]:
         metrics = self._get_metrics()
@@ -86,47 +108,43 @@ class GetQuality(ApiCommand):
             ]
         else:
             message = []
-            aqi = pm25_to_aqi(target_metrics.average_pm25)
-            message.append(
-                "Air quality near {} {} is {}{}.".format(
-                    target_metrics.city_name,
-                    self.zipcode,
-                    target_metrics.pm25_level.display.upper(),
-                    f" (AQI: {aqi})" if aqi else "",
-                )
-            )
 
-            if self.details:
-                num_desired = 3
-                lower_pm25_metrics = sorted(
-                    [
-                        m
-                        for m in metrics.values()
-                        if m.zipcode != self.zipcode
-                        and m.pm25_level < target_metrics.pm25_level
-                    ],
-                    # Sort by pm25 level, and then by distance from the desired zip to break ties
-                    key=lambda m: (m.pm25_level, m.distance),
-                )[:num_desired]
-                if lower_pm25_metrics:
-                    message.append("")
-                    message.append(
-                        "Try these other places near you for better air quality:"
+            if not self.recommend_only:
+                # We're either in details or default mode
+                aqi = pm25_to_aqi(target_metrics.average_pm25)
+                message.append(
+                    "Air quality near {} {} is {}{}.".format(
+                        target_metrics.city_name,
+                        self.zipcode,
+                        target_metrics.pm25_level.display.upper(),
+                        f" (AQI: {aqi})" if aqi else "",
                     )
-                    for m in lower_pm25_metrics:
-                        message.append(
-                            " - {} {}: {}".format(
-                                m.city_name, m.zipcode, m.pm25_level.display
-                            )
-                        )
+                )
 
+            if self.recommend:
+                # We're either in details or recommend mode
+                recommendations = self._get_recommendations(metrics.values(), target_metrics.pm25_level)
+                if not recommendations and self.recommend_only:
+                    # We couldn't find any recommendations, so display a nice message since we're also 
+                    # not showing any info about the zipcode.
+                    msg = "We couldn\'t find any zipcodes near {} with better air quality than {}.".format(
+                        self.zipcode,
+                        target_metrics.pm25_level.display,
+                    )
+                    if target_metrics.pm25_level >= Pm25.UNHEALTHY:
+                        msg += " Time to stay inside!"
+                    message.append(msg)
+                else:
+                    message.extend(recommendations)
+
+            if self.mode == GetQualityMode.DETAILS:
                 message.append("")
                 message.append(
                     f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {self.zipcode} is {target_metrics.average_pm25} µg/m³."
                 )
 
             message.append("")
-            message.append('Respond with "m" to get a full list of commands.')
+            message.extend(self._get_menu())
 
             Request.increment(
                 self.zipcode, self.ctx.identifier, self.ctx.identifier_type
@@ -134,10 +152,36 @@ class GetQuality(ApiCommand):
 
             return message
 
+    def _get_recommendations(self, metrics: typing.Iterable[Metrics], pm25_cutoff: Pm25) -> typing.List[str]:
+        message = []
+        num_desired = 5
+        lower_pm25_metrics = sorted(
+            [
+                m
+                for m in metrics
+                if m.zipcode != self.zipcode
+                and m.pm25_level < pm25_cutoff
+            ],
+            # Sort by pm25 level, and then by distance from the desired zip to break ties
+            key=lambda m: (m.pm25_level, m.distance),
+        )[:num_desired]
+        if lower_pm25_metrics:
+            message.append("")
+            message.append(
+                "Try these other places near you for better air quality:"
+            )
+            for m in lower_pm25_metrics:
+                message.append(
+                    " - {} {}: {}".format(
+                        m.city_name, m.zipcode, m.pm25_level.display
+                    )
+                )
+        return message
+
     def _get_metrics(self) -> typing.Dict[str, Metrics]:
         # Get a all zipcodes (inclusive) within 25km
         logger.info("Retrieving metrics for zipcode %s", self.zipcode)
-        if self.details:
+        if self.recommend:
             zipcodes_map = self._get_nearby_zipcodes()
         else:
             zipcodes_map = {}

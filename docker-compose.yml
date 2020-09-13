@@ -13,7 +13,6 @@ services:
       - 5000:5000
     depends_on:
       - db
-      - memcached
     stdin_open: true
     tty: true
   scheduler:
@@ -24,7 +23,6 @@ services:
       - ./.env.dev.secrets
     depends_on:
       - db
-      - memcached
   worker:
     build: ./app
     command: celery -A airq.celery worker -l info
@@ -33,12 +31,6 @@ services:
       - ./.env.dev.secrets
     depends_on:
       - db
-      - memcached
-  memcached:
-    image: memcached:latest
-    ports:
-      - 11211:11211
-    command: ["-m", "512m"]
   db:
     image: postgres
     restart: always
