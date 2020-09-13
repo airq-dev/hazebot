@@ -8,12 +8,11 @@ services:
       - ./app/:/home/app/app
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     ports:
       - 5000:5000
     depends_on:
       - db
-      - memcached
+      - redis
     stdin_open: true
     tty: true
   scheduler:
@@ -21,24 +20,21 @@ services:
     command: celery -A airq.celery beat -l info
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     depends_on:
       - db
-      - memcached
+      - redis
   worker:
     build: ./app
     command: celery -A airq.celery worker -l info
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     depends_on:
       - db
-      - memcached
-  memcached:
-    image: memcached:latest
+      - redis
+  redis:
+    image: redis:alpine
     ports:
-      - 11211:11211
-    command: ["-m", "512m"]
+      - 6379:6379
   db:
     image: postgres
     restart: always
