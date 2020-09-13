@@ -50,15 +50,12 @@ class Metrics:
 
 
 class GetQualityMode(enum.Enum):
-    DEFAULT = 0
-    DETAILS = 1
-    RECOMMEND = 2
+    DEFAULT = 0  # Just show short info about the zipcode.
+    DETAILS = 1  # Show detailed info about the zipcode and recommendations.
+    RECOMMEND = 2  # Just show recommendations
 
 
 class GetQuality(ApiCommand):
-    zipcode: str
-    details: bool
-
     def __init__(self, zipcode: str, mode: GetQualityMode, *args):
         super().__init__(*args)
         self.zipcode = zipcode
@@ -77,9 +74,10 @@ class GetQuality(ApiCommand):
             if directive == "r":
                 mode = GetQualityMode.RECOMMEND
 
-            repeat = directive == "l"
             if not user_input:
                 repeat = True
+            else:
+                repeat = directive == "l"
 
             if repeat:
                 zipcode = Request.get_last_zipcode(ctx.identifier, ctx.identifier_type)

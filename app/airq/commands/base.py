@@ -18,8 +18,6 @@ class CommandMeta(abc.ABCMeta):
 
 
 class ApiCommand(metaclass=CommandMeta):
-    ctx: CommandContext
-
     def __init__(self, ctx: CommandContext):
         self.ctx = ctx
 
