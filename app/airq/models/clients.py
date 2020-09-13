@@ -36,7 +36,7 @@ class Client(db.Model):  # type: ignore
             db.session.commit()
         return client
 
-    def get_last_requested_zipcode(self) -> typing.Optional[str]:
+    def get_last_requested_zipcode(self) -> typing.Optional[Zipcode]:
         row = (
             Request.query.with_entities(Request.zipcode)
             .filter_by(client_id=self.id)
@@ -44,18 +44,22 @@ class Client(db.Model):  # type: ignore
             .first()
         )
         if row:
-            return row[0]
+            # TODO: FK between Request and Zipcode
+            return Zipcode.get_by_zipcode(row[0])
         return None
 
-    def log_request(self, zipcode: str):
-        if not Zipcode.get_by_zipcode(zipcode):
-            return
-
-        request = Request.query.filter_by(client_id=self.id, zipcode=zipcode,).first()
+    def log_request(self, zipcode: Zipcode):
+        request = Request.query.filter_by(
+            client_id=self.id, zipcode=zipcode.zipcode,
+        ).first()
         now = datetime.datetime.now().timestamp()
         if request is None:
             request = Request(
-                client_id=self.id, zipcode=zipcode, count=1, first_ts=now, last_ts=now,
+                client_id=self.id,
+                zipcode=zipcode.zipcode,
+                count=1,
+                first_ts=now,
+                last_ts=now,
             )
             db.session.add(request)
         else:
