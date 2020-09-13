@@ -20,14 +20,23 @@ def get_celery_logger():
     return get_task_logger(__name__)
 
 
+if config.FLASK_ENV == "development":
+    # Use redis in dev so that people don't need to setup AWS credentials.
+    broker_url = "redis://redis:6379/0"
+    transport_options = {}
+else:
+    broker_url = "sqs://{}:{}@".format(
+        safequote(config.AWS_ACCESS_KEY_ID), safequote(config.AWS_SECRET_ACCESS_KEY)
+    )
+    transport_options = {"region": "us-west-1"}
+
+
 celery = Celery(config.app.import_name)
 celery.conf.update(
     accept_content=["application/json"],
     beat_schedule=BEAT_SCHEDULE,
-    broker_url="sqs://{}:{}@".format(
-        safequote(config.AWS_ACCESS_KEY_ID), safequote(config.AWS_SECRET_ACCESS_KEY)
-    ),
-    broker_transport_options={"region": "us-west-1"},
+    broker_url=broker_url,
+    broker_transport_options=transport_options,
     result_serializer="json",
     task_default_queue=f"celery-{config.FLASK_ENV}",
     task_serializer="json",
