@@ -43,15 +43,14 @@ def insert_request(
     if not Zipcode.query.filter_by(zipcode=zipcode).first():
         return
 
-    # client = Client.query.filter_by(
-    #     identifier=identifier,
-    #     type_code=identifier_type
-    # ).first()
+    client = Client.query.filter_by(
+        identifier=identifier, type_code=identifier_type
+    ).first()
 
-    # if client is None:
-    #     client = Client(identifier=identifier, type_code=identifier_type)
-    #     db.session.add(client)
-    #     db.session.commit()
+    if client is None:
+        client = Client(identifier=identifier, type_code=identifier_type)
+        db.session.add(client)
+        db.session.commit()
 
     request = Request.query.filter_by(
         client_identifier=identifier,
@@ -62,7 +61,7 @@ def insert_request(
     now = datetime.datetime.now().timestamp()
     if request is None:
         request = Request(
-            # client_id=client.id,
+            client_id=client.id,
             client_identifier=identifier,
             client_identifier_type=identifier_type,
             zipcode=zipcode,
@@ -72,7 +71,7 @@ def insert_request(
         )
         db.session.add(request)
     else:
-        # request.client_id = client.id
+        request.client_id = client.id
         request.count += 1
         request.last_ts = now
     db.session.commit()
