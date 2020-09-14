@@ -74,5 +74,8 @@ migrate = flask_migrate.Migrate(app, db)
 
 def log_exception(sender, exception, **extra):
     from airq.lib.logging import handle_exc
+
     handle_exc(exception)
+
+
 got_request_exception.connect(log_exception, app)
