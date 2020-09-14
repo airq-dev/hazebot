@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 def send_email(to_addresses: typing.List[str], subject: str, body: str) -> bool:
+    if config.DEBUG:
+        return True
+
     ses = boto3.client(
         "ses",
         region_name=config.SES_REGION,
