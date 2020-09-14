@@ -42,7 +42,7 @@ class Pm25(enum.IntEnum):
         else:
             return "Hazardous"
 
-    def to_aqi(self) -> int:
+    def to_aqi(self) -> typing.Optional[int]:
         return pm25_to_aqi(float(self))
 
     @property

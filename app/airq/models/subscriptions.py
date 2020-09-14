@@ -102,7 +102,11 @@ class Subscription(db.Model):  # type: ignore
         if not self.is_in_send_window:
             return False
 
-        metric = Metric.query.filter_by(zipcode_id=self.zipcode_id).order_by(Metric.timestamp.desc()).first()
+        metric = (
+            Metric.query.filter_by(zipcode_id=self.zipcode_id)
+            .order_by(Metric.timestamp.desc())
+            .first()
+        )
         if not metric:
             return False
 
@@ -116,20 +120,22 @@ class Subscription(db.Model):  # type: ignore
         if self.last_pm25:
             last_aqi_level = Pm25.from_measurement(self.last_pm25)
         else:
-            last_metric = Metric.query.filter(
-                Metric.zipcode_id == self.zipcode_id, Metric.timestamp != metric.timestamp
-            ).order_by(Metric.timestamp.desc()).first()
+            last_metric = (
+                Metric.query.filter(
+                    Metric.zipcode_id == self.zipcode_id,
+                    Metric.timestamp != metric.timestamp,
+                )
+                .order_by(Metric.timestamp.desc())
+                .first()
+            )
             if not last_metric:
                 return False
             last_aqi_level = last_metric.pm25_level
 
         last_aqi = last_aqi_level.to_aqi()
 
-        if (
-            last_aqi_level.is_unhealthy
-            and curr_aqi_level.is_unhealthy
-        ) or (
-            last_aqi_level.is_healthy and pm25_level.is_healthy
+        if (last_aqi_level.is_unhealthy and curr_aqi_level.is_unhealthy) or (
+            last_aqi_level.is_healthy and curr_aqi_level.is_healthy
         ):
             return False
 
