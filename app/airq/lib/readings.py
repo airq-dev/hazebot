@@ -42,6 +42,14 @@ class Pm25(enum.IntEnum):
         else:
             return "Hazardous"
 
+    @property
+    def is_unhealthy(self) -> bool:
+        return self >= self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
+
+    @property
+    def is_healthy(self) -> bool:
+        return not self.is_unhealthy
+
 
 def pm25_to_aqi(concentration: float) -> typing.Optional[int]:
     c = math.floor(10 * concentration) / 10

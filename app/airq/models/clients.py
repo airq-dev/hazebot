@@ -3,6 +3,7 @@ import enum
 import typing
 
 from airq.config import db
+from airq.lib.twilio import send_sms
 from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
 
@@ -66,3 +67,8 @@ class Client(db.Model):  # type: ignore
             request.count += 1
             request.last_ts = now
         db.session.commit()
+
+    def send_message(self, message: str):
+        if self.type_code == ClientIdentifierType.PHONE_NUMBER:
+            send_sms(message, self.identifier)
+        # Other clients types don't yet support message sending.

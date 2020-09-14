@@ -25,6 +25,10 @@
                 {
                     "name": "FLASK_ENV",
                     "value": "production"
+                },
+                {
+                    "name": "TWILIO_NUMBER",
+                    "value": "+12627472332"
                 }
             ],
             "secrets": [
@@ -55,6 +59,14 @@
                 {
                     "name": "POSTGRES_USER",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_USER-1EVSsZ"
+                },
+                {
+                    "name": "TWILIO_AUTHTOKEN",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:TWILIO_AUTHTOKEN-KDBKRb"
+                },
+                {
+                    "name": "TWILIO_SID",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:TWILIO_SID-CR9lLI"
                 }
             ],
             "mountPoints": [],

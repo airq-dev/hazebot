@@ -7,6 +7,10 @@ FLASK_ENV = os.getenv("FLASK_ENV", "development")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
+TWILIO_AUTHTOKEN = os.getenv("TWILIO_AUTHTOKEN", "")
+TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
+TWILIO_SID = os.getenv("TWILIO_SID", "")
+
 PG_DB = os.getenv("POSTGRES_DB", "postgres")
 PG_HOST = os.getenv("POSTGRES_HOST", "db")
 PG_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
