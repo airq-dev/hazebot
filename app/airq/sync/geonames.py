@@ -8,6 +8,7 @@ import typing
 import zipfile
 
 from airq.config import db
+from airq.lib.util import chunk_list
 from airq.models.cities import City
 from airq.models.zipcodes import Zipcode
 
@@ -66,10 +67,10 @@ def _get_timezones_data() -> typing.Dict[str, str]:
     zipcode_to_timezones = {}
     with gzip.open(filename) as f:
         for line in f:
-            line = line.strip()
+            line = line.decode().strip()
             if line.startswith("INSERT INTO"):
                 i = 0
-                while tokens[i] != "(":
+                while line[i] != "(":
                     i += 1
                 i += 1  # Skip the leading "("
                 j = len(line) - 1
@@ -78,8 +79,8 @@ def _get_timezones_data() -> typing.Dict[str, str]:
                 row_defs = line[i:j].split("),(")
                 for row_def in row_defs:
                     fields = row_def.split(",")
-                    zipcode = fields[1].strip()
-                    timezone = fields[6].strip()
+                    zipcode = fields[1][1:-1].strip()
+                    timezone = fields[6][1:-1].strip()
                     zipcode_to_timezones[zipcode] = timezone
 
     return zipcode_to_timezones
@@ -132,13 +133,15 @@ def _zipcodes_sync(geonames_data: TGeonamesData, cities_map: TCitiesMap, timezon
 
     if new_zipcodes:
         logger.info("Creating %s zipcodes", len(new_zipcodes))
-        db.session.bulk_save_objects(new_zipcodes)
-        db.session.commit()
+        for objects in chunk_list(new_zipcodes):
+            db.session.bulk_save_objects(objects)
+            db.session.commit()
 
     if updates:
         logger.info("Updating %s zipcodes", len(updates))
-        db.session.bulk_update_mappings(Zipcode, updates)
-        db.session.commit()
+        for mappings in chunk_list(updates):
+            db.session.bulk_update_mappings(Zipcode, mappings)
+            db.session.commit()
 
 
 def geonames_sync():
