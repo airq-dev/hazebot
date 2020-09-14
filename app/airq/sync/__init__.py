@@ -31,5 +31,9 @@ def models_sync(force_rebuild_geography: typing.Optional[bool] = None):
     if force_rebuild_geography:
         geonames_sync()
     purpleair_sync()
-    end_ts = time.perf_counter()
-    logger.info("Completed models_sync in %s seconds", end_ts - start_ts)
+    duration = time.perf_counter() - start_ts
+    if duration > 60 * 5:
+        log_level = logging.ERROR
+    else:
+        log_level = logging.INFO
+    logger.log(log_level, "Completed models_sync in %s seconds", duration)

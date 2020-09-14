@@ -1,6 +1,7 @@
+import typing
 from airq.config import db
-
 from airq.lib.readings import Pm25
+from airq.lib.readings import pm25_to_aqi
 
 
 class Metric(db.Model):  # type: ignore
@@ -24,3 +25,7 @@ class Metric(db.Model):  # type: ignore
     @property
     def pm25_level(self) -> Pm25:
         return Pm25.from_measurement(self.value)
+
+    @property
+    def aqi(self) -> typing.Optional[int]:
+        return pm25_to_aqi(self.value)
