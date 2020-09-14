@@ -33,6 +33,10 @@
             ],
             "secrets": [
                 {
+                    "name": "ADMIN_EMAILS",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:ADMIN_EMAILS-nIJ3UO"
+                },
+                {
                     "name": "AWS_ACCESS_KEY_ID",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:AWS_ACCESS_KEY_ID-hPCpxF"
                 },
