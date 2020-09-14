@@ -1,8 +1,10 @@
 import os
+import typing
 from logging.config import dictConfig
 
 
 FLASK_ENV = os.getenv("FLASK_ENV", "development")
+DEBUG = FLASK_ENV == "development"
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
@@ -26,7 +28,7 @@ PG_USER = os.getenv("POSTGRES_USER", "postgres")
 # Init logging before doing anything else.
 #
 # TODO: Send errors to admins as emails
-LOGGING_CONFIG = {
+LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
     "version": 1,
     "disable_existing_loggers": True,
     "formatters": {
@@ -41,6 +43,13 @@ LOGGING_CONFIG = {
     },
     "root": {"level": "INFO", "handlers": ["wsgi"]},
 }
+if not DEBUG:
+    LOGGING_CONFIG["handlers"]["mail_admins"] = {
+        "class": "airq.lib.logging.AdminEmailHandler",
+        "formatter": "default",
+        "level": "ERROR",
+    }
+    LOGGING_CONFIG["root"]["handlers"].append("mail_admins")
 dictConfig(LOGGING_CONFIG)
 
 import flask
@@ -73,9 +82,7 @@ migrate = flask_migrate.Migrate(app, db)
 
 
 def log_exception(sender, exception, **extra):
-    from airq.lib.logging import handle_exc
-
-    handle_exc(exception)
+    app.logger.exception(exception)
 
 
 got_request_exception.connect(log_exception, app)

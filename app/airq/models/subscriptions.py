@@ -125,9 +125,9 @@ class Subscription(db.Model):  # type: ignore
             zipcode=self.zipcode.zipcode,
             direction="up" if curr_metrics.value > last_metrics.value else "down",
             curr_aqi_level=curr_metrics.pm25_level.display,
-            curr_aqi=curr_metrics.value,
+            curr_aqi=curr_metrics.aqi,
             last_aqi_level=last_metrics.pm25_level.display,
-            last_aqi=last_metrics.value,
+            last_aqi=last_metrics.aqi,
         )
         self.client.send_message(message)
 

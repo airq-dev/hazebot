@@ -55,9 +55,6 @@ class ContextTask(celery.Task):  # type: ignore
         get_celery_logger().exception(
             "%s: %s", type(exc).__name__, str(exc), exc_info=exc
         )
-        from airq.lib.logging import handle_exc
-
-        handle_exc(exc)
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
 
