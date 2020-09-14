@@ -108,14 +108,13 @@ class Subscription(db.Model):  # type: ignore
         curr_metrics = metrics[0]
         last_metrics = metrics[1]
 
-        # TODO: Uncomment this once we've confirmed these send every hour
-        # if (
-        #     curr_metrics.pm25_level.is_unhealthy
-        #     and last_metrics.pm25_level.is_unhealthy
-        # ) or (
-        #     curr_metrics.pm25_level.is_healthy and last_metrics.pm25_level.is_healthy
-        # ):
-        #     return False
+        if (
+            curr_metrics.pm25_level.is_unhealthy
+            and last_metrics.pm25_level.is_unhealthy
+        ) or (
+            curr_metrics.pm25_level.is_healthy and last_metrics.pm25_level.is_healthy
+        ):
+            return False
 
         message = (
             "AQI near {city} {zipcode} is now {curr_aqi_level} ({curr_aqi}) {direction} from {last_aqi_level} ({last_aqi})\n"
