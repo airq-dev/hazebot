@@ -40,26 +40,21 @@ class Client(db.Model):  # type: ignore
         return client
 
     def get_last_requested_zipcode(self) -> typing.Optional[Zipcode]:
-        row = (
-            Request.query.with_entities(Request.zipcode)
-            .filter_by(client_id=self.id)
+        return (
+            Zipcode.query.join(Request)
+            .filter(Request.client_id == self.id)
             .order_by(Request.last_ts.desc())
             .first()
         )
-        if row:
-            # TODO: FK between Request and Zipcode
-            return Zipcode.get_by_zipcode(row[0])
-        return None
 
     def log_request(self, zipcode: Zipcode):
         request = Request.query.filter_by(
-            client_id=self.id, zipcode=zipcode.zipcode,
+            client_id=self.id, zipcode_id=zipcode.id,
         ).first()
         now = datetime.datetime.now().timestamp()
         if request is None:
             request = Request(
                 client_id=self.id,
-                zipcode=zipcode.zipcode,
                 zipcode_id=zipcode.id,
                 count=1,
                 first_ts=now,
