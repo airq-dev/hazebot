@@ -67,7 +67,7 @@ class Subscription(db.Model):  # type: ignore
             .join(Client)
             .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
-            # .filter(cls.last_executed_at < cutoff)
+            .filter(cls.last_executed_at < cutoff)
             .all()
         )
 
