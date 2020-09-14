@@ -6,7 +6,6 @@ from sqlalchemy.orm import joinedload
 
 from airq.config import db
 from airq.lib.readings import Pm25
-from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
