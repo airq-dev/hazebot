@@ -1,4 +1,3 @@
-import logging
 from celery import Celery
 from celery import signals
 from celery.schedules import crontab
