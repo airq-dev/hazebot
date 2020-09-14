@@ -8,7 +8,6 @@ services:
       - ./app/:/home/app/app
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     ports:
       - 5000:5000
     depends_on:
@@ -21,7 +20,6 @@ services:
     command: celery -A airq.celery beat -l info
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     depends_on:
       - db
       - redis
@@ -30,7 +28,6 @@ services:
     command: celery -A airq.celery worker -l info
     env_file:
       - ./.env.dev
-      - ./.env.dev.secrets
     depends_on:
       - db
       - redis

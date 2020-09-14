@@ -5,6 +5,8 @@ import typing
 from sqlalchemy.orm import joinedload
 
 from airq.config import db
+from airq.lib.readings import Pm25
+from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
@@ -29,6 +31,7 @@ class Subscription(db.Model):  # type: ignore
     created_at = db.Column(db.Integer(), nullable=False)
     disabled_at = db.Column(db.Integer(), default=0, nullable=False, index=True)
     last_executed_at = db.Column(db.Integer(), default=0, nullable=False, index=True)
+    last_pm25 = db.Column(db.Float(), nullable=True)
 
     client = db.relationship("Client")
     zipcode = db.relationship("Zipcode")
@@ -49,6 +52,9 @@ class Subscription(db.Model):  # type: ignore
         db.session.commit()
 
     def disable(self):
+        # Wipe last_pm25 so when this comes back online we don't hold onto
+        # a value from potentially months ago.
+        self.last_pm25 = None
         self.disabled_at = datetime.datetime.now().timestamp()
         db.session.commit()
 
@@ -61,7 +67,7 @@ class Subscription(db.Model):  # type: ignore
             .join(Client)
             .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
-            .filter(cls.last_executed_at < cutoff)
+            # .filter(cls.last_executed_at < cutoff)
             .all()
         )
 
@@ -96,23 +102,34 @@ class Subscription(db.Model):  # type: ignore
         if not self.is_in_send_window:
             return False
 
-        metrics = (
-            Metric.query.filter_by(zipcode_id=self.zipcode_id)
-            .order_by(Metric.timestamp.desc())
-            .limit(2)
-            .all()
-        )
-        if len(metrics) != 2:
+        metric = Metric.query.filter_by(zipcode_id=self.zipcode_id).order_by(Metric.timestamp.desc()).first()
+        if not metric:
             return False
 
-        curr_metrics = metrics[0]
-        last_metrics = metrics[1]
+        curr_aqi_level = metric.pm25_level
+        curr_aqi = curr_aqi_level.to_aqi()
+
+        # Only send if the pm25 changed from healthy to unhealthy or visa-versa
+        # since the last time we sent this alert.
+        # If we've never sent this alert, then just check that the most recent pm25
+        # readings have changed from healthy to unhealthy (or visa-versa).
+        if self.last_pm25:
+            last_aqi_level = Pm25.from_measurement(self.last_pm25)
+        else:
+            last_metric = Metric.query.filter(
+                Metric.zipcode_id == self.zipcode_id, Metric.timestamp != metric.timestamp
+            ).order_by(Metric.timestamp.desc()).first()
+            if not last_metric:
+                return False
+            last_aqi_level = last_metric.pm25_level
+
+        last_aqi = last_aqi_level.to_aqi()
 
         if (
-            curr_metrics.pm25_level.is_unhealthy
-            and last_metrics.pm25_level.is_unhealthy
+            last_aqi_level.is_unhealthy
+            and curr_aqi_level.is_unhealthy
         ) or (
-            curr_metrics.pm25_level.is_healthy and last_metrics.pm25_level.is_healthy
+            last_aqi_level.is_healthy and pm25_level.is_healthy
         ):
             return False
 
@@ -123,14 +140,15 @@ class Subscription(db.Model):  # type: ignore
         ).format(
             city=self.zipcode.city.name,
             zipcode=self.zipcode.zipcode,
-            direction="up" if curr_metrics.value > last_metrics.value else "down",
-            curr_aqi_level=curr_metrics.pm25_level.display,
-            curr_aqi=curr_metrics.aqi,
-            last_aqi_level=last_metrics.pm25_level.display,
-            last_aqi=last_metrics.aqi,
+            direction="up" if curr_aqi > last_aqi else "down",
+            curr_aqi_level=curr_aqi_level.display,
+            curr_aqi=curr_aqi,
+            last_aqi_level=last_aqi_level.display,
+            last_aqi=last_aqi,
         )
         self.client.send_message(message)
 
+        self.last_pm25 = metric.value
         self.last_executed_at = datetime.datetime.now().timestamp()
         db.session.commit()
 

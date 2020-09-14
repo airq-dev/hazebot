@@ -42,6 +42,9 @@ class Pm25(enum.IntEnum):
         else:
             return "Hazardous"
 
+    def to_aqi(self) -> int:
+        return pm25_to_aqi(float(self))
+
     @property
     def is_unhealthy(self) -> bool:
         return self >= self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
