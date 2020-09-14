@@ -87,7 +87,9 @@ class Subscription(db.Model):  # type: ignore
 
     @property
     def is_in_send_window(self) -> bool:
-        dt = datetime.datetime.now(tz=pytz.timezone(self.zipcode.timezone))
+        # Timezone can be null since our data is incomplete.
+        timezone = self.zipcode.timezone or "America/Los_Angeles"
+        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
         return 8 <= dt.hour <= 21
 
     def maybe_notify(self) -> bool:
