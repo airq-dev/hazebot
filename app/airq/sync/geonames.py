@@ -61,7 +61,7 @@ def _get_geonames_data() -> TGeonamesData:
 
 
 def _get_timezones_data() -> typing.Dict[str, str]:
-    filename = 'zipcodes_to_timezones.gz'
+    filename = "zipcodes_to_timezones.gz"
     _download_zipfile(ZIP_2_TIMEZONES_URL, filename)
 
     zipcode_to_timezones = {}
@@ -108,14 +108,23 @@ def _build_cities_map(geonames_data: TGeonamesData) -> TCitiesMap:
     return cities_map
 
 
-def _zipcodes_sync(geonames_data: TGeonamesData, cities_map: TCitiesMap, timezones_map: typing.Dict[str, str]):
+def _zipcodes_sync(
+    geonames_data: TGeonamesData,
+    cities_map: TCitiesMap,
+    timezones_map: typing.Dict[str, str],
+):
     existing_zipcodes = {zipcode.zipcode: zipcode for zipcode in Zipcode.query.all()}
     updates = []
     new_zipcodes = []
     for zipcode, city_name, state_code, latitude, longitude in geonames_data:
         obj = existing_zipcodes.get(zipcode)
         timezone = timezones_map.get(zipcode)
-        if not obj or obj.latitude != latitude or obj.longitude != longitude or timezone != obj.timezone:
+        if (
+            not obj
+            or obj.latitude != latitude
+            or obj.longitude != longitude
+            or timezone != obj.timezone
+        ):
             gh = geohash.encode(latitude, longitude)
             data = dict(
                 zipcode=zipcode,
