@@ -1,6 +1,7 @@
 alembic==1.4.2
 amqp==2.6.1
 billiard==3.6.3.0
+blinker==1.4
 boto3==1.14.56
 botocore==1.17.56
 celery==4.4.7

@@ -7,6 +7,11 @@ FLASK_ENV = os.getenv("FLASK_ENV", "development")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
+ADMIN_EMAILS = os.getenv("ADMIN_EMAILS", "").split(",")
+
+SES_REGION = os.getenv("SES_REGION", "")
+SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "")
+
 TWILIO_AUTHTOKEN = os.getenv("TWILIO_AUTHTOKEN", "")
 TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
 TWILIO_SID = os.getenv("TWILIO_SID", "")
@@ -41,6 +46,7 @@ dictConfig(LOGGING_CONFIG)
 import flask
 import flask_migrate
 import flask_sqlalchemy
+from flask import got_request_exception
 from airq import middleware
 
 app = flask.Flask(__name__)
@@ -64,3 +70,9 @@ app.config.from_mapping(config)
 
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
+
+
+def log_exception(sender, exception, **extra):
+    from airq.lib.logging import handle_exc
+    handle_exc(exception)
+got_request_exception.connect(log_exception, app)
