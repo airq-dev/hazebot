@@ -12,6 +12,7 @@ class Zipcode(db.Model):  # type: ignore
     city_id = db.Column(db.Integer(), db.ForeignKey("cities.id"), nullable=False)
     latitude = db.Column(db.Float(asdecimal=True), nullable=False)
     longitude = db.Column(db.Float(asdecimal=True), nullable=False)
+    timezone = db.Column(db.String(), nullable=True)
     geohash_bit_1 = db.Column(db.String(), nullable=False)
     geohash_bit_2 = db.Column(db.String(), nullable=False)
     geohash_bit_3 = db.Column(db.String(), nullable=False)
