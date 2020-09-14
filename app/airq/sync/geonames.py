@@ -1,6 +1,7 @@
 import collections
 import decimal
 import geohash
+import gzip
 import logging
 import requests
 import typing
@@ -22,16 +23,21 @@ TCitiesMap = typing.Dict[str, typing.Dict[str, City]]
 
 COUNTRY_CODE = "US"
 GEONAMES_URL = f"http://download.geonames.org/export/zip/{COUNTRY_CODE}.zip"
+ZIP_2_TIMEZONES_URL = "https://sourceforge.net/projects/zip2timezone/files/timezonebyzipcode_20120424.sql.gz/download"
 ARMY_PREFIXES = ("FPO", "APO")
 
 
-def _get_geonames_data() -> TGeonamesData:
-    resp = requests.get(GEONAMES_URL, stream=True)
+def _download_zipfile(url: str, filename: str):
+    resp = requests.get(url, stream=True)
     resp.raise_for_status()
-    zipfile_name = f"{COUNTRY_CODE}.zip"
-    with open(zipfile_name, "wb") as fd:
+    with open(filename, "wb") as fd:
         for chunk in resp.iter_content(chunk_size=512):
             fd.write(chunk)
+
+
+def _get_geonames_data() -> TGeonamesData:
+    zipfile_name = f"{COUNTRY_CODE}.zip"
+    _download_zipfile(GEONAMES_URL, zipfile_name)
 
     geonames_data = []
     with zipfile.ZipFile(zipfile_name) as zf:
@@ -51,6 +57,32 @@ def _get_geonames_data() -> TGeonamesData:
                 )
 
     return geonames_data
+
+
+def _get_timezones_data() -> typing.Dict[str, str]:
+    filename = 'zipcodes_to_timezones.gz'
+    _download_zipfile(ZIP_2_TIMEZONES_URL, filename)
+
+    zipcode_to_timezones = {}
+    with gzip.open(filename) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("INSERT INTO"):
+                i = 0
+                while tokens[i] != "(":
+                    i += 1
+                i += 1  # Skip the leading "("
+                j = len(line) - 1
+                j -= 1  # Skip the trailing ";"
+                j -= 1  # Skip the trailing ")"
+                row_defs = line[i:j].split("),(")
+                for row_def in row_defs:
+                    fields = row_def.split(",")
+                    zipcode = fields[1].strip()
+                    timezone = fields[6].strip()
+                    zipcode_to_timezones[zipcode] = timezone
+
+    return zipcode_to_timezones
 
 
 def _build_cities_map(geonames_data: TGeonamesData) -> TCitiesMap:
@@ -75,19 +107,21 @@ def _build_cities_map(geonames_data: TGeonamesData) -> TCitiesMap:
     return cities_map
 
 
-def _zipcodes_sync(geonames_data: TGeonamesData, cities_map: TCitiesMap):
+def _zipcodes_sync(geonames_data: TGeonamesData, cities_map: TCitiesMap, timezones_map: typing.Dict[str, str]):
     existing_zipcodes = {zipcode.zipcode: zipcode for zipcode in Zipcode.query.all()}
     updates = []
     new_zipcodes = []
     for zipcode, city_name, state_code, latitude, longitude in geonames_data:
         obj = existing_zipcodes.get(zipcode)
-        if not obj or obj.latitude != latitude or obj.longitude != longitude:
+        timezone = timezones_map.get(zipcode)
+        if not obj or obj.latitude != latitude or obj.longitude != longitude or timezone != obj.timezone:
             gh = geohash.encode(latitude, longitude)
             data = dict(
                 zipcode=zipcode,
                 city_id=cities_map[state_code][city_name].id,
                 latitude=latitude,
                 longitude=longitude,
+                timezone=timezone,
                 **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
             )
             if obj:
@@ -108,6 +142,9 @@ def _zipcodes_sync(geonames_data: TGeonamesData, cities_map: TCitiesMap):
 
 
 def geonames_sync():
+    logger.info("Retrieving timezone data from sourceforge")
+    timezones_map = _get_timezones_data()
+
     logger.info("Retrieving zipcode data from geonames")
     geonames_data = _get_geonames_data()
 
@@ -115,4 +152,4 @@ def geonames_sync():
     cities_map = _build_cities_map(geonames_data)
 
     logger.info("Syncing zipcodes from %s entries", len(geonames_data))
-    _zipcodes_sync(geonames_data, cities_map)
+    _zipcodes_sync(geonames_data, cities_map, timezones_map)

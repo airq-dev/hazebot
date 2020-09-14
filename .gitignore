@@ -7,3 +7,4 @@ data/*.db
 *.zip
 data/purpleair.json
 .mypy_cache
+*.gz
