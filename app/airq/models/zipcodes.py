@@ -27,6 +27,7 @@ class Zipcode(db.Model):  # type: ignore
     geohash_bit_12 = db.Column(db.String(), nullable=False)
 
     city = db.relationship("City")
+    # requests = db.relationship("Request")
 
     def __repr__(self) -> str:
         return f"<Zipcode {self.zipcode}>"
