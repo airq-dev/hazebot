@@ -26,6 +26,8 @@ class Zipcode(db.Model):  # type: ignore
     geohash_bit_11 = db.Column(db.String(), nullable=False)
     geohash_bit_12 = db.Column(db.String(), nullable=False)
 
+    city = db.relationship("City")
+
     def __repr__(self) -> str:
         return f"<Zipcode {self.zipcode}>"
 
@@ -36,7 +38,3 @@ class Zipcode(db.Model):  # type: ignore
     @property
     def geohash(self) -> str:
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
-
-    @property
-    def city(self) -> City:
-        return City.query.filter_by(id=self.city_id).one()

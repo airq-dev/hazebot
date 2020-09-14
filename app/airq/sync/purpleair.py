@@ -11,7 +11,8 @@ from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
 from airq.models.metrics import Metric
 from airq.models.relations import SensorZipcodeRelation
-from airq.models.sensors import Sensor, is_valid_reading
+from airq.models.sensors import Sensor
+from airq.models.subscriptions import Subscription
 from airq.models.zipcodes import Zipcode
 
 
@@ -49,6 +50,32 @@ def _build_relations_map() -> TRelationsMap:
     return relations_map
 
 
+def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
+    if sensor_data.get("DEVICE_LOCATIONTYPE") != "outside":
+        return False
+    if sensor_data.get("ParentID"):
+        return False
+    if sensor_data.get("LastSeen", 0) < datetime.datetime.now().timestamp() - (60 * 60):
+        # Out of date / maybe dead
+        return False
+    if sensor_data.get("Flag"):
+        # Flagged for an unusually high reading
+        return False
+    try:
+        pm25 = float(sensor_data.get("PM2_5Value", 0))
+    except (TypeError, ValueError):
+        return False
+    if pm25 <= 0 or pm25 > 1000:
+        # Something is very wrong
+        return False
+    latitude = sensor_data.get("Lat")
+    longitude = sensor_data.get("Lon")
+    if latitude is None or longitude is None:
+        return False
+
+    return True
+
+
 def _sensors_sync(
     purpleair_data: typing.List[typing.Dict[str, typing.Any]],
     relations_map: TRelationsMap,
@@ -59,7 +86,7 @@ def _sensors_sync(
     new_sensors = []
     moved_sensor_ids = []
     for result in purpleair_data:
-        if is_valid_reading(result):
+        if _is_valid_reading(result):
             sensor = existing_sensor_map.get(result["ID"])
             latitude = result["Lat"]
             longitude = result["Lon"]
@@ -228,6 +255,14 @@ def _metrics_sync():
     logger.info("Deleting %s stale metrics metrics", num_deleted)
 
 
+def _handle_subscriptions():
+    num_sent = 0
+    for subscription in Subscription.get_eligible_for_sending():
+        if subscription.maybe_notify():
+            num_sent += 1
+    logger.info("Sent %s notifications", num_sent)
+
+
 def purpleair_sync():
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_data()
@@ -242,3 +277,6 @@ def purpleair_sync():
 
     logger.info("Syncing metrics")
     _metrics_sync()
+
+    logger.info("Sending alerts")
+    _handle_subscriptions()

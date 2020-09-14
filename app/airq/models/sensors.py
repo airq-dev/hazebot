@@ -1,6 +1,3 @@
-import datetime
-import typing
-
 from airq.config import db
 
 
@@ -31,29 +28,3 @@ class Sensor(db.Model):  # type: ignore
     @property
     def geohash(self) -> str:
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
-
-
-def is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
-    if sensor_data.get("DEVICE_LOCATIONTYPE") != "outside":
-        return False
-    if sensor_data.get("ParentID"):
-        return False
-    if sensor_data.get("LastSeen", 0) < datetime.datetime.now().timestamp() - (60 * 60):
-        # Out of date / maybe dead
-        return False
-    if sensor_data.get("Flag"):
-        # Flagged for an unusually high reading
-        return False
-    try:
-        pm25 = float(sensor_data.get("PM2_5Value", 0))
-    except (TypeError, ValueError):
-        return False
-    if pm25 <= 0 or pm25 > 1000:
-        # Something is very wrong
-        return False
-    latitude = sensor_data.get("Lat")
-    longitude = sensor_data.get("Lon")
-    if latitude is None or longitude is None:
-        return False
-
-    return True

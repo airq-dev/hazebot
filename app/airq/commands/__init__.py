@@ -26,8 +26,8 @@ ROUTES = [
     ),
     ShowAboutHandler.route(pattern=r"^\?$"),
     ShowMenuHandler.route(pattern=r"^m$"),
-    StopHandler.route(pattern=r"^stop"),
-    StopHandler.route(pattern=r"^stop\sall", stop_all=True),
+    StopHandler.route(pattern=r"^s$"),
+    StopHandler.route(pattern=r"^u$", stop_all=True),
     WatchHandler.route(pattern=r"^w(?:\s{})?$".format(ZIPCODE_REGEX)),
 ]
 
