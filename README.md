@@ -27,7 +27,7 @@ The synchronization process is one of the most complex parts of Hazebot's archit
 
 1. All current sensor readings are retrieved from PurpleAir.
 2. The `sensors` table is updated with these readings. Any previously unseen sensors are insterted into the `sensors` table.
-3. The relationship table between sensors and zipcodes, `sensors_zipcodes`, is updated with the latest sensor locations. Usually there's not much to do here, but when a new sensor comes online or when one moves we use [Geohashing](https://en.wikipedia.org/wiki/Geohashing#:~:text=Geohashing%20%2F%CB%88d%CA%92i%CB%90o%CA%8A,and%20then%20tell%20the%20story) to create associations between it and all zipcodes within 25 kilometers. 
+3. The relationship table between sensors and zipcodes, `sensors_zipcodes`, is updated with the latest sensor locations. Usually there's not much to do here, but when a new sensor comes online or when one moves we use [Geohashing](https://en.wikipedia.org/wiki/Geohash) to create associations between it and all zipcodes within 25 kilometers. 
 4. We loop over each zipcode in the `zipcodes` table and calculate the current average reading for that zipcode from the most up-to-date data in the `sensors` table. We insert these metrics in the `metrics` table, which aggregates historical per-zipcode data going back two hours.
 5. We loop over each row in the `subscriptions` table and alert all users who qualify.
 
