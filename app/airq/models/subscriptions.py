@@ -25,7 +25,7 @@ class Subscription(db.Model):  # type: ignore
 
     # Send alerts between 7 and 10 PM.
     # This would be nice to expose as a preference eventually.
-    SEND_WINDOW_HOURS = (7, 10)
+    SEND_WINDOW_HOURS = (7, 22)
 
     zipcode_id = db.Column(
         db.Integer(),
