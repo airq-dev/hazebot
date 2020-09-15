@@ -15,6 +15,8 @@ from airq.models.metrics import Metric
 class Subscription(db.Model):  # type: ignore
     __tablename__ = "subscriptions"
 
+    FREQUENCY = 3 * 60 * 60
+
     zipcode_id = db.Column(
         db.Integer(),
         db.ForeignKey("zipcodes.id", name="subscription_zipcode_id_fkey"),
@@ -60,20 +62,20 @@ class Subscription(db.Model):  # type: ignore
     @classmethod
     def get_eligible_for_sending(cls) -> typing.List["Subscription"]:
         curr_time = datetime.datetime.now().timestamp()
-        cutoff = curr_time - (60 * 60)
+        cutoff = curr_time - cls.FREQUENCY
         return (
             cls.query.options(joinedload(Subscription.zipcode))
             .join(Client)
-            .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
+            # .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
-            .filter(cls.last_executed_at < cutoff)
+            # .filter(cls.last_executed_at < cutoff)
             .all()
         )
 
     @classmethod
     def get_or_create(
         cls, client_id: int, zipcode_id: int
-    ) -> typing.Tuple["Subscription", bool]:
+    ) -> "Subscription":
         subscription = cls.query.filter_by(
             client_id=client_id, zipcode_id=zipcode_id
         ).first()
@@ -85,10 +87,7 @@ class Subscription(db.Model):  # type: ignore
             )
             db.session.add(subscription)
             db.session.commit()
-            was_created = True
-        else:
-            was_created = False
-        return subscription, was_created
+        return subscription
 
     @property
     def is_in_send_window(self) -> bool:
@@ -112,44 +111,19 @@ class Subscription(db.Model):  # type: ignore
         curr_aqi_level = metric.pm25_level
         curr_aqi = curr_aqi_level.to_aqi()
 
-        # Only send if the pm25 changed from healthy to unhealthy or visa-versa
-        # since the last time we sent this alert.
-        # If we've never sent this alert, then just check that the most recent pm25
-        # readings have changed from healthy to unhealthy (or visa-versa).
-        if self.last_pm25:
-            last_aqi_level = Pm25.from_measurement(self.last_pm25)
-        else:
-            last_metric = (
-                Metric.query.filter(
-                    Metric.zipcode_id == self.zipcode_id,
-                    Metric.timestamp != metric.timestamp,
-                )
-                .order_by(Metric.timestamp.desc())
-                .first()
-            )
-            if not last_metric:
-                return False
-            last_aqi_level = last_metric.pm25_level
-
+        # Only send if the pm25 changed a level since the last time we sent this alert.
+        last_aqi_level = Pm25.from_measurement(self.last_pm25)
         last_aqi = last_aqi_level.to_aqi()
-
-        if (last_aqi_level.is_unhealthy and curr_aqi_level.is_unhealthy) or (
-            last_aqi_level.is_healthy and curr_aqi_level.is_healthy
-        ):
+        if last_aqi == curr_aqi:
             return False
 
         message = (
-            "AQI near {city} {zipcode} is now {curr_aqi_level} ({curr_aqi}) {direction} from {last_aqi_level} ({last_aqi})\n"
-            "\n"
-            'Reply "s" to stop AQI alerts for {zipcode}'
+            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})"
         ).format(
             city=self.zipcode.city.name,
             zipcode=self.zipcode.zipcode,
-            direction="up" if curr_aqi > last_aqi else "down",
             curr_aqi_level=curr_aqi_level.display,
             curr_aqi=curr_aqi,
-            last_aqi_level=last_aqi_level.display,
-            last_aqi=last_aqi,
         )
         self.client.send_message(message)
 
