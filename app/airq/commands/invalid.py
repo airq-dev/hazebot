@@ -8,6 +8,6 @@ class InvalidInputHandler(ApiCommandHandler):
         return [
             'Unrecognized option "{}". Reply with M for the menu{}.'.format(
                 self.user_input,
-                " or S to stop this alert" if self.client.get_subscription() else "",
+                " or U to stop this alert" if self.client.get_subscription() else "",
             )
         ]

@@ -99,7 +99,7 @@ class GetQualityHandler(ApiCommandHandler):
             if was_updated:
                 message.append("")
                 message.append("We'll alert you when the air quality changes category.")
-                message.append("Reply U to stop this alert, M for menu.")
+                message.append("Reply M for menu, U to stop this alert.")
         else:
             message.append(target_metrics.pm25_level.description)
             message.append("")

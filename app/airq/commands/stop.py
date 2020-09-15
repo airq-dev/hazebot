@@ -22,5 +22,5 @@ class StopHandler(ApiCommandHandler):
 
         subscription.disable()
         return [
-            f"Got it! You will no longer recieve air quality alerts for {zipcode.zipcode}."
+            f"Got it! You will no longer recieve alerts for {zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
         ]
