@@ -25,12 +25,6 @@ from airq.models.zipcodes import Zipcode
 logger = logging.getLogger(__name__)
 
 
-# Try to get at least 10 readings per zipcode.
-DESIRED_NUM_READINGS = 10
-
-# Allow any number of readings within 5km from the zipcode centroid.
-DESIRED_READING_DISTANCE_KM = 5
-
 # Get readings for zipcodes within 150 mi of the target zipcode.
 MAX_NEARBY_ZIPCODE_RADIUS_KM = 150
 
@@ -99,7 +93,7 @@ class GetQualityHandler(ApiCommandHandler):
             if was_updated:
                 message.append("")
                 message.append("We'll alert you when the air quality changes category.")
-                message.append("Reply U to stop this alert, M for menu.")
+                message.append("Reply M for menu, U to stop this alert.")
         else:
             message.append(target_metrics.pm25_level.description)
             message.append("")
