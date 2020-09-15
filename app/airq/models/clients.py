@@ -86,6 +86,8 @@ class Client(db.Model):  # type: ignore
         return Subscription.query.filter_by(client_id=self.id, disabled_at=0).first()
 
     def update_subscription(self, zipcode_id: int, current_pm25: float) -> bool:
+        from airq.models.subscriptions import Subscription
+
         current_subscription = self.get_subscription()
         if current_subscription:
             if current_subscription.zipcode_id == zipcode_id:
