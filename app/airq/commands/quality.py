@@ -25,12 +25,6 @@ from airq.models.zipcodes import Zipcode
 logger = logging.getLogger(__name__)
 
 
-# Try to get at least 10 readings per zipcode.
-DESIRED_NUM_READINGS = 10
-
-# Allow any number of readings within 5km from the zipcode centroid.
-DESIRED_READING_DISTANCE_KM = 5
-
 # Get readings for zipcodes within 150 mi of the target zipcode.
 MAX_NEARBY_ZIPCODE_RADIUS_KM = 150
 
