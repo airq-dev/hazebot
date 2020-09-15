@@ -6,21 +6,7 @@ from airq.models.zipcodes import Zipcode
 
 
 class StopHandler(ApiCommandHandler):
-    def handle(self, stop_all: bool = False) -> typing.List[str]:
-        if stop_all:
-            subscriptions = Subscription.query.filter_by(
-                client_id=self.client.id, disabled_at=0
-            ).all()
-            if not subscriptions:
-                return ["Looks like you don't have any subscriptions to disable."]
-
-            for subscription in subscriptions:
-                subscription.disable()
-
-            return [
-                f"Got it! You won't recieve air quality alerts for {len(subscriptions)} zipcodes."
-            ]
-
+    def handle(self) -> typing.List[str]:
         zipcode = self.client.get_last_requested_zipcode()
         if not zipcode:
             return [

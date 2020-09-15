@@ -18,6 +18,7 @@ from airq.models.metrics import Metric
 from airq.models.requests import Request
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
+from airq.models.subscriptions import Subscription
 from airq.models.zipcodes import Zipcode
 
 
@@ -51,22 +52,9 @@ class AirQualityMetrics:
 
 
 class GetQualityHandler(ApiCommandHandler):
-    class Mode(enum.Enum):
-        DEFAULT = 0  # Just show short info about the zipcode.
-        DETAILS = 1  # Show detailed info about the zipcode and recommendations.
-        RECOMMEND = 2  # Just show recommendations
-
-    def __init__(self, *args, mode: Mode = Mode.DEFAULT):
+    def __init__(self, *args, details: bool = False):
         super().__init__(*args)
-        self.mode = mode
-
-    @property
-    def recommend(self) -> bool:
-        return self.mode in (self.Mode.DETAILS, self.Mode.RECOMMEND)
-
-    @property
-    def recommend_only(self) -> bool:
-        return self.mode == self.Mode.RECOMMEND
+        self.details = details
 
     def handle(self, zipcode: typing.Optional[str] = None) -> typing.List[str]:
         aqi_metrics = {}
@@ -94,48 +82,38 @@ class GetQualityHandler(ApiCommandHandler):
             ]
 
         message = []
+        aqi = pm25_to_aqi(target_metrics.average_pm25)
 
-        if not self.recommend_only:
-            # We're either in details or default mode
-            aqi = pm25_to_aqi(target_metrics.average_pm25)
+        if not self.details:
             message.append(
-                "Air quality near {} {} is {}{}.".format(
+                "{} {} is {}{}.".format(
                     target_metrics.city_name,
                     zipcode.zipcode,
                     target_metrics.pm25_level.display.upper(),
-                    f" (AQI: {aqi})" if aqi else "",
+                    f" (AQI {aqi})" if aqi else "",
                 )
             )
+            was_updated = self.client.update_subscription(
+                zipcode.id, target_metrics.average_pm25
+            )
+            if was_updated:
+                message.append("")
+                message.append("We'll alert you when the air quality changes category.")
+                message.append("Reply U to stop this alert, M for menu.")
+        else:
+            message.append(target_metrics.pm25_level.description)
+            message.append("")
 
-        if self.recommend:
-            # We're either in details or recommend mode
             recommendations = self._get_recommendations(
                 aqi_metrics.values(), target_metrics.zipcode, target_metrics.pm25_level
             )
             if recommendations:
-                if message:
-                    message.append(
-                        ""
-                    )  # Add a newline if we have other text to display.
                 message.extend(recommendations)
-            elif self.recommend_only:
-                # We couldn't find any recommendations, so display a nice message since we're also
-                # not showing any info about the zipcode.
-                msg = "We couldn't find any zipcodes near {} with better air quality than {}.".format(
-                    zipcode.zipcode, target_metrics.pm25_level.display,
-                )
-                if target_metrics.pm25_level >= Pm25.UNHEALTHY:
-                    msg += " Time to stay inside!"
-                message.append(msg)
+                message.append("")
 
-        if self.mode == self.Mode.DETAILS:
-            message.append("")
             message.append(
                 f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {zipcode.zipcode} is {target_metrics.average_pm25} µg/m³."
             )
-
-        message.append("")
-        message.extend(self._get_menu())
 
         self.client.log_request(zipcode)
 
@@ -148,7 +126,7 @@ class GetQualityHandler(ApiCommandHandler):
         pm25_cutoff: Pm25,
     ) -> typing.List[str]:
         message = []
-        num_desired = 5
+        num_desired = 3
         lower_pm25_metrics = sorted(
             [m for m in metrics if m.zipcode != zipcode and m.pm25_level < pm25_cutoff],
             # Sort by pm25 level, and then by distance from the desired zip to break ties
@@ -167,7 +145,7 @@ class GetQualityHandler(ApiCommandHandler):
     ) -> typing.Dict[int, AirQualityMetrics]:
         # Get a all zipcodes (inclusive) within 25km
         logger.info("Retrieving metrics for zipcode %s", zipcode.zipcode)
-        if self.recommend:
+        if self.details:
             zipcodes_map = self._get_nearby_zipcodes(zipcode)
         else:
             zipcodes_map = {}
