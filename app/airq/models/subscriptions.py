@@ -5,6 +5,7 @@ import typing
 from sqlalchemy.orm import joinedload
 
 from airq.config import db
+from airq.lib.readings import pm25_to_aqi
 from airq.lib.readings import Pm25
 from airq.lib.twilio import send_sms
 from airq.models.clients import Client
@@ -107,12 +108,12 @@ class Subscription(db.Model):  # type: ignore
             return False
 
         curr_aqi_level = metric.pm25_level
-        curr_aqi = curr_aqi_level.to_aqi()
+        curr_aqi = metric.aqi
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
-        last_aqi = last_aqi_level.to_aqi()
-        if last_aqi == curr_aqi:
+        last_aqi = pm25_to_aqi(self.last_pm25)
+        if curr_aqi_level == last_aqi_level:
             return False
 
         message = (
