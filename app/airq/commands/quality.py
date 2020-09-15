@@ -112,7 +112,7 @@ class GetQualityHandler(ApiCommandHandler):
                 message.append("")
 
             message.append(
-                f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {zipcode.zipcode} is {target_metrics.average_pm25} µg/m³."
+                f"Average PM2.5 from {target_metrics.num_readings} sensor(s) near {zipcode.zipcode} is {target_metrics.average_pm25} µg/m^3."
             )
 
         self.client.log_request(zipcode)
