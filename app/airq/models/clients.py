@@ -8,6 +8,9 @@ from airq.lib.twilio import send_sms
 from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
 
+if typing.TYPE_CHECKING:
+    from airq.models.subscriptions import Subscription
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +80,13 @@ class Client(db.Model):  # type: ignore
             # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)
 
-    def update_subscription(self, zipcode_id: int, current_pm25: float) -> bool:
+    def get_subscription(self,) -> typing.Optional["Subscription"]:
         from airq.models.subscriptions import Subscription
 
-        current_subscription = Subscription.query.filter_by(
-            client_id=self.id, disabled_at=0
-        ).first()
+        return Subscription.query.filter_by(client_id=self.id, disabled_at=0).first()
+
+    def update_subscription(self, zipcode_id: int, current_pm25: float) -> bool:
+        current_subscription = self.get_subscription()
         if current_subscription:
             if current_subscription.zipcode_id == zipcode_id:
                 return False

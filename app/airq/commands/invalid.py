@@ -5,8 +5,9 @@ from airq.commands.base import ApiCommandHandler
 
 class InvalidInputHandler(ApiCommandHandler):
     def handle(self) -> typing.List[str]:
-        message = [
-            f'Unrecognized option "{self.user_input}". Reply with your zipcode for air quality information.'
+        return [
+            'Unrecognized option "{}". Reply with M for the menu{}.'.format(
+                self.user_input,
+                " or S to stop this alert" if self.client.get_subscription() else "",
+            )
         ]
-        message.extend(self._get_menu())
-        return message

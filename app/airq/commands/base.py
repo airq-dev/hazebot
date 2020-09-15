@@ -79,11 +79,3 @@ class ApiCommandHandler(abc.ABC):
     @abc.abstractmethod
     def handle(self) -> typing.List[str]:
         ...
-
-    def _get_menu(self) -> typing.List[str]:
-        return [
-            "Reply R for safer places, "
-            "D for details, "
-            "L for latest, "
-            "and ? for hazebot info."
-        ]

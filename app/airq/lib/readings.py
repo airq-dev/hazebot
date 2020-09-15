@@ -7,7 +7,7 @@ import typing
 class Pm25(enum.IntEnum):
     GOOD = 0
     MODERATE = 12
-    UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS = 35
+    UNHEALTHY_FOR_SENSITIVE_GROUPS = 35
     UNHEALTHY = 55
     VERY_UNHEALTHY = 150
     HAZARDOUS = 250
@@ -16,10 +16,10 @@ class Pm25(enum.IntEnum):
     def from_measurement(cls, measurement: float) -> "Pm25":
         if measurement < cls.MODERATE:
             return cls.GOOD
-        if measurement < cls.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+        if measurement < cls.UNHEALTHY_FOR_SENSITIVE_GROUPS:
             return cls.MODERATE
         if measurement < cls.UNHEALTHY:
-            return cls.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
+            return cls.UNHEALTHY_FOR_SENSITIVE_GROUPS
         if measurement < cls.VERY_UNHEALTHY:
             return cls.UNHEALTHY
         if measurement < cls.HAZARDOUS:
@@ -33,8 +33,8 @@ class Pm25(enum.IntEnum):
             return "Good"
         elif self == self.MODERATE:
             return "Moderate"
-        elif self == self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
-            return "Unhealthy for Sensitive Individuals"
+        elif self == self.UNHEALTHY_FOR_SENSITIVE_GROUPS:
+            return "Unhealthy for Sensitive Groups"
         elif self == self.UNHEALTHY:
             return "Unhealthy"
         elif self == self.VERY_UNHEALTHY:
@@ -46,20 +46,12 @@ class Pm25(enum.IntEnum):
         return pm25_to_aqi(float(self))
 
     @property
-    def is_unhealthy(self) -> bool:
-        return self >= self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS
-
-    @property
-    def is_healthy(self) -> bool:
-        return not self.is_unhealthy
-
-    @property
     def description(self) -> str:
         if self == self.GOOD:
             return "Good (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk."
         elif self == self.MODERATE:
             return "Moderate (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
-        elif self == self.UNHEALTHY_FOR_SENSITIVE_INDIVIDUALS:
+        elif self == self.UNHEALTHY_FOR_SENSITIVE_GROUPS:
             return "Unhealthy for Sensitive Groups (AQI: 101 - 150) means members of sensitive groups may experience health effects. The general public is not likely to be affected."
         elif self == self.UNHEALTHY:
             return "Unhealthy (AQI: 151 - 200) means everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects."

@@ -64,10 +64,11 @@ class Subscription(db.Model):  # type: ignore
         curr_time = datetime.datetime.now().timestamp()
         cutoff = curr_time - cls.FREQUENCY
         return (
-            cls.query.options(joinedload(Subscription.zipcode)).join(Client)
-            # .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
+            cls.query.options(joinedload(Subscription.zipcode))
+            .join(Client)
+            .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
-            # .filter(cls.last_executed_at < cutoff)
+            .filter(cls.last_executed_at < cutoff)
             .all()
         )
 
