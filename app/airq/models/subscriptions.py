@@ -16,7 +16,16 @@ from airq.models.metrics import Metric
 class Subscription(db.Model):  # type: ignore
     __tablename__ = "subscriptions"
 
-    FREQUENCY = 3 * 60 * 60
+    # Send alerts at most every one hour to avoid spamming people.
+    # One hour seems like a reasonable frequency because AQI
+    # doesn't fluctuate very frequently. We should look at implementing
+    # logic to smooth out this alerting so that if AQI oscillates
+    # between two levels we don't spam the user every hour.
+    FREQUENCY = 1 * 60 * 60
+
+    # Send alerts between 7 and 10 PM.
+    # This would be nice to expose as a preference eventually.
+    SEND_WINDOW_HOURS = (7, 10)
 
     zipcode_id = db.Column(
         db.Integer(),
@@ -93,7 +102,8 @@ class Subscription(db.Model):  # type: ignore
         # Timezone can be null since our data is incomplete.
         timezone = self.zipcode.timezone or "America/Los_Angeles"
         dt = datetime.datetime.now(tz=pytz.timezone(timezone))
-        return 8 <= dt.hour <= 21
+        send_start, send_end = self.SEND_WINDOW_HOURS
+        return send_start <= dt.hour <= send_end
 
     def maybe_notify(self) -> bool:
         if not self.is_in_send_window:
