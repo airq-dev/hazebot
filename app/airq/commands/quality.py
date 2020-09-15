@@ -93,7 +93,9 @@ class GetQualityHandler(ApiCommandHandler):
                     f" (AQI {aqi})" if aqi else "",
                 )
             )
-            was_updated = self.client.update_subscription(zipcode.id, target_metrics.average_pm25)
+            was_updated = self.client.update_subscription(
+                zipcode.id, target_metrics.average_pm25
+            )
             if was_updated:
                 message.append("")
                 message.append("We'll alert you when the air quality changes category.")

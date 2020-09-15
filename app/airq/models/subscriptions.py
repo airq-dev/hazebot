@@ -64,8 +64,7 @@ class Subscription(db.Model):  # type: ignore
         curr_time = datetime.datetime.now().timestamp()
         cutoff = curr_time - cls.FREQUENCY
         return (
-            cls.query.options(joinedload(Subscription.zipcode))
-            .join(Client)
+            cls.query.options(joinedload(Subscription.zipcode)).join(Client)
             # .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
             # .filter(cls.last_executed_at < cutoff)
@@ -73,9 +72,7 @@ class Subscription(db.Model):  # type: ignore
         )
 
     @classmethod
-    def get_or_create(
-        cls, client_id: int, zipcode_id: int
-    ) -> "Subscription":
+    def get_or_create(cls, client_id: int, zipcode_id: int) -> "Subscription":
         subscription = cls.query.filter_by(
             client_id=client_id, zipcode_id=zipcode_id
         ).first()
