@@ -31,13 +31,13 @@ def sms_reply() -> str:
     return str(resp)
 
 
-def quality() -> str:
-    zipcode = request.args.get("zipcode", "").strip()
+def test_command() -> str:
+    command = request.args.get("command", "").strip()
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    return commands.handle_command(zipcode, ip, ClientIdentifierType.IP)
+    return commands.handle_command(command, ip, ClientIdentifierType.IP)
 
 
 def login() -> typing.Union[Response, str]:
