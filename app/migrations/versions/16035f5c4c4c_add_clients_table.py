@@ -43,6 +43,10 @@ def upgrade():
     res = conn.execute(
         "SELECT id, client_id, client_identifier, client_identifier_type FROM requests"
     )
+    if res is None:
+        print("Skipping data migration because Alembic is running with --sql")
+        return
+
     for id, client_id, identifier, type_code in res.fetchall():
         res = conn.execute(
             "SELECT id FROM clients WHERE identifier=%s AND type_code=%s",

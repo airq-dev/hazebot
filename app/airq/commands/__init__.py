@@ -25,7 +25,9 @@ ROUTES = [
 def handle_command(
     user_input: str, identifier: str, identifier_type: ClientIdentifierType
 ) -> str:
-    client = Client.get_or_create(identifier, identifier_type)
+    client, was_created = Client.get_or_create(identifier, identifier_type)
+    if not was_created:
+        client.mark_seen()
 
     for route in ROUTES:
         match = route.match(user_input)
