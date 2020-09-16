@@ -245,14 +245,16 @@ def _metrics_sync():
                 )
             )
 
-            updates.append({
-                'id': zipcode_id,
-                'pm25': pm25,
-                'pm25_updated_at': timestamp,
-                'num_sensors': num_sensors,
-                'min_sensor_distance': min_sensor_distance,
-                'max_sensor_distance': max_sensor_distance
-            })
+            updates.append(
+                {
+                    "id": zipcode_id,
+                    "pm25": pm25,
+                    "pm25_updated_at": timestamp,
+                    "num_sensors": num_sensors,
+                    "min_sensor_distance": min_sensor_distance,
+                    "max_sensor_distance": max_sensor_distance,
+                }
+            )
 
     logger.info("Inserting %s metrics", len(metrics))
     for objects in chunk_list(metrics, batch_size=5000):

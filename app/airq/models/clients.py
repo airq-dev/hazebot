@@ -26,13 +26,23 @@ class Client(db.Model):  # type: ignore
     id = db.Column(db.Integer(), primary_key=True)
     identifier = db.Column(db.String(), nullable=False)
     type_code = db.Column(db.Enum(ClientIdentifierType), nullable=False)
-    last_activity_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
+    last_activity_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
 
-    zipcode_id = db.Column(db.Integer(), db.ForeignKey('zipcodes.id', name='clients_zipcode_id_fkey'), nullable=True)
+    zipcode_id = db.Column(
+        db.Integer(),
+        db.ForeignKey("zipcodes.id", name="clients_zipcode_id_fkey"),
+        nullable=True,
+    )
     last_pm25 = db.Column(db.Float(), nullable=True)
-    last_alert_sent_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
-    alerts_disabled_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
-    num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default='0')
+    last_alert_sent_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
+    alerts_disabled_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
+    num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
 
     requests = db.relationship("Request")
     zipcode = db.relationship("Zipcode")
@@ -49,7 +59,11 @@ class Client(db.Model):  # type: ignore
     ) -> typing.Tuple["Client", bool]:
         client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
-            client = cls(identifier=identifier, type_code=type_code, last_activity_at=datetime.datetime.now().timestamp())
+            client = cls(
+                identifier=identifier,
+                type_code=type_code,
+                last_activity_at=datetime.datetime.now().timestamp(),
+            )
             db.session.add(client)
             db.session.commit()
             was_created = True
