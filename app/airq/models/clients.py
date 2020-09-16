@@ -4,15 +4,14 @@ import logging
 import pytz
 import typing
 
+from sqlalchemy.orm import joinedload
+
 from airq.config import db
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
 from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
-
-if typing.TYPE_CHECKING:
-    from airq.models.subscriptions import Subscription
 
 
 logger = logging.getLogger(__name__)
@@ -29,13 +28,23 @@ class Client(db.Model):  # type: ignore
     id = db.Column(db.Integer(), primary_key=True)
     identifier = db.Column(db.String(), nullable=False)
     type_code = db.Column(db.Enum(ClientIdentifierType), nullable=False)
-    last_activity_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
+    last_activity_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
 
-    zipcode_id = db.Column(db.Integer(), db.ForeignKey('zipcodes.id', name='clients_zipcode_id_fkey'), nullable=True)
+    zipcode_id = db.Column(
+        db.Integer(),
+        db.ForeignKey("zipcodes.id", name="clients_zipcode_id_fkey"),
+        nullable=True,
+    )
     last_pm25 = db.Column(db.Float(), nullable=True)
-    last_alert_sent_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
-    alerts_disabled_at = db.Column(db.Integer(), nullable=False, index=True, server_default='0')
-    num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default='0')
+    last_alert_sent_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
+    alerts_disabled_at = db.Column(
+        db.Integer(), nullable=False, index=True, server_default="0"
+    )
+    num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
 
     requests = db.relationship("Request")
     zipcode = db.relationship("Zipcode")
@@ -62,21 +71,17 @@ class Client(db.Model):  # type: ignore
     ) -> typing.Tuple["Client", bool]:
         client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
-            client = cls(identifier=identifier, type_code=type_code, last_activity_at=datetime.datetime.now().timestamp())
+            client = cls(
+                identifier=identifier,
+                type_code=type_code,
+                last_activity_at=datetime.datetime.now().timestamp(),
+            )
             db.session.add(client)
             db.session.commit()
             was_created = True
         else:
             was_created = False
         return client, was_created
-
-    def get_last_requested_zipcode(self) -> typing.Optional[Zipcode]:
-        return (
-            Zipcode.query.join(Request)
-            .filter(Request.client_id == self.id)
-            .order_by(Request.last_ts.desc())
-            .first()
-        )
 
     def log_request(self, zipcode: Zipcode):
         request = Request.query.filter_by(
@@ -104,26 +109,19 @@ class Client(db.Model):  # type: ignore
             # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)
 
-    def get_subscription(self,) -> typing.Optional["Subscription"]:
-        from airq.models.subscriptions import Subscription
-
-        return Subscription.query.filter_by(client_id=self.id, disabled_at=0).first()
-
-    def update_subscription(self, zipcode_id: int, current_pm25: float) -> bool:
-        from airq.models.subscriptions import Subscription
-
-        self.last_pm25 = current_pm25
+    def update_subscription(self, zipcode: Zipcode) -> bool:
+        self.last_pm25 = zipcode.pm25
         curr_zipcode_id = self.zipcode_id
-        if curr_zipcode_id != zipcode_id:
+        if curr_zipcode_id != zipcode.id:
             # TODO: Command to re-enable alerts instead of auto re-enabling them.
             self.alerts_disabled_at = 0
-            self.zipcode_id = zipcode_id
+            self.zipcode_id = zipcode.id
         db.session.commit()
         return curr_zipcode_id != self.zipcode_id
 
     @classmethod
     def curr_ts(cls) -> int:
-        return datetime.datetime.now().timestamp()
+        return int(datetime.datetime.now().timestamp())
 
     def mark_seen(self):
         self.last_activity_at = self.curr_ts()
@@ -133,6 +131,10 @@ class Client(db.Model):  # type: ignore
         self.last_pm25 = None
         self.alerts_disabled_at = self.curr_ts()
         db.session.commit()
+
+    @property
+    def is_enabled_for_alerts(self) -> bool:
+        return bool(self.zipcode_id and not self.alerts_disabled_at)
 
     @property
     def is_in_send_window(self) -> bool:
@@ -147,15 +149,15 @@ class Client(db.Model):  # type: ignore
         cutoff = cls.curr_ts() - cls.FREQUENCY
         return (
             cls.query.options(joinedload(cls.zipcode))
-            .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+            # .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.alerts_disabled_at == 0)
-            .filter(cls.last_alert_sent_at < cutoff)
+            # .filter(cls.last_alert_sent_at < cutoff)
             .all()
         )
 
     def maybe_notify(self) -> bool:
-        # if not self.is_in_send_window:
-        #     return False
+        if not self.is_in_send_window:
+            return False
 
         curr_pm25 = self.zipcode.pm25
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
@@ -164,8 +166,8 @@ class Client(db.Model):  # type: ignore
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
         last_aqi = pm25_to_aqi(self.last_pm25)
-        # if curr_aqi_level == last_aqi_level:
-        #     return False
+        if curr_aqi_level == last_aqi_level:
+            return False
 
         message = (
             "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})"
@@ -177,8 +179,8 @@ class Client(db.Model):  # type: ignore
         )
         self.send_message(message)
 
-        self.last_alert_sent_at = datetime.datetime.now().timestamp()
-        self.last_pm25 = metric.value
+        self.last_alert_sent_at = self.curr_ts()
+        self.last_pm25 = curr_pm25
         self.num_alerts_sent += 1
         db.session.commit()
 

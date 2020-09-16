@@ -1,7 +1,6 @@
 import typing
 
 from airq.commands.base import ApiCommandHandler
-from airq.models.subscriptions import Subscription
 from airq.models.zipcodes import Zipcode
 
 
@@ -13,7 +12,9 @@ class StopHandler(ApiCommandHandler):
             ]
 
         if self.client.alerts_disabled_at:
-           return [f"Looks like you already stopped watching {self.client.zipcode.zipcode}."]
+            return [
+                f"Looks like you already stopped watching {self.client.zipcode.zipcode}."
+            ]
 
         self.client.disable_alerts()
         return [

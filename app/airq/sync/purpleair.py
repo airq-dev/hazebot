@@ -9,7 +9,7 @@ from airq.config import db
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
-from airq.models.subscriptions import Client
+from airq.models.clients import Client
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
@@ -144,6 +144,7 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
         longitude = sensor.longitude
         done = False
         zipcode_ids: typing.Set[int] = set()
+        # TODO: Use Postgres' native geolocation extension.
         while gh and not done:
             zipcodes = [
                 zipcode for zipcode in trie.get(gh) if zipcode.id not in zipcode_ids
@@ -196,7 +197,7 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
 
 def _metrics_sync():
     updates = []
-    timestamp = datetime.datetime.now().timestamp()
+    timestamp = int(datetime.datetime.now().timestamp())
 
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, distance in (
@@ -231,16 +232,18 @@ def _metrics_sync():
             num_sensors = len(readings)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
-            updates.append({
-                'id': zipcode_id,
-                'pm25': pm25,
-                'pm25_updated_at': timestamp,
-                'num_sensors': num_sensors,
-                'min_sensor_distance': min_sensor_distance,
-                'max_sensor_distance': max_sensor_distance
-            })
+            updates.append(
+                {
+                    "id": zipcode_id,
+                    "pm25": pm25,
+                    "pm25_updated_at": timestamp,
+                    "num_sensors": num_sensors,
+                    "min_sensor_distance": min_sensor_distance,
+                    "max_sensor_distance": max_sensor_distance,
+                }
+            )
 
-    logger.info("Updating %s zipcodes", len(zipcodes))
+    logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
@@ -249,8 +252,12 @@ def _metrics_sync():
 def _send_alerts():
     num_sent = 0
     for client in Client.get_eligible_for_sending():
-        if client.maybe_notify():
-            num_sent += 1
+        try:
+            if client.maybe_notify():
+                num_sent += 1
+        except Exception as e:
+            logger.exception("Failed to send alert to %s: %s", client, e)
+
     logger.info("Sent %s alerts", num_sent)
 
 
