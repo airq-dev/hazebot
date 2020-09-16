@@ -76,9 +76,9 @@ class Subscription(db.Model):  # type: ignore
         return (
             cls.query.options(joinedload(Subscription.zipcode))
             .join(Client)
-            # .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
+            .filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.disabled_at == 0)
-            # .filter(cls.last_executed_at < cutoff)
+            .filter(cls.last_executed_at < cutoff)
             .all()
         )
 
@@ -106,8 +106,8 @@ class Subscription(db.Model):  # type: ignore
         return send_start <= dt.hour < send_end
 
     def maybe_notify(self) -> bool:
-        # if not self.is_in_send_window:
-        #     return False
+        if not self.is_in_send_window:
+            return False
 
         metric = (
             Metric.query.filter_by(zipcode_id=self.zipcode_id)
@@ -123,8 +123,8 @@ class Subscription(db.Model):  # type: ignore
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
         last_aqi = pm25_to_aqi(self.last_pm25)
-        # if curr_aqi_level == last_aqi_level:
-        #     return False
+        if curr_aqi_level == last_aqi_level:
+            return False
 
         message = (
             "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})"
