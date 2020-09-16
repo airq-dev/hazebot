@@ -1,8 +1,16 @@
+from flask import flash
+from flask import redirect
+from flask import render_template
 from flask import request
+from flask import url_for
+from flask_login import current_user
+from flask_login import login_user
 from twilio.twiml.messaging_response import MessagingResponse
 
 from airq import commands
+from airq.forms import LoginForm
 from airq.models.clients import ClientIdentifierType
+from airq.models.users import User
 
 
 def healthcheck() -> str:
@@ -27,3 +35,20 @@ def quality() -> str:
     else:
         ip = request.remote_addr
     return commands.handle_command(zipcode, ip, ClientIdentifierType.IP)
+
+
+
+def login() -> str:
+    if current_user.is_authenticated:
+        # TODO: Redirect to the admin page.
+        return redirect('/')
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash("Invalid email or password")
+            return redirect(url_for("login"))
+        login_user(user, remember=True)
+        # TODO: Redirect to the admin page.
+        return redirect('/')
+    return render_template("login.html", title="Sign In", form=form)

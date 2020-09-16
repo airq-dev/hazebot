@@ -5,4 +5,5 @@ from . import relations
 from . import requests
 from . import sensors
 from . import subscriptions
+from . import users
 from . import zipcodes

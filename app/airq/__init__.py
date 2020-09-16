@@ -12,5 +12,6 @@ app.cli.command("sync")(management.sync)
 
 # Register routes
 app.route("/", methods=["GET"])(api.healthcheck)
-app.route("/sms", methods=["POST"])(api.sms_reply)
+app.route("/login", methods=["GET", "POST"])(api.login)
 app.route("/quality", methods=["GET"])(api.quality)
+app.route("/sms", methods=["POST"])(api.sms_reply)
