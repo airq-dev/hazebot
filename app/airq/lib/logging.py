@@ -7,6 +7,9 @@ from airq import config
 from airq.lib import ses
 
 
+logger = logging.getLogger(__name__)
+
+
 class AdminEmailHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
         if not record.exc_info:
@@ -19,3 +22,4 @@ class AdminEmailHandler(logging.Handler):
             for key, value in request.environ.items():
                 body += "{}={}\n".format(key, value)
         ses.send_email(config.ADMIN_EMAILS, subject, body)
+        logger.info("Sent email to %s", config.ADMIN_EMAILS)
