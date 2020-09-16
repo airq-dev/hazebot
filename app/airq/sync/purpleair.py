@@ -26,8 +26,8 @@ PURPLEAIR_URL = "https://www.purpleair.com/json"
 # Try to get at least 10 readings per zipcode.
 DESIRED_NUM_READINGS = 10
 
-# Allow any number of readings within 5km from the zipcode centroid.
-DESIRED_READING_DISTANCE_KM = 5
+# Allow any number of readings within 2.5km from the zipcode centroid.
+DESIRED_READING_DISTANCE_KM = 2.5
 
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
