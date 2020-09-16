@@ -197,6 +197,7 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
 
 def _metrics_sync():
     metrics = []
+    updates = []
     timestamp = datetime.datetime.now().timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
@@ -228,6 +229,11 @@ def _metrics_sync():
                 break
 
         if readings:
+            pm25 = round(sum(readings) / len(readings), ndigits=3)
+            num_sensors = len(readings)
+            min_sensor_distance = round(closest_reading, ndigits=3)
+            max_sensor_distance = round(farthest_reading, ndigits=3)
+
             metrics.append(
                 Metric(
                     zipcode_id=zipcode_id,
@@ -239,9 +245,23 @@ def _metrics_sync():
                 )
             )
 
+            updates.append({
+                'id': zipcode_id,
+                'pm25': pm25,
+                'pm25_updated_at': timestamp,
+                'num_sensors': num_sensors,
+                'min_sensor_distance': min_sensor_distance,
+                'max_sensor_distance': max_sensor_distance
+            })
+
     logger.info("Inserting %s metrics", len(metrics))
     for objects in chunk_list(metrics, batch_size=5000):
         db.session.bulk_save_objects(objects)
+        db.session.commit()
+
+    logger.info("Updating %s zipcodes", len(zipcodes))
+    for mappings in chunk_list(updates, batch_size=5000):
+        db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
 
     # Delete all metrics more than two hours old

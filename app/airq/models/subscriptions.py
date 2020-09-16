@@ -64,6 +64,7 @@ class Subscription(db.Model):  # type: ignore
     def disable(self):
         # Wipe last_pm25 so when this comes back online we don't hold onto
         # a value from potentially months ago.
+        self.client.disable_alerts()
         self.last_pm25 = None
         self.disabled_at = datetime.datetime.now().timestamp()
         db.session.commit()
@@ -134,9 +135,12 @@ class Subscription(db.Model):  # type: ignore
             curr_aqi=curr_aqi,
         )
         self.client.send_message(message)
+        self.client.last_alert_sent_at = datetime.datetime.now().timestamp()
+        self.client.last_pm25 = metric.value
+        self.client.num_alerts_sent += 1
 
         self.last_pm25 = metric.value
-        self.last_executed_at = datetime.datetime.now().timestamp()
+        self.last_executed_at = self.client.last_alert_sent_at
         db.session.commit()
 
         return True

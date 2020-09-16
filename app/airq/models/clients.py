@@ -26,8 +26,16 @@ class Client(db.Model):  # type: ignore
     id = db.Column(db.Integer(), primary_key=True)
     identifier = db.Column(db.String(), nullable=False)
     type_code = db.Column(db.Enum(ClientIdentifierType), nullable=False)
+    last_activity_at = db.Column(db.Integer(), nullable=False, index=True)
+
+    zipcode_id = db.Column(db.Integer(), db.ForeignKey('zipcodes.id', name='clients_zipcode_id_fkey'), nullable=True)
+    last_pm25 = db.Column(db.Float(), nullable=True)
+    last_alert_sent_at = db.Column(db.Integer(), nullable=False, index=True, default=0)
+    alerts_disabled_at = db.Column(db.Integer(), nullable=False, index=True, default=0)
+    num_alerts_sent = db.Column(db.Integer(), nullable=False, default=0)
 
     requests = db.relationship("Request")
+    zipcode = db.relationship("Zipcode")
 
     __table_args__ = (
         db.Index(
@@ -38,13 +46,16 @@ class Client(db.Model):  # type: ignore
     @classmethod
     def get_or_create(
         cls, identifier: str, type_code: ClientIdentifierType
-    ) -> "Client":
+    ) -> typing.Tuple["Client", bool]:
         client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
-            client = cls(identifier=identifier, type_code=type_code)
+            client = cls(identifier=identifier, type_code=type_code, last_activity_at=datetime.datetime.now().timestamp())
             db.session.add(client)
             db.session.commit()
-        return client
+            was_created = True
+        else:
+            was_created = False
+        return client, was_created
 
     def get_last_requested_zipcode(self) -> typing.Optional[Zipcode]:
         return (
@@ -88,6 +99,11 @@ class Client(db.Model):  # type: ignore
     def update_subscription(self, zipcode_id: int, current_pm25: float) -> bool:
         from airq.models.subscriptions import Subscription
 
+        self.last_pm25 = current_pm25
+        if self.zipcode_id != zipcode_id:
+            self.zipcode_id = zipcode_id
+        db.session.commit()
+
         current_subscription = self.get_subscription()
         if current_subscription:
             if current_subscription.zipcode_id == zipcode_id:
@@ -106,3 +122,12 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
         return True
+
+    def mark_seen(self):
+        self.last_activity_at = datetime.datetime.now().timestamp()
+        db.session.commit()
+
+    def disable_alerts(self):
+        self.last_pm25 = None
+        self.alerts_disabled_at = datetime.datetime.now().timestamp()
+        db.session.commit()
