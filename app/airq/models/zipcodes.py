@@ -84,17 +84,16 @@ class Zipcode(db.Model):  # type: ignore
     def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:
         zipcodes: typing.List[Zipcode] = []
 
-        cutoff = self.cutoff()
-        pm25_level = self.pm25_level
-        if not pm25_level or self.is_pm25_stale:
+        if not self.pm25_level or self.is_pm25_stale:
             return zipcodes
 
+        cutoff = self.cutoff()
         seen_ids: typing.Set[int] = set()
         gh = list(self.geohash)
         # TODO: Use Postgres' native geolocation extension.
         while gh:
             query = Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).filter(
-                Zipcode.pm25 < pm25_level
+                Zipcode.pm25 < self.pm25_level
             )
             for i, c in enumerate(gh, start=1):
                 col = getattr(Zipcode, f"geohash_bit_{i}")
