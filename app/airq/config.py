@@ -9,7 +9,9 @@ if typing.TYPE_CHECKING:
 FLASK_ENV = os.getenv("FLASK_ENV", "development")
 DEBUG = FLASK_ENV == "development"
 
-SECRET_KEY = os.getenv("SECRET_KEY", "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2")
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+)
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")

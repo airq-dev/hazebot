@@ -6,7 +6,7 @@ from airq.config import db
 
 
 class User(UserMixin, db.Model):  # type: ignore
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)

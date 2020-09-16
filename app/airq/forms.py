@@ -6,6 +6,14 @@ from wtforms import validators
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[validators.DataRequired()], render_kw={'placeholder': "Email"})
-    password = PasswordField('Password', validators=[validators.DataRequired()], render_kw={'placeholder': "Password"})
-    submit = SubmitField('Submit')
+    email = StringField(
+        "Email",
+        validators=[validators.DataRequired()],
+        render_kw={"placeholder": "Email"},
+    )
+    password = PasswordField(
+        "Password",
+        validators=[validators.DataRequired()],
+        render_kw={"placeholder": "Password"},
+    )
+    submit = SubmitField("Submit")
