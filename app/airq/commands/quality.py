@@ -70,9 +70,7 @@ class GetDetailsHandler(BaseQualityHandler):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append(
-                "Try these other places near you for better air quality:"
-            )
+            message.append("Try these other places near you for better air quality:")
             for recommendation in recommended_zipcodes:
                 message.append(
                     " - {} {}: {}".format(

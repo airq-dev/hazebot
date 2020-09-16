@@ -185,12 +185,3 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
         return True
-
-    def mark_seen(self):
-        self.last_activity_at = datetime.datetime.now().timestamp()
-        db.session.commit()
-
-    def disable_alerts(self):
-        self.last_pm25 = None
-        self.alerts_disabled_at = datetime.datetime.now().timestamp()
-        db.session.commit()
