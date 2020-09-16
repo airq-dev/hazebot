@@ -73,6 +73,10 @@
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_USER-1EVSsZ"
                 },
                 {
+                    "name": "SECRET_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:SECRET_KEY-ZzCXkF"
+                },
+                {
                     "name": "TWILIO_AUTHTOKEN",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:TWILIO_AUTHTOKEN-KDBKRb"
                 },
