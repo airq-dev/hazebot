@@ -1,6 +1,6 @@
 # Hazebot - TEXT your ZIP to 26AQISAFE2 for local, up-to-date air quality.
 
-Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information protect your and your community. 
+Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information protect your and your community. You can also visit us at [hazebot.org](www.hazebot.org).
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
