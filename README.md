@@ -1,6 +1,6 @@
 # Hazebot - TEXT your ZIP to 26AQISAFE2 for local, up-to-date air quality.
 
-Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information protect your and your community. 
+Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information protect your and your community.
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
@@ -27,7 +27,7 @@ The synchronization process is one of the most complex parts of Hazebot's archit
 
 1. All current sensor readings are retrieved from PurpleAir.
 2. The `sensors` table is updated with these readings. Any previously unseen sensors are insterted into the `sensors` table.
-3. The relationship table between sensors and zipcodes, `sensors_zipcodes`, is updated with the latest sensor locations. Usually there's not much to do here, but when a new sensor comes online or when one moves we use [Geohashing](https://en.wikipedia.org/wiki/Geohash) to create associations between it and all zipcodes within 25 kilometers. 
+3. The relationship table between sensors and zipcodes, `sensors_zipcodes`, is updated with the latest sensor locations. Usually there's not much to do here, but when a new sensor comes online or when one moves we use [Geohashing](https://en.wikipedia.org/wiki/Geohash) to create associations between it and all zipcodes within 25 kilometers.
 4. We loop over each zipcode in the `zipcodes` table and calculate the current average reading for that zipcode from the most up-to-date data in the `sensors` table. We insert these metrics in the `metrics` table, which aggregates historical per-zipcode data going back two hours.
 5. We loop over each row in the `subscriptions` table and alert all users who qualify.
 
@@ -35,7 +35,7 @@ Once per day, at 12 AM UTC, the worker synchronizes the `zipcodes` table with th
 
 ## Contributing
 
-Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `flask sync --geography`. This runs the synchronization process described above to populate your database.
+Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker-compose exec app flask sync --geography`. This runs the synchronization process described above to populate your database.
 
 You can then test the API by navigating to `http://localhost:5000/quality?zipcode<YOUR ZIPCODE>`. The `/quality` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
 
