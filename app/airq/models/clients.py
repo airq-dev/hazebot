@@ -152,6 +152,7 @@ class Client(db.Model):  # type: ignore
             .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.alerts_disabled_at == 0)
             .filter(cls.last_alert_sent_at < cutoff)
+            .filter(cls.zipcode_id.isnot(None))
             .all()
         )
 
