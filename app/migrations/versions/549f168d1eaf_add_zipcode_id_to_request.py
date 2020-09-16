@@ -25,6 +25,10 @@ def upgrade():
     # ### end Alembic commands ###
     conn = op.get_bind()
     res = conn.execute("SELECT id, zipcode FROM requests")
+    if res is None:
+        print("Skipping data migration because Alembic is running with --sql")
+        return
+
     for request_id, zipcode in res.fetchall():
         res = conn.execute("SELECT id FROM zipcodes WHERE zipcode=%s", zipcode)
         row = res.fetchone()
