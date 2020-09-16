@@ -259,7 +259,7 @@ def _metrics_sync():
         db.session.bulk_save_objects(objects)
         db.session.commit()
 
-    logger.info("Updating %s zipcodes", len(zipcodes))
+    logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
