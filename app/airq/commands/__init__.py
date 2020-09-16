@@ -3,18 +3,19 @@ import html
 from airq.commands.invalid import InvalidInputHandler
 from airq.commands.about import ShowAboutHandler
 from airq.commands.menu import ShowMenuHandler
+from airq.commands.quality import GetDetailsHandler
 from airq.commands.quality import GetQualityHandler
 from airq.commands.stop import StopHandler
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
-ZIPCODE_REGEX = "(?P<zipcode>\d{5})"
+ZIPCODE_REGEX = "(?P<raw_zip>\d{5})"
 
 
 ROUTES = [
     GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
-    GetQualityHandler.route(pattern=r"^1$", details=True),
+    GetDetailsHandler.route(pattern=r"^1$"),
     GetQualityHandler.route(pattern=r"^2$"),
     ShowAboutHandler.route(pattern=r"^3$"),
     ShowMenuHandler.route(pattern=r"^m$"),

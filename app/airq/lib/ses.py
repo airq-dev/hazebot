@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 def send_email(to_addresses: typing.List[str], subject: str, body: str) -> bool:
     if config.DEBUG:
+        logger.info("Not sending email to %s addresses", len(to_addresses))
         return True
 
     ses = boto3.client(
