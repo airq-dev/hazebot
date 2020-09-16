@@ -24,7 +24,7 @@ TRelationsMap = typing.Dict[int, typing.Dict[int, float]]
 PURPLEAIR_URL = "https://www.purpleair.com/json"
 
 # Try to get at least 8 readings per zipcode.
-DESIRED_NUM_READINGS = 8 
+DESIRED_NUM_READINGS = 8
 
 # Allow any number of readings within 2.5km from the zipcode centroid.
 DESIRED_READING_DISTANCE_KM = 2.5
