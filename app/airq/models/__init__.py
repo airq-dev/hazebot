@@ -4,5 +4,4 @@ from . import metrics
 from . import relations
 from . import requests
 from . import sensors
-from . import subscriptions
 from . import zipcodes

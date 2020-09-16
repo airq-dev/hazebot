@@ -154,6 +154,8 @@ class GetQualityHandler(ApiCommandHandler):
         while gh:
             query = Zipcode.query.with_entities(
                 Zipcode.id, Zipcode.latitude, Zipcode.longitude,
+            ).filter(
+                Zipcode.pm25
             )
             for i, c in enumerate(gh, start=1):
                 col = getattr(Zipcode, f"geohash_bit_{i}")

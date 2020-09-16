@@ -1,9 +1,12 @@
 import datetime
 import enum
 import logging
+import pytz
 import typing
 
 from airq.config import db
+from airq.lib.readings import Pm25
+from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
 from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
@@ -42,6 +45,16 @@ class Client(db.Model):  # type: ignore
             "_client_identifier_type_code", "identifier", "type_code", unique=True,
         ),
     )
+
+    # Send alerts at most every one hour to avoid spamming people.
+    # One hour seems like a reasonable frequency because AQI
+    # doesn't fluctuate very frequently. We should look at implementing
+    # logic to smooth out this alerting so that if AQI oscillates
+    # between two levels we don't spam the user every hour.
+    FREQUENCY = 1 * 60 * 60
+
+    # Send alerts between 8 AM and 9 PM.
+    SEND_WINDOW_HOURS = (8, 21)
 
     @classmethod
     def get_or_create(
@@ -100,34 +113,73 @@ class Client(db.Model):  # type: ignore
         from airq.models.subscriptions import Subscription
 
         self.last_pm25 = current_pm25
-        if self.zipcode_id != zipcode_id:
+        curr_zipcode_id = self.zipcode_id
+        if curr_zipcode_id != zipcode_id:
+            # TODO: Command to re-enable alerts instead of auto re-enabling them.
+            self.alerts_disabled_at = 0
             self.zipcode_id = zipcode_id
         db.session.commit()
+        return curr_zipcode_id != self.zipcode_id
 
-        current_subscription = self.get_subscription()
-        if current_subscription:
-            if current_subscription.zipcode_id == zipcode_id:
-                return False
-            current_subscription.disable()
-
-        subscription = Subscription.get_or_create(self.id, zipcode_id)
-        if subscription.is_disabled:
-            subscription.enable()
-
-        # This is a new subscription
-        # Mark it to be checked again in 3 hours.
-        subscription.last_pm25 = current_pm25
-        subscription.last_executed_at = datetime.datetime.now().timestamp()
-        db.session.add(subscription)
-        db.session.commit()
-
-        return True
+    @classmethod
+    def curr_ts(cls) -> int:
+        return datetime.datetime.now().timestamp()
 
     def mark_seen(self):
-        self.last_activity_at = datetime.datetime.now().timestamp()
+        self.last_activity_at = self.curr_ts()
         db.session.commit()
 
     def disable_alerts(self):
         self.last_pm25 = None
-        self.alerts_disabled_at = datetime.datetime.now().timestamp()
+        self.alerts_disabled_at = self.curr_ts()
         db.session.commit()
+
+    @property
+    def is_in_send_window(self) -> bool:
+        # Timezone can be null since our data is incomplete.
+        timezone = self.zipcode.timezone or "America/Los_Angeles"
+        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
+        send_start, send_end = self.SEND_WINDOW_HOURS
+        return send_start <= dt.hour < send_end
+
+    @classmethod
+    def get_eligible_for_sending(cls) -> typing.List["Client"]:
+        cutoff = cls.curr_ts() - cls.FREQUENCY
+        return (
+            cls.query.options(joinedload(cls.zipcode))
+            .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+            .filter(cls.alerts_disabled_at == 0)
+            .filter(cls.last_alert_sent_at < cutoff)
+            .all()
+        )
+
+    def maybe_notify(self) -> bool:
+        # if not self.is_in_send_window:
+        #     return False
+
+        curr_pm25 = self.zipcode.pm25
+        curr_aqi_level = Pm25.from_measurement(curr_pm25)
+        curr_aqi = pm25_to_aqi(curr_pm25)
+
+        # Only send if the pm25 changed a level since the last time we sent this alert.
+        last_aqi_level = Pm25.from_measurement(self.last_pm25)
+        last_aqi = pm25_to_aqi(self.last_pm25)
+        # if curr_aqi_level == last_aqi_level:
+        #     return False
+
+        message = (
+            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})"
+        ).format(
+            city=self.zipcode.city.name,
+            zipcode=self.zipcode.zipcode,
+            curr_aqi_level=curr_aqi_level.display,
+            curr_aqi=curr_aqi,
+        )
+        self.send_message(message)
+
+        self.last_alert_sent_at = datetime.datetime.now().timestamp()
+        self.last_pm25 = metric.value
+        self.num_alerts_sent += 1
+        db.session.commit()
+
+        return True

@@ -9,10 +9,9 @@ from airq.config import db
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
-from airq.models.metrics import Metric
+from airq.models.subscriptions import Client
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
-from airq.models.subscriptions import Subscription
 from airq.models.zipcodes import Zipcode
 
 
@@ -196,7 +195,6 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
 
 
 def _metrics_sync():
-    metrics = []
     updates = []
     timestamp = datetime.datetime.now().timestamp()
 
@@ -233,18 +231,6 @@ def _metrics_sync():
             num_sensors = len(readings)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
-
-            metrics.append(
-                Metric(
-                    zipcode_id=zipcode_id,
-                    timestamp=timestamp,
-                    value=round(sum(readings) / len(readings), ndigits=3),
-                    num_sensors=len(readings),
-                    min_sensor_distance=round(closest_reading, ndigits=3),
-                    max_sensor_distance=round(farthest_reading, ndigits=3),
-                )
-            )
-
             updates.append({
                 'id': zipcode_id,
                 'pm25': pm25,
@@ -254,33 +240,18 @@ def _metrics_sync():
                 'max_sensor_distance': max_sensor_distance
             })
 
-    logger.info("Inserting %s metrics", len(metrics))
-    for objects in chunk_list(metrics, batch_size=5000):
-        db.session.bulk_save_objects(objects)
-        db.session.commit()
-
     logger.info("Updating %s zipcodes", len(zipcodes))
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
 
-    # Delete all metrics more than two hours old
-    cutoff = timestamp - (2 * 60 * 60)
-    num_deleted = (
-        db.session.query(Metric)
-        .filter(Metric.timestamp <= cutoff)
-        .delete(synchronize_session=False)
-    )
-    db.session.commit()
-    logger.info("Deleting %s stale metrics metrics", num_deleted)
 
-
-def _handle_subscriptions():
+def _send_alerts():
     num_sent = 0
-    for subscription in Subscription.get_eligible_for_sending():
-        if subscription.maybe_notify():
+    for client in Client.get_eligible_for_sending():
+        if client.maybe_notify():
             num_sent += 1
-    logger.info("Sent %s notifications", num_sent)
+    logger.info("Sent %s alerts", num_sent)
 
 
 def purpleair_sync():
@@ -299,4 +270,4 @@ def purpleair_sync():
     _metrics_sync()
 
     logger.info("Sending alerts")
-    _handle_subscriptions()
+    _send_alerts()

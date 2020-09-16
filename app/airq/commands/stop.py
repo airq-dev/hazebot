@@ -7,20 +7,15 @@ from airq.models.zipcodes import Zipcode
 
 class StopHandler(ApiCommandHandler):
     def handle(self) -> typing.List[str]:
-        zipcode = self.client.get_last_requested_zipcode()
-        if not zipcode:
+        if self.client.zipcode is None:
             return [
                 "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
             ]
 
-        subscription = Subscription.query.filter_by(
-            client_id=self.client.id, zipcode_id=zipcode.id,
-        ).first()
+        if self.client.alerts_disabled_at:
+           return [f"Looks like you already stopped watching {self.client.zipcode.zipcode}."]
 
-        if not subscription or subscription.is_disabled:
-            return [f"Looks like you already stopped watching {zipcode.zipcode}."]
-
-        subscription.disable()
+        self.client.disable_alerts()
         return [
-            f"Got it! You will no longer recieve alerts for {zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
+            f"Got it! You will no longer recieve alerts for {self.client.zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
         ]
