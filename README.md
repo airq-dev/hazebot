@@ -35,14 +35,14 @@ Once per day, at 12 AM UTC, the worker synchronizes the `zipcodes` table with th
 
 ## Contributing
 
-Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `flask sync --geography`. This runs the synchronization process described above to populate your database.
+Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker compose exec app flask sync --geography`. This runs the synchronization process described above to populate your database.
 
 You can then test the API by navigating to `http://localhost:5000/quality?zipcode<YOUR ZIPCODE>`. The `/quality` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
 
 Next, install [black](https://github.com/psf/black) and [mypy](http://mypy-lang.org/):
 
 ```
-pip install 'black==19.10b0
+pip install 'black==19.10b0'
 pip install mypy
 ```
 
