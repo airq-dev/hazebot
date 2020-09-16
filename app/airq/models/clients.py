@@ -149,9 +149,9 @@ class Client(db.Model):  # type: ignore
         cutoff = cls.curr_ts() - cls.FREQUENCY
         return (
             cls.query.options(joinedload(cls.zipcode))
-            # .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+            .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
             .filter(cls.alerts_disabled_at == 0)
-            # .filter(cls.last_alert_sent_at < cutoff)
+            .filter(cls.last_alert_sent_at < cutoff)
             .all()
         )
 
@@ -185,3 +185,12 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
         return True
+
+    def mark_seen(self):
+        self.last_activity_at = datetime.datetime.now().timestamp()
+        db.session.commit()
+
+    def disable_alerts(self):
+        self.last_pm25 = None
+        self.alerts_disabled_at = datetime.datetime.now().timestamp()
+        db.session.commit()
