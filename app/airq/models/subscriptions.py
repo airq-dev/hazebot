@@ -23,9 +23,8 @@ class Subscription(db.Model):  # type: ignore
     # between two levels we don't spam the user every hour.
     FREQUENCY = 1 * 60 * 60
 
-    # Send alerts between 7 and 10 PM.
-    # This would be nice to expose as a preference eventually.
-    SEND_WINDOW_HOURS = (7, 22)
+    # Send alerts between 8 AM and 9 PM.
+    SEND_WINDOW_HOURS = (8, 21)
 
     zipcode_id = db.Column(
         db.Integer(),
@@ -103,7 +102,7 @@ class Subscription(db.Model):  # type: ignore
         timezone = self.zipcode.timezone or "America/Los_Angeles"
         dt = datetime.datetime.now(tz=pytz.timezone(timezone))
         send_start, send_end = self.SEND_WINDOW_HOURS
-        return send_start <= dt.hour <= send_end
+        return send_start <= dt.hour < send_end
 
     def maybe_notify(self) -> bool:
         if not self.is_in_send_window:
