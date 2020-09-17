@@ -2,6 +2,7 @@ import abc
 import typing
 
 from airq.commands.base import ApiCommandHandler
+from airq.lib.geo import kilometers_to_miles
 from airq.models.zipcodes import Zipcode
 
 
@@ -69,10 +70,11 @@ class GetDetailsHandler(BaseQualityHandler):
             message.append("Here are the closest places with better air quality:")
             for recommendation in recommended_zipcodes:
                 message.append(
-                    " - {} {}: {}".format(
+                    " - {} {}: {} ({} mi)".format(
                         recommendation.city.name,
                         recommendation.zipcode,
-                        recommendation.pm25_level.display,
+                        recommendation.pm25_level.display.upper(),
+                        round(kilometers_to_miles(recommendation.distance(zipcode)), 1),
                     )
                 )
             message.append("")
