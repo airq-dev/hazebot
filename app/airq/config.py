@@ -19,7 +19,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 ADMIN_EMAILS = os.getenv("ADMIN_EMAILS", "").split(",")
 
 SES_REGION = os.getenv("SES_REGION", "us-west-2")
-SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "")
+SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "info@hazebot.org")
 
 TWILIO_AUTHTOKEN = os.getenv("TWILIO_AUTHTOKEN", "")
 TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
@@ -46,17 +46,15 @@ LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
             "class": "logging.StreamHandler",
             "stream": "ext://flask.logging.wsgi_errors_stream",
             "formatter": "default",
-        }
+        },
+        "mail_admins": {
+            "class": "airq.lib.logging.AdminEmailHandler",
+            "formatter": "default",
+            "level": "ERROR",
+        },
     },
-    "root": {"level": "INFO", "handlers": ["wsgi"]},
+    "root": {"level": "INFO", "handlers": ["wsgi", "mail_admins"]},
 }
-if not DEBUG:
-    LOGGING_CONFIG["handlers"]["mail_admins"] = {
-        "class": "airq.lib.logging.AdminEmailHandler",
-        "formatter": "default",
-        "level": "ERROR",
-    }
-    LOGGING_CONFIG["root"]["handlers"].append("mail_admins")
 dictConfig(LOGGING_CONFIG)
 
 import flask

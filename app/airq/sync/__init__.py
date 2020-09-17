@@ -37,3 +37,8 @@ def models_sync(force_rebuild_geography: typing.Optional[bool] = None):
     else:
         log_level = logging.INFO
     logger.log(log_level, "Completed models_sync in %s seconds", duration)
+
+
+def test_me():
+    logger.exception("test 1")
+    raise Exception("test 2")

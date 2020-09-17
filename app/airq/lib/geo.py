@@ -3,7 +3,7 @@ import math
 
 def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     """
-    Calculate the great circle distance between two points 
+    Calculate the great circle distance between two points
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians
@@ -19,3 +19,14 @@ def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> fl
     c = 2 * math.asin(math.sqrt(a))
     r = 6371  # Radius of earth in kilometers. Use 3956 for miles
     return c * r
+
+
+def kilometers_to_miles(kilometers: float) -> float:
+    """
+    Converts kilometers to miles
+    """
+    # conversion factor
+    conv_fac = 0.621371
+
+    # calculate miles
+    return kilometers * conv_fac
