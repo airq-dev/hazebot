@@ -5,6 +5,7 @@ import pytz
 import typing
 
 from sqlalchemy.orm import joinedload
+from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
 from airq.lib.readings import Pm25
@@ -104,7 +105,17 @@ class Client(db.Model):  # type: ignore
 
     def send_message(self, message: str):
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
-            send_sms(message, self.identifier)
+            try:
+                send_sms(message, self.identifier)
+            except TwilioRestException as e:
+                if e.code == 21610:
+                    # The message From/To pair violates a blacklist rule.
+                    logger.warning(
+                        "Disabling alerts for unsubscribed recipient %s", self
+                    )
+                    self.disable_alerts()
+                else:
+                    raise
         else:
             # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)

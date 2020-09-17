@@ -27,17 +27,3 @@ def quality() -> str:
     else:
         ip = request.remote_addr
     return commands.handle_command(zipcode, ip, ClientIdentifierType.IP)
-
-
-## REMOVE CODE BELOW THIS ##
-
-import logging
-from airq.tasks import throw_in_celery
-
-logger = logging.getLogger(__name__)
-
-
-def remove_me() -> str:
-    throw_in_celery.delay()
-    logger.exception("app exc 1")
-    raise Exception("app exc 2")
