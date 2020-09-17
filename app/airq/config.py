@@ -12,7 +12,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 ADMIN_EMAILS = os.getenv("ADMIN_EMAILS", "").split(",")
 
 SES_REGION = os.getenv("SES_REGION", "us-west-2")
-SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "")
+SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "info@hazebot.org")
 
 TWILIO_AUTHTOKEN = os.getenv("TWILIO_AUTHTOKEN", "")
 TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
