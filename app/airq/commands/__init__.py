@@ -15,9 +15,9 @@ ZIPCODE_REGEX = "(?P<raw_zip>\d{5})"
 
 ROUTES = [
     GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
-    GetDetailsHandler.route(pattern=r"^1$"),
-    GetQualityHandler.route(pattern=r"^2$"),
-    ShowAboutHandler.route(pattern=r"^3$"),
+    GetDetailsHandler.route(pattern=r"^^1[\.\)]?$"),
+    GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
+    ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
     ShowMenuHandler.route(pattern=r"^m$"),
     StopHandler.route(pattern=r"^u$"),
 ]
