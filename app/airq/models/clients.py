@@ -4,7 +4,11 @@ import logging
 import pytz
 import typing
 
+from sqlalchemy import case
+from sqlalchemy import func
+from sqlalchemy import literal_column
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Query
 
 from airq.config import db
 from airq.lib.readings import Pm25
@@ -138,6 +142,8 @@ class Client(db.Model):  # type: ignore
 
     @property
     def is_in_send_window(self) -> bool:
+        if self.zipcode_id is None:
+            return False
         # Timezone can be null since our data is incomplete.
         timezone = self.zipcode.timezone or "America/Los_Angeles"
         dt = datetime.datetime.now(tz=pytz.timezone(timezone))
@@ -145,11 +151,16 @@ class Client(db.Model):  # type: ignore
         return send_start <= dt.hour < send_end
 
     @classmethod
+    def filter_phones(cls) -> Query:
+        return cls.query
+        # return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+
+    @classmethod
     def get_eligible_for_sending(cls) -> typing.List["Client"]:
         cutoff = cls.curr_ts() - cls.FREQUENCY
         return (
-            cls.query.options(joinedload(cls.zipcode))
-            .filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+            cls.filter_phones()
+            .options(joinedload(cls.zipcode))
             .filter(cls.alerts_disabled_at == 0)
             .filter(cls.last_alert_sent_at < cutoff)
             .filter(cls.zipcode_id.isnot(None))
@@ -186,3 +197,44 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
         return True
+
+    #
+    # Stats getters
+    #
+
+    @classmethod
+    def get_total_num_sends(cls) -> int:
+        return (
+            cls.filter_phones().with_entities(func.sum(cls.num_alerts_sent)).scalar()
+            or 0
+        )
+
+    @classmethod
+    def get_total_num_subscriptions(cls) -> int:
+        return cls.filter_phones().filter(cls.alerts_disabled_at == 0).count()
+
+    @classmethod
+    def get_inactive_counts(cls):
+        windows = [1, 2, 3, 7, 30]
+        curr_time = cls.curr_ts()
+        groups = [
+            func.sum(
+                case(
+                    [
+                        (
+                            cls.last_activity_at > curr_time - (window * 24 * 60 * 60),
+                            literal_column("1"),
+                        )
+                    ],
+                    else_=literal_column("0"),
+                )
+            ).label("{} day{}".format(window, "s" if window > 1 else ""))
+            for window in windows
+        ]
+        counts = (
+            count or 0 for count in cls.filter_phones()
+            # .filter(cls.alerts_disabled_at > 0)
+            .with_entities(*groups)
+            .first()
+        )
+        return dict(zip(windows, counts))

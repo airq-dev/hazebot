@@ -6,12 +6,16 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
+from flask_login import login_required
 from flask_login import login_user
+from flask_login import logout_user
 from twilio.twiml.messaging_response import MessagingResponse
 from werkzeug import Response
 
 from airq import commands
+from airq.decorators import admin_required
 from airq.forms import LoginForm
+from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.users import User
 
@@ -54,3 +58,19 @@ def login() -> typing.Union[Response, str]:
         # TODO: Redirect to the admin page.
         return redirect("/")
     return render_template("login.html", title="Sign In", form=form)
+
+
+@login_required
+def logout() -> Response:
+    logout_user()
+    return redirect(url_for("login"))
+
+
+@admin_required
+def admin() -> str:
+    summary_metrics = {
+        "num_sent": Client.get_total_num_sends(),
+        "num_subscribed_clients": Client.get_total_num_subscriptions(),
+    }
+    activity_counts = Client.get_inactive_counts()
+    return render_template("admin.html", title="Admin", stats=stats)
