@@ -83,6 +83,7 @@ class Zipcode(db.Model):  # type: ignore
 
     def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:
         zipcodes: typing.List[Zipcode] = []
+        print(self.pm25_level, self.is_pm25_stale)
 
         if not self.pm25_level or self.is_pm25_stale:
             return zipcodes
