@@ -77,7 +77,7 @@ class GetDetailsHandler(BaseQualityHandler):
                     " - {} {} {} mi: {}".format(
                         recommendation.city.name,
                         recommendation.zipcode,
-                        round(kilometers_to_miles(recommendation.distance(zipcode)), 2),
+                        round(kilometers_to_miles(recommendation.distance(zipcode)), 1),
                         recommendation.pm25_level.display,
                     )
                 )
