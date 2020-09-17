@@ -35,6 +35,8 @@ Once per day, at 12 AM UTC, the worker synchronizes the `zipcodes` table with th
 
 ## Contributing
 
+### Local Setup
+
 Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker compose exec app flask sync --geography`. This runs the synchronization process described above to populate your database.
 
 You can then test the API by navigating to `http://localhost:5000/quality?zipcode<YOUR ZIPCODE>`. The `/quality` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
@@ -47,3 +49,13 @@ pip install mypy
 ```
 
 Before opening a PR, run `black .` and `mypy app` from the root of this repository and ensure that both exit cleanly (CI will fail otherwise).
+
+
+### Accessing the Database
+
+You can directly query Postgres via Docker while the app is running. Run:
+
+```
+docker-compose db /bin/sh  # gets you a command line in the container
+psql --user postgres  # logs you into the container
+```
