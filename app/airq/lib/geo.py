@@ -20,6 +20,7 @@ def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> fl
     r = 6371  # Radius of earth in kilometers. Use 3956 for miles
     return c * r
 
+
 def kilometers_to_miles(kilometers: float) -> float:
     """
     Converts kilometers to miles
