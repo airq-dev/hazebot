@@ -70,11 +70,11 @@ class GetDetailsHandler(BaseQualityHandler):
             message.append("Here are the closest places with better air quality:")
             for recommendation in recommended_zipcodes:
                 message.append(
-                    " - {} {} {} mi: {}".format(
+                    " - {} {}: {} ({} mi)".format(
                         recommendation.city.name,
                         recommendation.zipcode,
+                        recommendation.pm25_level.display.upper(),
                         round(kilometers_to_miles(recommendation.distance(zipcode)), 1),
-                        recommendation.pm25_level.display,
                     )
                 )
             message.append("")
