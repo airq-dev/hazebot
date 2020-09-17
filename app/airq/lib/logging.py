@@ -4,14 +4,16 @@ import traceback
 from flask import request
 
 from airq import config
-from airq.lib import ses
 
 
-logger = logging.getLogger(__name__)
+def get_airq_logger(name: str) -> logging.Logger:
+    return logging.getLogger("airq." + name)
 
 
 class AdminEmailHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
+        from airq.lib import ses
+
         if not record.exc_info:
             return
         _, exc, _ = record.exc_info
@@ -22,4 +24,3 @@ class AdminEmailHandler(logging.Handler):
             for key, value in request.environ.items():
                 body += "{}={}\n".format(key, value)
         ses.send_email(config.ADMIN_EMAILS, subject, body)
-        logger.info("Sent email to %s", config.ADMIN_EMAILS)
