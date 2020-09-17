@@ -1,13 +1,9 @@
 import abc
-import logging
 import typing
 
 from airq.commands.base import ApiCommandHandler
 from airq.lib.geo import kilometers_to_miles
 from airq.models.zipcodes import Zipcode
-
-
-logger = logging.getLogger(__name__)
 
 
 class BaseQualityHandler(ApiCommandHandler):
@@ -50,7 +46,7 @@ class GetQualityHandler(BaseQualityHandler):
             "{} {} is {}{}.".format(
                 zipcode.city.name,
                 zipcode.zipcode,
-                zipcode.pm25_level.display.upper(),
+                zipcode.pm25_level.display,
                 f" (AQI {aqi})" if aqi else "",
             )
         )
@@ -71,7 +67,7 @@ class GetDetailsHandler(BaseQualityHandler):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append("Try these other places near you for better air quality:")
+            message.append("Here are the closest places with better air quality:")
             for recommendation in recommended_zipcodes:
                 message.append(
                     " - {} {} {} mi: {}".format(
