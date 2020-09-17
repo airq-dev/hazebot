@@ -52,7 +52,6 @@ class ContextTask(celery.Task):  # type: ignore
             return self.run(*args, **kwargs)
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        print("on failure")
         get_celery_logger().exception(
             "%s: %s", type(exc).__name__, str(exc), exc_info=exc
         )
@@ -64,7 +63,6 @@ celery.Task = ContextTask
 
 @signals.setup_logging.connect
 def setup_celery_logging(**kwargs):
-    print("setting up logging")
     dictConfig(config.LOGGING_CONFIG)
 
 
