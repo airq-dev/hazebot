@@ -46,7 +46,7 @@ class Zipcode(db.Model):  # type: ignore
         return f"<Zipcode {self.zipcode}>"
 
     def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls, *args, **kwargs)
+        obj = super().__new__(cls)
         obj._distance_cache = {}
         return obj
 
