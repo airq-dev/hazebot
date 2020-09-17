@@ -108,8 +108,6 @@ def _sensors_sync(
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["ID"])
-            elif not relations_map.get(result["ID"]):
-                moved_sensor_ids.append(result["ID"])
 
             if sensor:
                 updates.append(data)
