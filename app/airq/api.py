@@ -73,4 +73,4 @@ def admin() -> str:
         "num_subscribed_clients": Client.get_total_num_subscriptions(),
     }
     activity_counts = Client.get_inactive_counts()
-    return render_template("admin.html", title="Admin", stats=stats)
+    return render_template("admin.html", title="Admin", summary_metrics=summary_metrics, activity_counts=activity_counts)
