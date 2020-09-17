@@ -57,5 +57,5 @@ You can directly query Postgres via Docker while the app is running. Run:
 
 ```
 docker-compose db /bin/sh  # gets you a command line in the container
-psql --user postgres  # logs you into the container
+psql --user postgres  # logs you into the database
 ```
