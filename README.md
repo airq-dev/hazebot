@@ -6,7 +6,7 @@ Building the 411 for air quality in the United States: a texting platform access
 
 ## Features
 
-To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every three hours, and only between the hours of 8AM and 9PM, so (we hope) this won't feel spammy.
+To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every hour, and only between the hours of 8AM and 9PM.
 
 We also support several SMS "commands":
 * `1`: Get details about the air quality in your zipcode, and recommendations of nearby areas with healthier air.
