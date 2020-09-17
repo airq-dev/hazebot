@@ -30,35 +30,32 @@ class Pm25(enum.IntEnum):
     @property
     def display(self) -> str:
         if self == self.GOOD:
-            return "Good"
+            return "GOOD"
         elif self == self.MODERATE:
-            return "Moderate"
+            return "MODERATE"
         elif self == self.UNHEALTHY_FOR_SENSITIVE_GROUPS:
-            return "Unhealthy for Sensitive Groups"
+            return "UNHEALTHY FOR SENSITIVE GROUPS"
         elif self == self.UNHEALTHY:
-            return "Unhealthy"
+            return "UNHEALTHY"
         elif self == self.VERY_UNHEALTHY:
-            return "Very Unhealthy"
+            return "VERY UNHEALTHY"
         else:
-            return "Hazardous"
-
-    def to_aqi(self) -> typing.Optional[int]:
-        return pm25_to_aqi(float(self))
+            return "HAZARDOUS"
 
     @property
     def description(self) -> str:
         if self == self.GOOD:
-            return "Good (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk."
+            return "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk."
         elif self == self.MODERATE:
-            return "Moderate (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
+            return "MODERATE (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
         elif self == self.UNHEALTHY_FOR_SENSITIVE_GROUPS:
-            return "Unhealthy for Sensitive Groups (AQI: 101 - 150) means members of sensitive groups may experience health effects. The general public is not likely to be affected."
+            return "UNHEALTHY FOR SENSITIVE GROUPS (AQI: 101 - 150) means members of sensitive groups may experience health effects. The general public is not likely to be affected."
         elif self == self.UNHEALTHY:
-            return "Unhealthy (AQI: 151 - 200) means everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects."
+            return "UNHEALTHY (AQI: 151 - 200) means everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects."
         elif self == self.VERY_UNHEALTHY:
-            return "Very Unhealthy (AQI: 201 - 300): Health alert. Everyone may experience more serious health effects."
+            return "VERY UNHEALTHY (AQI: 201 - 300): Health alert. Everyone may experience more serious health effects."
         else:
-            return "Hazardous (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
+            return "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
 
 
 def pm25_to_aqi(concentration: float) -> typing.Optional[int]:

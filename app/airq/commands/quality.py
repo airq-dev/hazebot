@@ -1,12 +1,8 @@
 import abc
-import logging
 import typing
 
 from airq.commands.base import ApiCommandHandler
 from airq.models.zipcodes import Zipcode
-
-
-logger = logging.getLogger(__name__)
 
 
 class BaseQualityHandler(ApiCommandHandler):
@@ -49,7 +45,7 @@ class GetQualityHandler(BaseQualityHandler):
             "{} {} is {}{}.".format(
                 zipcode.city.name,
                 zipcode.zipcode,
-                zipcode.pm25_level.display.upper(),
+                zipcode.pm25_level.display,
                 f" (AQI {aqi})" if aqi else "",
             )
         )
@@ -76,7 +72,7 @@ class GetDetailsHandler(BaseQualityHandler):
                     " - {} {}: {}".format(
                         recommendation.city.name,
                         recommendation.zipcode,
-                        recommendation.pm25_level.display.upper(),
+                        recommendation.pm25_level.display,
                     )
                 )
             message.append("")
