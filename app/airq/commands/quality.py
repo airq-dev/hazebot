@@ -57,7 +57,6 @@ class GetQualityHandler(BaseQualityHandler):
         if was_updated:
             message.append("")
             message.append("We'll alert you when the air quality changes category.")
-            message.append("")
             message.append("Reply M for menu, U to stop this alert.")
         return message
 
