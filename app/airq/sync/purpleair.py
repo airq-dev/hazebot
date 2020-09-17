@@ -23,11 +23,11 @@ TRelationsMap = typing.Dict[int, typing.Dict[int, float]]
 
 PURPLEAIR_URL = "https://www.purpleair.com/json"
 
-# Try to get at least 10 readings per zipcode.
-DESIRED_NUM_READINGS = 10
+# Try to get at least 8 readings per zipcode.
+DESIRED_NUM_READINGS = 8
 
-# Allow any number of readings within 5km from the zipcode centroid.
-DESIRED_READING_DISTANCE_KM = 5
+# Allow any number of readings within 2.5km from the zipcode centroid.
+DESIRED_READING_DISTANCE_KM = 2.5
 
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
@@ -107,8 +107,6 @@ def _sensors_sync(
                     longitude=longitude,
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
-                moved_sensor_ids.append(result["ID"])
-            elif not relations_map.get(result["ID"]):
                 moved_sensor_ids.append(result["ID"])
 
             if sensor:
