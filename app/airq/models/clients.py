@@ -110,7 +110,9 @@ class Client(db.Model):  # type: ignore
             except TwilioRestException as e:
                 if e.code == 21610:
                     # The message From/To pair violates a blacklist rule.
-                    logger.warning("Disabling alerts for unsubscribed recipient %s", self)
+                    logger.warning(
+                        "Disabling alerts for unsubscribed recipient %s", self
+                    )
                     self.disable_alerts()
         else:
             # Other clients types don't yet support message sending.
