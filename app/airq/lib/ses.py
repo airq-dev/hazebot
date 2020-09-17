@@ -1,11 +1,11 @@
 import boto3
-import logging
 import typing
 
 from airq import config
+from airq.lib.logging import get_airq_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_airq_logger(__name__)
 
 
 def send_email(to_addresses: typing.List[str], subject: str, body: str) -> bool:

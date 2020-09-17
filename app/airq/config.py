@@ -39,17 +39,15 @@ LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
             "class": "logging.StreamHandler",
             "stream": "ext://flask.logging.wsgi_errors_stream",
             "formatter": "default",
-        }
+        },
+        "mail_admins": {
+            "class": "airq.lib.logging.AdminEmailHandler",
+            "formatter": "default",
+            "level": "ERROR",
+        },
     },
-    "root": {"level": "INFO", "handlers": ["wsgi"]},
+    "root": {"level": "INFO", "handlers": ["wsgi", "mail_admins"]},
 }
-if not DEBUG:
-    LOGGING_CONFIG["handlers"]["mail_admins"] = {
-        "class": "airq.lib.logging.AdminEmailHandler",
-        "formatter": "default",
-        "level": "ERROR",
-    }
-    LOGGING_CONFIG["root"]["handlers"].append("mail_admins")
 dictConfig(LOGGING_CONFIG)
 
 import flask
