@@ -82,32 +82,18 @@ class Zipcode(db.Model):  # type: ignore
         return self._distance_cache[other.id]
 
     def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:
-        zipcodes: typing.List[Zipcode] = []
-
         if not self.pm25_level or self.is_pm25_stale:
-            return zipcodes
+            return []
 
         cutoff = self.cutoff()
-        seen_ids: typing.Set[int] = set()
-        gh = list(self.geohash)
-        # TODO: Use Postgres' native geolocation extension.
-        while gh:
-            query = Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).filter(
-                Zipcode.pm25 < self.pm25_level
-            )
-            for i, c in enumerate(gh, start=1):
-                col = getattr(Zipcode, f"geohash_bit_{i}")
-                query = query.filter(col == c)
-            if seen_ids:
-                query = query.filter(~Zipcode.id.in_(seen_ids))
-            for zipcode, _ in sorted(
-                [(zipcode, self.distance(zipcode),) for zipcode in query.all()],
-                key=lambda t: t[1],
-            ):
-                zipcodes.append(zipcode)
-                seen_ids.add(zipcode.id)
-                if len(zipcodes) >= num_desired:
-                    return zipcodes
-            gh.pop()
-
-        return zipcodes
+        zipcodes = (
+            Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff)
+            .filter(Zipcode.pm25 < self.pm25_level)
+            .all()
+        )
+        # Sorting 40000 zipcodes in memory is surprisingly fast.
+        #
+        # I wouldn't be surprised if doing this huge fetch every time actually leads to better
+        # performance since Postgres can easily cache the whole query.
+        #
+        return sorted(zipcodes, key=lambda z: self.distance(z))[:num_desired]
