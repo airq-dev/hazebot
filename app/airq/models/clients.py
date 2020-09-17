@@ -114,6 +114,8 @@ class Client(db.Model):  # type: ignore
                         "Disabling alerts for unsubscribed recipient %s", self
                     )
                     self.disable_alerts()
+                else:
+                    raise
         else:
             # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)
