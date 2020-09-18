@@ -1,6 +1,8 @@
 import datetime
 import typing
 
+from flask_sqlalchemy import BaseQuery
+
 from airq.lib.geo import haversine_distance
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
@@ -8,8 +10,15 @@ from airq.models.cities import City
 from airq.config import db
 
 
+class ZipcodeQuery(BaseQuery):
+    def get_by_zipcode(self, zipcode: str) -> typing.Optional["Zipcode"]:
+        return self.filter_by(zipcode=zipcode).first()
+
+
 class Zipcode(db.Model):  # type: ignore
     __tablename__ = "zipcodes"
+
+    query_class = ZipcodeQuery
 
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
     zipcode = db.Column(db.String(), nullable=False, unique=True, index=True)
@@ -50,10 +59,6 @@ class Zipcode(db.Model):  # type: ignore
         obj._distance_cache = {}
         return obj
 
-    @classmethod
-    def get_by_zipcode(cls, zipcode: str) -> typing.Optional["Zipcode"]:
-        return cls.query.filter_by(zipcode=zipcode).first()
-
     @property
     def geohash(self) -> str:
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
@@ -75,10 +80,13 @@ class Zipcode(db.Model):  # type: ignore
         return pm25_to_aqi(self.pm25)
 
     def distance(self, other: "Zipcode") -> float:
-        if other.id not in self._distance_cache:
-            self._distance_cache[other.id] = haversine_distance(
-                other.longitude, other.latitude, self.longitude, self.latitude,
-            )
+        if other.id in self._distance_cache:
+            return self._distance_cache[other.id]
+        if self.id in other._distance_cache:
+            return other._distance_cache[self.id]
+        self._distance_cache[other.id] = haversine_distance(
+            other.longitude, other.latitude, self.longitude, self.latitude,
+        )
         return self._distance_cache[other.id]
 
     def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:

@@ -1,8 +1,18 @@
 from airq.config import db
 
+from flask_sqlalchemy import BaseQuery
+from sqlalchemy import func
+
+
+class RequestQuery(BaseQuery):
+    def get_total_count(self) -> int:
+        return self.with_entities(func.sum(Request.count)).scalar() or 0
+
 
 class Request(db.Model):  # type: ignore
     __tablename__ = "requests"
+
+    query_class = RequestQuery
 
     zipcode_id = db.Column(
         db.Integer(),

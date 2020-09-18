@@ -2,9 +2,16 @@ import os
 import typing
 from logging.config import dictConfig
 
+if typing.TYPE_CHECKING:
+    from airq.models.users import User
+
 
 FLASK_ENV = os.getenv("FLASK_ENV", "development")
 DEBUG = FLASK_ENV == "development"
+
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+)
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
@@ -51,12 +58,16 @@ LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
 dictConfig(LOGGING_CONFIG)
 
 import flask
+import flask_login
 import flask_migrate
 import flask_sqlalchemy
+import flask_wtf
+from flask import g
 from flask import got_request_exception
 from airq import middleware
 
 app = flask.Flask(__name__)
+app.secret_key = SECRET_KEY
 
 # We have to use this `setattr` hack here or Mypy gets really confused.
 # See https://github.com/python/mypy/issues/2427 for details.
@@ -77,6 +88,20 @@ app.config.from_mapping(config)
 
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
+login = flask_login.LoginManager(app)
+
+csrf = flask_wtf.csrf.CSRFProtect()
+csrf.init_app(app)
+
+
+@login.user_loader
+def load_user(user_id: str) -> typing.Optional["User"]:
+    from airq.models.users import User
+
+    user = User.query.get(int(user_id))
+    if user:
+        g.user = user
+    return user
 
 
 def log_exception(sender, exception, **extra):

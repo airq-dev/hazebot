@@ -231,7 +231,7 @@ def _metrics_sync():
 
 def _send_alerts():
     num_sent = 0
-    for client in Client.get_eligible_for_sending():
+    for client in Client.query.filter_eligible_for_sending().all():
         try:
             if client.maybe_notify():
                 num_sent += 1
