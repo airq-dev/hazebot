@@ -105,7 +105,9 @@ def admin_bulk_sms():
     return render_template(
         "bulk_sms.html",
         form=form,
-        num_inactive=Client.filter_inactive_since(datetime.datetime.now().timestamp()).count(),
+        num_inactive=Client.filter_inactive_since(
+            datetime.datetime.now().timestamp()
+        ).count(),
     )
 
 
