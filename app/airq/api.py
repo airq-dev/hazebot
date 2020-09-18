@@ -102,7 +102,11 @@ def admin_bulk_sms():
         bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
         flash("Sent!")
         return redirect(url_for("admin_summary"))
-    return render_template("bulk_sms.html", form=form)
+    return render_template(
+        "bulk_sms.html",
+        form=form,
+        num_inactive=Client.filter_inactive_since(datetime.datetime.now().timestamp()).count(),
+    )
 
 
 @admin_required
