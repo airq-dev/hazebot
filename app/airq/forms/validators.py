@@ -17,7 +17,7 @@ class PhoneNumberValidator:
         if not data:
             return
 
-        client = Client.get_by_phone_number(data)
+        client = Client.query.get_by_phone_number(data)
         if client:
             return
 

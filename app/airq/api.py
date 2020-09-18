@@ -77,12 +77,12 @@ def admin_summary() -> str:
         "admin.html",
         title="Admin",
         summary={
-            "Total Alerts Sent": Client.get_total_num_sends(),
-            "Total Subscribed Clients": Client.get_total_num_subscriptions(),
-            "Total Clients": Client.filter_phones().count(),
-            "Total Zipcode Requests": Request.get_total_count(),
+            "Total Alerts Sent": Client.query.get_total_num_sends(),
+            "Total Subscribed Clients": Client.query.get_total_num_subscriptions(),
+            "Total Clients": Client.query.filter_phones().count(),
+            "Total Zipcode Requests": Request.query.get_total_count(),
         },
-        activity_counts=Client.get_activity_counts(),
+        activity_counts=Client.query.get_activity_counts(),
     )
 
 
@@ -91,7 +91,7 @@ def admin_stats():
     last_active_at = request.args.get("last_active_at")
     if not last_active_at:
         return Response(status=400)
-    num_clients = Client.filter_inactive_since(last_active_at).count()
+    num_clients = Client.query.filter_inactive_since(last_active_at).count()
     return jsonify({"num_clients": num_clients})
 
 
@@ -102,14 +102,20 @@ def admin_bulk_sms():
         bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
         flash("Sent!")
         return redirect(url_for("admin_summary"))
-    return render_template("bulk_sms.html", form=form)
+    return render_template(
+        "bulk_sms.html",
+        form=form,
+        num_inactive=Client.query.filter_inactive_since(
+            datetime.datetime.now().timestamp()
+        ).count(),
+    )
 
 
 @admin_required
 def admin_sms():
     form = SMSForm()
     if form.validate_on_submit():
-        client = Client.get_by_phone_number(form.data["phone_number"])
+        client = Client.query.get_by_phone_number(form.data["phone_number"])
         client.send_message(form.data["message"])
         flash("Sent!")
         return redirect(url_for("admin_summary"))
