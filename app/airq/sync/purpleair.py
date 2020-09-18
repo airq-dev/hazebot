@@ -1,11 +1,11 @@
 import collections
-import datetime
 import geohash
 import logging
 import requests
 import typing
 
 from airq.config import db
+from airq.lib.datetime import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
@@ -54,7 +54,7 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
         return False
     if sensor_data.get("ParentID"):
         return False
-    if sensor_data.get("LastSeen", 0) < datetime.datetime.now().timestamp() - (60 * 60):
+    if sensor_data.get("LastSeen", 0) < timestamp() - (60 * 60):
         # Out of date / maybe dead
         return False
     if sensor_data.get("Flag"):
@@ -195,12 +195,12 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
 
 def _metrics_sync():
     updates = []
-    timestamp = int(datetime.datetime.now().timestamp())
+    ts = timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, distance in (
         Sensor.query.join(SensorZipcodeRelation)
-        .filter(Sensor.updated_at > timestamp - (30 * 60))
+        .filter(Sensor.updated_at > ts - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
@@ -234,7 +234,7 @@ def _metrics_sync():
                 {
                     "id": zipcode_id,
                     "pm25": pm25,
-                    "pm25_updated_at": timestamp,
+                    "pm25_updated_at": ts,
                     "num_sensors": num_sensors,
                     "min_sensor_distance": min_sensor_distance,
                     "max_sensor_distance": max_sensor_distance,
