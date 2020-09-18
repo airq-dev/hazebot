@@ -72,30 +72,12 @@ class Client(db.Model):  # type: ignore
     SEND_WINDOW_HOURS = (8, 21)
 
     @classmethod
-    def get_or_create(
-        cls, identifier: str, type_code: ClientIdentifierType
-    ) -> typing.Tuple["Client", bool]:
-        client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
-        if not client:
-            client = cls(
-                identifier=identifier,
-                type_code=type_code,
-                last_activity_at=datetime.datetime.now().timestamp(),
-            )
-            db.session.add(client)
-            db.session.commit()
-            was_created = True
-        else:
-            was_created = False
-        return client, was_created
+    def curr_ts(cls) -> int:
+        return int(datetime.datetime.now().timestamp())
 
-    @classmethod
-    def get_by_phone_number(cls, phone_number: str) -> typing.Optional["Client"]:
-        if len(phone_number) == 10:
-            phone_number += "1"
-        if len(phone_number) == 11:
-            phone_number += "+"
-        return cls.filter_phones().filter_by(identifier=phone_number).first()
+    #
+    # Presence
+    #
 
     def log_request(self, zipcode: Zipcode):
         request = Request.query.filter_by(
@@ -116,6 +98,43 @@ class Client(db.Model):  # type: ignore
             request.last_ts = now
         db.session.commit()
 
+    def mark_seen(self):
+        self.last_activity_at = self.curr_ts()
+        db.session.commit()
+
+    #
+    # Alerting
+    #
+
+    @property
+    def is_enabled_for_alerts(self) -> bool:
+        return bool(self.zipcode_id and not self.alerts_disabled_at)
+
+    def update_subscription(self, zipcode: Zipcode) -> bool:
+        self.last_pm25 = zipcode.pm25
+        curr_zipcode_id = self.zipcode_id
+        if curr_zipcode_id != zipcode.id:
+            # TODO: Command to re-enable alerts instead of auto re-enabling them.
+            self.alerts_disabled_at = 0
+            self.zipcode_id = zipcode.id
+        db.session.commit()
+        return curr_zipcode_id != self.zipcode_id
+
+    def disable_alerts(self):
+        self.last_pm25 = None
+        self.alerts_disabled_at = self.curr_ts()
+        db.session.commit()
+
+    @property
+    def is_in_send_window(self) -> bool:
+        if self.zipcode_id is None:
+            return False
+        # Timezone can be null since our data is incomplete.
+        timezone = self.zipcode.timezone or "America/Los_Angeles"
+        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
+        send_start, send_end = self.SEND_WINDOW_HOURS
+        return send_start <= dt.hour < send_end
+
     def send_message(self, message: str) -> bool:
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
             try:
@@ -135,59 +154,6 @@ class Client(db.Model):  # type: ignore
             logger.info("Not messaging client %s: %s", self.id, message)
 
         return True
-
-    def update_subscription(self, zipcode: Zipcode) -> bool:
-        self.last_pm25 = zipcode.pm25
-        curr_zipcode_id = self.zipcode_id
-        if curr_zipcode_id != zipcode.id:
-            # TODO: Command to re-enable alerts instead of auto re-enabling them.
-            self.alerts_disabled_at = 0
-            self.zipcode_id = zipcode.id
-        db.session.commit()
-        return curr_zipcode_id != self.zipcode_id
-
-    @classmethod
-    def curr_ts(cls) -> int:
-        return int(datetime.datetime.now().timestamp())
-
-    def mark_seen(self):
-        self.last_activity_at = self.curr_ts()
-        db.session.commit()
-
-    def disable_alerts(self):
-        self.last_pm25 = None
-        self.alerts_disabled_at = self.curr_ts()
-        db.session.commit()
-
-    @property
-    def is_enabled_for_alerts(self) -> bool:
-        return bool(self.zipcode_id and not self.alerts_disabled_at)
-
-    @property
-    def is_in_send_window(self) -> bool:
-        if self.zipcode_id is None:
-            return False
-        # Timezone can be null since our data is incomplete.
-        timezone = self.zipcode.timezone or "America/Los_Angeles"
-        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
-        send_start, send_end = self.SEND_WINDOW_HOURS
-        return send_start <= dt.hour < send_end
-
-    @classmethod
-    def filter_phones(cls) -> Query:
-        return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
-
-    @classmethod
-    def get_eligible_for_sending(cls) -> typing.List["Client"]:
-        cutoff = cls.curr_ts() - cls.FREQUENCY
-        return (
-            cls.filter_phones()
-            .options(joinedload(cls.zipcode))
-            .filter(cls.alerts_disabled_at == 0)
-            .filter(cls.last_alert_sent_at < cutoff)
-            .filter(cls.zipcode_id.isnot(None))
-            .all()
-        )
 
     def maybe_notify(self) -> bool:
         if not self.is_in_send_window:
@@ -221,16 +187,69 @@ class Client(db.Model):  # type: ignore
 
         return True
 
+    #
+    # Fetchers
+    #
+
     @classmethod
-    def filter_inactive_since(cls, timestamp: float) -> Query:
+    def get_or_create(
+        cls, identifier: str, type_code: ClientIdentifierType
+    ) -> typing.Tuple["Client", bool]:
+        client = cls.query.filter_by(identifier=identifier, type_code=type_code).first()
+        if not client:
+            client = cls(
+                identifier=identifier,
+                type_code=type_code,
+                last_activity_at=datetime.datetime.now().timestamp(),
+            )
+            db.session.add(client)
+            db.session.commit()
+            was_created = True
+        else:
+            was_created = False
+        return client, was_created
+
+    @classmethod
+    def get_by_phone_number(cls, phone_number: str) -> typing.Optional["Client"]:
+        if len(phone_number) == 10:
+            phone_number = "1" + phone_number
+        if len(phone_number) == 11:
+            phone_number = "+" + phone_number
+        return cls.filter_phones().filter_by(identifier=phone_number).first()
+
+    #
+    # Filters
+    #
+
+    @classmethod
+    def filter_phones(cls) -> Query:
+        return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+
+    @classmethod
+    def filter_no_alerting(cls) -> Query:
+        """Filter for clients which have disabled alerts or never received an alert."""
         return (
             cls.filter_phones()
-            .filter(cls.alerts_disabled_at > 0)
-            .filter(cls.last_activity_at < timestamp)
+            .filter(or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0))
+        )
+
+    @classmethod
+    def filter_inactive_since(cls, timestamp: float) -> Query:
+        return cls.filter_no_alerting().filter(cls.last_activity_at < timestamp)
+
+    @classmethod
+    def filter_eligible_for_sending(cls) -> Query:
+        cutoff = cls.curr_ts() - cls.FREQUENCY
+        return (
+            cls.filter_phones()
+            .options(joinedload(cls.zipcode))
+            .filter(cls.alerts_disabled_at == 0)
+            .filter(cls.last_alert_sent_at < cutoff)
+            .filter(cls.zipcode_id.isnot(None))
         )
 
     #
-    # Stats getters
+    # Stats
     #
 
     @classmethod
@@ -264,8 +283,7 @@ class Client(db.Model):  # type: ignore
         ]
         counts = (
             count or 0
-            for count in cls.filter_phones()
-            .filter(or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0))
+            for count in cls.filter_no_alerting()
             .with_entities(*groups)
             .first()
         )
