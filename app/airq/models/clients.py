@@ -228,9 +228,8 @@ class Client(db.Model):  # type: ignore
     @classmethod
     def filter_no_alerting(cls) -> Query:
         """Filter for clients which have disabled alerts or never received an alert."""
-        return (
-            cls.filter_phones()
-            .filter(or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0))
+        return cls.filter_phones().filter(
+            or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0)
         )
 
     @classmethod
@@ -283,8 +282,6 @@ class Client(db.Model):  # type: ignore
         ]
         counts = (
             count or 0
-            for count in cls.filter_no_alerting()
-            .with_entities(*groups)
-            .first()
+            for count in cls.filter_no_alerting().with_entities(*groups).first()
         )
         return dict(zip(windows, counts))
