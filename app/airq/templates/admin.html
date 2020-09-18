@@ -24,19 +24,20 @@
     </section>
 
     <section>
-        <h2>Inactive Counts</h2>
+        <h2>Active Users</h2>
+        <p>All users who were active or received an alert in the last n days.</p>
         <table>
             <thead>
-                {% for lookback in inactive_counts %}
+                {% for lookback in activity_counts %}
                     <th>
-                        Inactive {{ lookback }}d
+                        {{ lookback }}d
                     </th>
                 {% endfor %}
             </thead>
             <tr>
-                {% for num_inactive in inactive_counts.values() %}
+                {% for num_active in activity_counts.values() %}
                     <td>
-                        {{ num_inactive }}
+                        {{ num_active }}
                     </td>
                 {% endfor %}
             </tr>

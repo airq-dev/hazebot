@@ -79,9 +79,10 @@ def admin_summary() -> str:
         summary={
             "Total Alerts Sent": Client.get_total_num_sends(),
             "Total Subscribed Clients": Client.get_total_num_subscriptions(),
-            "Total Messages Recieved": Request.get_total_count(),
+            "Total Clients": Client.filter_phones().count(),
+            "Total Zipcode Requests": Request.get_total_count(),
         },
-        inactive_counts=Client.get_inactive_counts(),
+        activity_counts=Client.get_activity_counts(),
     )
 
 
