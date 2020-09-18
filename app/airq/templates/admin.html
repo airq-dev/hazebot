@@ -5,17 +5,41 @@
 {% endblock %}
 
 {% block content %}
-    <table>
-        <thead>
-            <td>Metric</td>
-            <td>Value</td>
-        </thead>
-        <tbody>
+    <section>
+        <h2>Summary</h2>
+        <table>
+            <thead>
+                <th>Metric</th>
+                <th>Value</th>
+            </thead>
+            <tbody>
+                {% for metric, value in summary.items() %}
+                    <tr>
+                        <td>{{ metric }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
 
-        </tbody>
-    </table>
-
-    <table>
-
-    </table>
+    <section>
+        <h2>Inactive Counts</h2>
+        <table>
+            <thead>
+                {% for lookback in inactive_counts %}
+                    <th>
+                        Inactive {{ lookback }}d
+                    </th>
+                {% endfor %}
+            </thead>
+            <tr>
+                {% for num_inactive in inactive_counts.values() %}
+                    <td>
+                        {{ num_inactive }}
+                    </td>
+                {% endfor %}
+            </tr>
+        </table>
+    </section>
 {% endblock %}

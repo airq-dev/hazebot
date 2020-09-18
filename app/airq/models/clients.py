@@ -163,8 +163,7 @@ class Client(db.Model):  # type: ignore
 
     @classmethod
     def filter_phones(cls) -> Query:
-        return cls.query
-        # return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
+        return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
 
     @classmethod
     def get_eligible_for_sending(cls) -> typing.List["Client"]:
@@ -243,8 +242,9 @@ class Client(db.Model):  # type: ignore
             for window in windows
         ]
         counts = (
-            count or 0 for count in cls.filter_phones()
-            # .filter(cls.alerts_disabled_at > 0)
+            count or 0
+            for count in cls.filter_phones()
+            .filter(cls.alerts_disabled_at > 0)
             .with_entities(*groups)
             .first()
         )

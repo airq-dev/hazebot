@@ -1,17 +1,80 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - Hazebot</title>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Open Sans", sans-serif;
+      margin: 0;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    nav {
+      align-items: center;
+      background-color: white;
+      border-bottom: 1px solid black;
+      display: flex;
+      left: 0;
+      justify-content: space-between;
+      position: fixed;
+      right: 0;
+      top: 0;
+    }
+
+    nav, main {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+
+    main {
+      padding-top: 75px;
+    }
+
+    section {
+      margin-bottom: 30px;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    td, th {
+      border: 1px solid black;
+      margin: 0;
+      padding: 5px;
+    }
+
+    .form-field {
+      margin-bottom: 5px;
+    }
+
+    .list-piped li {
+      display: inline-block;
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    .list-piped li:not(:last-of-type)::after {
+      content: "|";
+    }
+
+  </style>
+</head>
 <nav>
   <h1>Hazebot</h1>
-  <ul>
+  <ul class="list-piped">
     {% if g.user %}
-      <li><span>{{ g.user['username'] }}</span>
+      <li><span>{{ g.user['email'] }}</span>
       <li><a href="{{ url_for('logout') }}">Log Out</a>
     {% else %}
       <li><a href="{{ url_for('login') }}">Log In</a>
     {% endif %}
   </ul>
 </nav>
-<section class="content">
+<main>
   <header>
     {% block header %}{% endblock %}
   </header>
@@ -19,4 +82,4 @@
     <div class="flash">{{ message }}</div>
   {% endfor %}
   {% block content %}{% endblock %}
-</section>
+</main>

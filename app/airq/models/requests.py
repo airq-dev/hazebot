@@ -1,5 +1,7 @@
 from airq.config import db
 
+from sqlalchemy import func
+
 
 class Request(db.Model):  # type: ignore
     __tablename__ = "requests"
@@ -25,3 +27,7 @@ class Request(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return f"<Request {self.client_id} - {self.zipcode_id}>"
+
+    @classmethod
+    def get_total_count(cls) -> int:
+        return cls.query.with_entities(func.sum(cls.count)).scalar() or 0

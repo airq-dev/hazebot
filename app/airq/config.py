@@ -62,6 +62,7 @@ import flask_login
 import flask_migrate
 import flask_sqlalchemy
 import flask_wtf
+from flask import g
 from flask import got_request_exception
 from airq import middleware
 
@@ -97,7 +98,10 @@ csrf.init_app(app)
 def load_user(user_id: str) -> typing.Optional["User"]:
     from airq.models.users import User
 
-    return User.query.get(int(user_id))
+    user = User.query.get(int(user_id))
+    if user:
+        g.user = user
+    return user
 
 
 def log_exception(sender, exception, **extra):
