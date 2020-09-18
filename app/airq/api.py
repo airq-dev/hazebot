@@ -15,6 +15,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from werkzeug import Response
 
 from airq import commands
+from airq.config import csrf
 from airq.decorators import admin_required
 from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
@@ -31,6 +32,7 @@ def healthcheck() -> str:
     return "OK"
 
 
+@csrf.exempt
 def sms_reply() -> str:
     resp = MessagingResponse()
     zipcode = request.values.get("Body", "").strip()
