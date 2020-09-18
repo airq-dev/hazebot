@@ -9,7 +9,7 @@ from airq.models.zipcodes import Zipcode
 class BaseQualityHandler(ApiCommandHandler):
     def handle(self, raw_zip: typing.Optional[str] = None) -> typing.List[str]:
         if raw_zip:
-            zipcode = Zipcode.get_by_zipcode(raw_zip)
+            zipcode = Zipcode.query.get_by_zipcode(raw_zip)
             if zipcode is None:
                 return [f"Hmm. Are you sure {raw_zip} is a valid US zipcode?"]
         else:
