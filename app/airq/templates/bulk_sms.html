@@ -14,7 +14,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const lastActivityInput = document.getElementById('last_active_at');
             const numClientsDisplay = document.getElementById('num-clients');
-            let numClients = 0;
+            let numClients = {{ num_inactive|tojson }};
 
             displayNumClients = () => {
                 const date = new Date(lastActivityInput.value);
