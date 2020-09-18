@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}SMS{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    {% include 'partials/_form.html' %}
+{% endblock %}
