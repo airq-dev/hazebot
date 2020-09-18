@@ -11,9 +11,17 @@ app = config.app
 app.cli.command("sync")(management.sync)
 
 # Register routes
+# TODO: Change '/' to be the admin page,
+# and repoint healthcheck /healthcheck
 app.route("/", methods=["GET"])(api.healthcheck)
-app.route("/admin", methods=["GET"])(api.admin)
+app.route("/healthcheck", methods=["GET"])(api.healthcheck)
 app.route("/login", methods=["GET", "POST"])(api.login)
 app.route("/logout", methods=["GET"])(api.logout)
 app.route("/test", methods=["GET"])(api.test_command)
 app.route("/sms", methods=["POST"])(api.sms_reply)
+
+# Admin routes
+app.route("/admin", methods=["GET"])(api.admin_summary)
+app.route("/admin/bulk-sms", methods=["GET", "POST"])(api.admin_bulk_sms)
+app.route("/admin/sms", methods=["GET", "POST"])(api.admin_sms)
+app.route("/admin/stats", methods=["GET"])(api.admin_stats)

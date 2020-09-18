@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <style>
+        .num-clients {
+            display: block;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <script type="application/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const lastActivityInput = document.getElementById('last_active_at');
+            const numClientsDisplay = document.getElementById('num-clients');
+            let numClients = 0;
+
+            displayNumClients = () => {
+                const date = new Date(lastActivityInput.value);
+                numClientsDisplay.textContent = (
+                    numClients + 
+                    " users inactive since " + 
+                    date.getFullYear() + 
+                    "/" + 
+                    (date.getMonth() + 1) + 
+                    "/" + 
+                    date.getDate() + 
+                    " " + 
+                    (date.getHours() % 12) + 
+                    ":" + 
+                    (date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes()) + 
+                    " " +
+                    (date.getHours() > 11 ? "PM" : "AM")
+                );
+            };
+
+            displayNumClients();
+
+            lastActivityInput.addEventListener('change', async () => {
+                const date =  new Date(lastActivityInput.value);
+                const ts = Math.floor(date.getTime() / 1000);
+                const response = await fetch('/admin/stats?last_active_at=' + ts);
+                const stats = await response.json();
+                numClients = stats.num_clients;
+                displayNumClients();
+            });
+
+            var form = document.getElementsByTagName('form')[0];
+            var listener = form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                if (numClients === 0) {
+                    alert("Cannot send a message to 0 users!")
+                    return false;
+                }
+                var content = document.getElementById('message').value;
+                msg = "Are you sure you want to send the following message to ";
+                if (numClients === 1) {
+                    msg += "1 user?"
+                } else {
+                    msg += numClients + " users?"
+                }
+                msg += "\n\n";
+                msg += "\"" + content + "\"";
+                if (!confirm(msg)) {
+                    return false;
+                }
+                form.submit();
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block header %}
+    <h1>{% block title %}Bulk SMS{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {% with field=form.message %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
+        {% with field=form.last_active_at %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
+        <span class="num-clients" id="num-clients"></span>
+        {% with field=form.submit_btn %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
+    </form>
+{% endblock %}

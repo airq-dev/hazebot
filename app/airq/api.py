@@ -1,6 +1,8 @@
+import datetime
 import typing
 
 from flask import flash
+from flask import jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -14,11 +16,15 @@ from werkzeug import Response
 
 from airq import commands
 from airq.decorators import admin_required
+from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
+from airq.forms import SMSForm
+from airq.lib.datetime import local_now
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.requests import Request
 from airq.models.users import User
+from airq.tasks import bulk_send
 
 
 def healthcheck() -> str:
@@ -47,7 +53,7 @@ def test_command() -> str:
 
 def login() -> typing.Union[Response, str]:
     if current_user.is_authenticated:
-        return redirect(url_for("admin"))
+        return redirect(url_for("admin_summary"))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -55,7 +61,7 @@ def login() -> typing.Union[Response, str]:
             flash("Invalid email or password")
             return redirect(url_for("login"))
         login_user(user, remember=True)
-        return redirect(url_for("admin"))
+        return redirect(url_for("admin_summary"))
     return render_template("login.html", title="Sign In", form=form)
 
 
@@ -66,7 +72,7 @@ def logout() -> Response:
 
 
 @admin_required
-def admin() -> str:
+def admin_summary() -> str:
     return render_template(
         "admin.html",
         title="Admin",
@@ -77,3 +83,33 @@ def admin() -> str:
         },
         inactive_counts=Client.get_inactive_counts(),
     )
+
+
+@admin_required
+def admin_stats():
+    last_active_at = request.args.get("last_active_at")
+    if not last_active_at:
+        return Response(status=400)
+    num_clients = Client.filter_inactive_since(last_active_at).count()
+    return jsonify({"num_clients": num_clients})
+
+
+@admin_required
+def admin_bulk_sms():
+    form = BulkSMSForm(last_active_at=local_now())
+    if form.validate_on_submit():
+        bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
+        flash("Sent!")
+        return redirect(url_for("admin_summary"))
+    return render_template("bulk_sms.html", form=form)
+
+
+@admin_required
+def admin_sms():
+    form = SMSForm()
+    if form.validate_on_submit():
+        client = Client.get_by_phone_number(form.data["phone_number"])
+        client.send_message(form.data["message"])
+        flash("Sent!")
+        return redirect(url_for("admin_summary"))
+    return render_template("sms.html", form=form)

@@ -7,6 +7,7 @@ import typing
 from sqlalchemy import case
 from sqlalchemy import func
 from sqlalchemy import literal_column
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Query
 from twilio.base.exceptions import TwilioRestException
@@ -88,6 +89,14 @@ class Client(db.Model):  # type: ignore
             was_created = False
         return client, was_created
 
+    @classmethod
+    def get_by_phone_number(cls, phone_number: str) -> typing.Optional["Client"]:
+        if len(phone_number) == 10:
+            phone_number += "1"
+        if len(phone_number) == 11:
+            phone_number += "+"
+        return cls.filter_phones().filter_by(identifier=phone_number).first()
+
     def log_request(self, zipcode: Zipcode):
         request = Request.query.filter_by(
             client_id=self.id, zipcode_id=zipcode.id,
@@ -107,7 +116,7 @@ class Client(db.Model):  # type: ignore
             request.last_ts = now
         db.session.commit()
 
-    def send_message(self, message: str):
+    def send_message(self, message: str) -> bool:
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
             try:
                 send_sms(message, self.identifier)
@@ -118,11 +127,14 @@ class Client(db.Model):  # type: ignore
                         "Disabling alerts for unsubscribed recipient %s", self
                     )
                     self.disable_alerts()
+                    return False
                 else:
                     raise
         else:
             # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)
+
+        return True
 
     def update_subscription(self, zipcode: Zipcode) -> bool:
         self.last_pm25 = zipcode.pm25
@@ -199,7 +211,8 @@ class Client(db.Model):  # type: ignore
             curr_aqi_level=curr_aqi_level.display,
             curr_aqi=curr_aqi,
         )
-        self.send_message(message)
+        if not self.send_message(message):
+            return False
 
         self.last_alert_sent_at = self.curr_ts()
         self.last_pm25 = curr_pm25
@@ -207,6 +220,14 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
         return True
+
+    @classmethod
+    def filter_inactive_since(cls, timestamp: float) -> Query:
+        return (
+            cls.filter_phones()
+            .filter(cls.alerts_disabled_at > 0)
+            .filter(cls.last_activity_at < timestamp)
+        )
 
     #
     # Stats getters
@@ -225,7 +246,7 @@ class Client(db.Model):  # type: ignore
 
     @classmethod
     def get_inactive_counts(cls):
-        windows = [1, 2, 3, 7, 30]
+        windows = [1, 2, 3, 4, 5, 6, 7, 30]
         curr_time = cls.curr_ts()
         groups = [
             func.sum(
@@ -244,7 +265,7 @@ class Client(db.Model):  # type: ignore
         counts = (
             count or 0
             for count in cls.filter_phones()
-            .filter(cls.alerts_disabled_at > 0)
+            .filter(or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0))
             .with_entities(*groups)
             .first()
         )

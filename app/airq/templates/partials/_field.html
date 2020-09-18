@@ -1,4 +1,7 @@
 <div class="form-field">
+    {% if not field.widget.input_type == "submit" %}
+        <label>{{ field.label }}</label>
+    {% endif %}
     {{ field }}
     {% if field.errors %}
         <ul class="errors">

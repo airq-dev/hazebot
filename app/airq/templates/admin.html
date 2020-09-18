@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-    <h1>{% block title %}Admin{% endblock %}</h1>
+    <h1>{% block title %}Stats{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -41,5 +41,13 @@
                 {% endfor %}
             </tr>
         </table>
+    </section>
+
+    <section>
+        <h2>Actions</h2>
+        <ul>
+            <li><a href="/admin/bulk-sms">Send a Bulk SMS Message</a></li>
+            <li><a href="/admin/sms">Send an SMS Message</a></li>
+        </ul>
     </section>
 {% endblock %}

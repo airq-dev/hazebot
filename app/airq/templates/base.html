@@ -8,8 +8,9 @@
       margin: 0;
     }
 
-    ul {
-      list-style: none;
+    nav, main {
+      padding-left: 15px;
+      padding-right: 15px;
     }
 
     nav {
@@ -24,9 +25,9 @@
       top: 0;
     }
 
-    nav, main {
-      padding-left: 15px;
-      padding-right: 15px;
+    h1 a {
+      color: black;
+      text-decoration: none;
     }
 
     main {
@@ -47,12 +48,26 @@
       padding: 5px;
     }
 
+    .flash {
+      color: red;
+      font-weight: bold;
+    }
+
     .form-field {
-      margin-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .form-field label {
+      display: block;
+    }
+
+    .form-field .errors {
+      color: red;
     }
 
     .list-piped li {
       display: inline-block;
+      list-style: none;
       padding-left: 5px;
       padding-right: 5px;
     }
@@ -62,9 +77,10 @@
     }
 
   </style>
+  {% block head %}{% endblock %}
 </head>
 <nav>
-  <h1>Hazebot</h1>
+  <h1><a href="/admin">Hazebot Admin</a></h1>
   <ul class="list-piped">
     {% if g.user %}
       <li><span>{{ g.user['email'] }}</span>
