@@ -8,6 +8,7 @@ import typing
 import zipfile
 
 from airq.config import db
+from airq.lib.http import chunked_download
 from airq.lib.util import chunk_list
 from airq.models.cities import City
 from airq.models.zipcodes import Zipcode
@@ -28,17 +29,9 @@ ZIP_2_TIMEZONES_URL = "https://sourceforge.net/projects/zip2timezone/files/timez
 ARMY_PREFIXES = ("FPO", "APO")
 
 
-def _download_zipfile(url: str, filename: str):
-    resp = requests.get(url, stream=True)
-    resp.raise_for_status()
-    with open(filename, "wb") as fd:
-        for chunk in resp.iter_content(chunk_size=512):
-            fd.write(chunk)
-
-
 def _get_geonames_data() -> TGeonamesData:
     zipfile_name = f"{COUNTRY_CODE}.zip"
-    _download_zipfile(GEONAMES_URL, zipfile_name)
+    chunked_download(GEONAMES_URL, zipfile_name)
 
     geonames_data = []
     with zipfile.ZipFile(zipfile_name) as zf:
@@ -62,7 +55,7 @@ def _get_geonames_data() -> TGeonamesData:
 
 def _get_timezones_data() -> typing.Dict[str, str]:
     filename = "zipcodes_to_timezones.gz"
-    _download_zipfile(ZIP_2_TIMEZONES_URL, filename)
+    chunked_download(ZIP_2_TIMEZONES_URL, filename)
 
     zipcode_to_timezones = {}
     with gzip.open(filename) as f:

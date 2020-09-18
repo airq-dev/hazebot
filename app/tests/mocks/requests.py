@@ -35,7 +35,7 @@ class MockRequests:
         self._patch = None
 
     def __enter__(self):
-        self._patch = mock.patch.object(requests, 'get', self.get)
+        self._patch = mock.patch.object(requests, "get", self.get)
         self._patch.start()
 
     def __exit__(self, exc_type, exc, tb):
@@ -46,4 +46,6 @@ class MockRequests:
         if url in self._fixtures:
             print(f"Using mock {self._fixtures[url]} for {url}")
             return MockResponse(self._fixtures[url])
-        raise Exception(f"Cannot find a fixture for {url}.\nAvailable fixtures: {self._fixtures}")
+        raise Exception(
+            f"Cannot find a fixture for {url}.\nAvailable fixtures: {self._fixtures}"
+        )

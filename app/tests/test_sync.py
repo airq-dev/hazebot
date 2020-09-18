@@ -31,17 +31,21 @@ class SyncTestCase(BaseTestCase):
             print("Truncating tables")
             self._truncate_tables()
 
-        with MockRequests({
-            GEONAMES_URL: 'geonames/US.zip',
-            ZIP_2_TIMEZONES_URL: 'geonames/zipcodes_to_timezones.gz',
-            PURPLEAIR_URL: 'purpleair/purpleair.json'
-        }):
+        with MockRequests(
+            {
+                GEONAMES_URL: "geonames/US.zip",
+                ZIP_2_TIMEZONES_URL: "geonames/zipcodes_to_timezones.gz",
+                PURPLEAIR_URL: "purpleair/purpleair.json",
+            }
+        ):
             models_sync(only_if_empty=skip_force_rebuild, force_rebuild_geography=True)
 
-        self.assertEqual(29541, City.query.count())
-        self.assertEqual(40959, Zipcode.query.count())
-        self.assertEqual(7084, Sensor.query.count())
-        self.assertEqual(113479, SensorZipcodeRelation.query.count())
+        # We run tests on a subset of data so they don't take forever to build,
+        # hence these small counts.
+        self.assertEqual(132, City.query.count())
+        self.assertEqual(227, Zipcode.query.count())
+        self.assertEqual(80, Sensor.query.count())
+        self.assertEqual(1741, SensorZipcodeRelation.query.count())
 
 
 if __name__ == "__main__":
