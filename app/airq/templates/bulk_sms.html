@@ -20,14 +20,14 @@
                 const date = new Date(lastActivityInput.value);
                 numClientsDisplay.textContent = (
                     numClients + 
-                    " users inactive since " + 
+                    " users have not been active or recieved an alert since " + 
                     date.getFullYear() + 
                     "/" + 
                     (date.getMonth() + 1) + 
                     "/" + 
                     date.getDate() + 
                     " " + 
-                    (date.getHours() % 12) + 
+                    ((date.getHours() % 12) || 12) + 
                     ":" + 
                     (date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes()) + 
                     " " +
@@ -46,15 +46,15 @@
                 displayNumClients();
             });
 
-            var form = document.getElementsByTagName('form')[0];
-            var listener = form.addEventListener('submit', (event) => {
+            const form = document.getElementsByTagName('form')[0];
+            form.addEventListener('submit', (event) => {
                 event.preventDefault();
                 if (numClients === 0) {
                     alert("Cannot send a message to 0 users!")
                     return false;
                 }
-                var content = document.getElementById('message').value;
-                msg = "Are you sure you want to send the following message to ";
+                const content = document.getElementById('message').value;
+                let msg = "Are you sure you want to send the following message to ";
                 if (numClients === 1) {
                     msg += "1 user?"
                 } else {

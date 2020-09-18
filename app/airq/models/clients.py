@@ -4,10 +4,7 @@ import logging
 import pytz
 import typing
 
-from sqlalchemy import case
 from sqlalchemy import func
-from sqlalchemy import literal_column
-from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Query
 from twilio.base.exceptions import TwilioRestException
@@ -226,15 +223,12 @@ class Client(db.Model):  # type: ignore
         return cls.query.filter(cls.type_code == ClientIdentifierType.PHONE_NUMBER)
 
     @classmethod
-    def filter_no_alerting(cls) -> Query:
-        """Filter for clients which have disabled alerts or never received an alert."""
-        return cls.filter_phones().filter(
-            or_(cls.alerts_disabled_at > 0, cls.last_alert_sent_at == 0)
-        )
-
-    @classmethod
     def filter_inactive_since(cls, timestamp: float) -> Query:
-        return cls.filter_no_alerting().filter(cls.last_activity_at < timestamp)
+        return (
+            cls.filter_phones()
+            .filter(cls.last_activity_at < timestamp)
+            .filter(cls.last_alert_sent_at < timestamp)
+        )
 
     @classmethod
     def filter_eligible_for_sending(cls) -> Query:
@@ -260,28 +254,21 @@ class Client(db.Model):  # type: ignore
 
     @classmethod
     def get_total_num_subscriptions(cls) -> int:
-        return cls.filter_phones().filter(cls.alerts_disabled_at == 0).count()
+        return (
+            cls.filter_phones()
+            .filter(cls.alerts_disabled_at == 0)
+            .filter(cls.zipcode_id.isnot(None))
+            .count()
+        )
 
     @classmethod
-    def get_inactive_counts(cls):
+    def get_activity_counts(cls):
         windows = [1, 2, 3, 4, 5, 6, 7, 30]
         curr_time = cls.curr_ts()
-        groups = [
-            func.sum(
-                case(
-                    [
-                        (
-                            cls.last_activity_at > curr_time - (window * 24 * 60 * 60),
-                            literal_column("1"),
-                        )
-                    ],
-                    else_=literal_column("0"),
-                )
-            ).label("{} day{}".format(window, "s" if window > 1 else ""))
-            for window in windows
-        ]
-        counts = (
-            count or 0
-            for count in cls.filter_no_alerting().with_entities(*groups).first()
-        )
-        return dict(zip(windows, counts))
+        counts = {window: 0 for window in windows}
+        for client in cls.filter_phones().all():
+            for window in windows:
+                ts = curr_time - (window * 24 * 60 * 60)
+                if client.last_activity_at > ts or client.last_alert_sent_at > ts:
+                    counts[window] += 1
+        return counts
