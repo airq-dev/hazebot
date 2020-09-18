@@ -1,6 +1,6 @@
 # Hazebot
 
-Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information protect your and your community. You can also visit us at [hazebot.org](www.hazebot.org).
+Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information to protect your and your community. You can also visit us at [hazebot.org](www.hazebot.org).
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
