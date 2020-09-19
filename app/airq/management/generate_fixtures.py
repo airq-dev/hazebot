@@ -7,15 +7,16 @@ import requests
 import shutil
 import zipfile
 
-from airq.lib.datetime import timestamp
+from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.http import chunked_download
 from airq.sync.geonames import COUNTRY_CODE
 from airq.sync.geonames import GEONAMES_URL
 from airq.sync.purpleair import PURPLEAIR_URL
+from tests.base import BaseTestCase
 
 
-COORDINATES = (45.5181, -122.6745)
+COORDINATES = (45.5181, -122.6745)  # Central Portland
 RADIUS = 100
 
 
@@ -24,7 +25,17 @@ def _is_in_range(lat: float, lon: float):
 
 
 def generate_fixtures():
+    """
+    Generates fixture data for all zipcodes and sensors within 100km of central Portland.
+
+    We test on this subset of real data to keep test speed down.
+
+    I would caution against running this script unless absolutely necessary because doing so
+    will force you to fix a bunch of tests.
+
+    """
     path = pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures"
+    timestamp = BaseTestCase.timestamp
 
     resp = requests.get(PURPLEAIR_URL)
     resp.raise_for_status()
@@ -39,6 +50,7 @@ def generate_fixtures():
             and longitude is not None
             and _is_in_range(latitude, longitude)
         ):
+            res["LastSeen"] = timestamp
             results.append(res)
         else:
             num_skipped += 1
@@ -82,7 +94,3 @@ def generate_fixtures():
     with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(file_name, os.path.basename(file_name))
     print(f"Skipped {num_skipped} zipcodes (wrote {num_kept})")
-
-    print("Writing fixtures timestamp")
-    with open(path / "metadata.json", "w") as f:
-        json.dump({"generated_ts": timestamp()}, f)

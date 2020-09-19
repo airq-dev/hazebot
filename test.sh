@@ -1,14 +1,14 @@
-# TODO: Build opt
+set -eux
+
 export COMPOSE_PROJECT_NAME=airq_test
-export COMPOSE_FILE=docker-compose.test.yml
 
 function usage() {
     echo "Usage:"
     echo "    ./test                      Run tests."
     echo "    ./test your.test.module     Run tests for a given module."
-    echo "    ./test -b                   Rebuild docker, then run tests."
-    echo "    ./test your.test.module -b  Rebuild docker, then run tests for a given module."
-    echo "    ./test -d                   Shut down test container."
+    echo "    ./test -b                   Rebuild containers, then run tests."
+    echo "    ./test your.test.module -b  Rebuild containers, then run tests for a given module."
+    echo "    ./test -d                   Shut down test containers."
     echo "    ./test -h                   Display this help message."
     exit
 }
@@ -50,10 +50,14 @@ if $build && $down; then
     exit
 fi
 
-container=`docker ps | grep airq_test_app`
+containers=`docker ps`
+running=false
+if echo $containers | grep airq_test; then 
+  running=true
+fi
 
 if $down; then
-    if [ "$container" ]; then
+    if $running; then
         docker-compose down
     else
         echo "Containers are not running."
@@ -62,8 +66,8 @@ if $down; then
     exit
 fi
 
-if [ -z "$container" ]; then
-    cmd="docker-compose up -d"
+if ! $running; then
+    cmd="docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d"
     if $build; then
         cmd+=" --build"
     fi
@@ -72,10 +76,8 @@ if [ -z "$container" ]; then
 
     printf "Waiting for server"
 
-    # Wait for server to start
     attempt_counter=0
     max_attempts=20
-
     until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
         if [ ${attempt_counter} -eq ${max_attempts} ]; then
           echo "Server failed to start in time"
@@ -97,5 +99,7 @@ if [ "$module" ]; then
   docker-compose exec app python3 -m unittest ${module}
 else
   echo "Running all tests"
-  docker-compose exec app python3 -m unittest tests
+  docker-compose exec app python3 -m unittest discover
 fi
+
+exit $?

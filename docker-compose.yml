@@ -3,13 +3,8 @@ version: '3.7'
 services:
   app:
     build: ./app
-    command: flask run --host=0.0.0.0
     volumes:
       - ./app/:/home/app/app
-    env_file:
-      - ./.env.dev
-    ports:
-      - 5000:5000
     depends_on:
       - db
       - redis
@@ -18,23 +13,17 @@ services:
   scheduler:
     build: ./app
     command: celery -A airq.celery beat -l info
-    env_file:
-      - ./.env.dev
     depends_on:
       - db
       - redis
   worker:
     build: ./app
     command: celery -A airq.celery worker -l info
-    env_file:
-      - ./.env.dev
     depends_on:
       - db
       - redis
   redis:
     image: redis:alpine
-    ports:
-      - 6379:6379
   db:
     image: postgres
     restart: always

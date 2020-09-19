@@ -54,7 +54,10 @@ LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
             "level": "ERROR",
         },
     },
-    "root": {"level": "INFO", "handlers": ["wsgi", "mail_admins"]},
+    "root": {
+        "level": "ERROR" if TESTING else "INFO",
+        "handlers": ["wsgi", "mail_admins"],
+    },
 }
 dictConfig(LOGGING_CONFIG)
 

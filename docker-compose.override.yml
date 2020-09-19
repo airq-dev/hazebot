@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  app:
+    command: flask run --host=0.0.0.0
+    env_file:
+      - ./.env.dev
+    ports:
+      - 5000:5000
+  scheduler:
+    env_file:
+      - ./.env.dev
+  worker:
+    env_file:
+      - ./.env.dev
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+
+volumes: 
+  pgdata:

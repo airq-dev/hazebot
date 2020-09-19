@@ -34,3 +34,17 @@ jobs:
               uses: jpetrucciani/mypy-check@master
               with:
                 path: 'app'
+    test: 
+        name: Test
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Checkout
+              uses: actions/checkout@v2
+              with: 
+                ref: ${{ github.event.pull_request.head.sha }}
+            - name: Test
+              run: |
+                ./test.sh --build
+            - name: Down
+              run: |
+                ./test.sh --down

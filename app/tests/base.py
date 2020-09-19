@@ -1,82 +1,80 @@
 import datetime
-import json
+import pytz
+import typing
 import unittest
 
-from flask_sqlalchemy import SessionBase
-from unittest import mock
-
-from airq import config
-from airq.lib import datetime as airq_datetime
-
-
-# Much of the following code is shamelessly ripped from:
-# http://koo.fi/blog/2015/10/22/flask-sqlalchemy-and-postgresql-unit-testing-with-transaction-savepoints/
-class TestingSession(SessionBase):
-    def __init__(self, db, bind, **options):
-        self.app = db.get_app()
-        super().__init__(autocommit=False, autoflush=True, bind=bind, **options)
-
-    def __call__(self):
-        # Flask-SQLAlchemy wants to create a new session
-        # Simply return the existing session
-        return self
-
-    def get_bind(self, mapper=None, clause=None):
-        # mapper is None if someone tries to just get a connection
-        if mapper is not None:
-            info = getattr(mapper.mapped_table, "info", {})
-            bind_key = info.get("bind_key")
-            if bind_key is not None:
-                state = flask.ext.sqlalchemy.get_state(self.app)
-                return state.db.get_engine(self.app, bind=bind_key)
-        return super().get_bind(mapper, clause)
+from airq import models
+from airq.config import app
+from airq.config import db
+from airq.lib.clock import _clock
+from tests.mocks.time import MockDateTime
 
 
 class BaseTestCase(unittest.TestCase):
-    app = config.app
+    app = app
+    db = db
     client = app.test_client()
-    db = config.db
-    timestamp = None
+
+    _persistent_models = (
+        models.relations.SensorZipcodeRelation,
+        models.sensors.Sensor,
+        models.zipcodes.Zipcode,
+        models.cities.City,
+    )
+
+    __first_test_case = True
+
+    dt = datetime.datetime(
+        year=2020,
+        month=9,
+        day=18,
+        hour=20,
+        minute=29,
+        second=28,
+        tzinfo=pytz.timezone("America/Los_Angeles"),
+    )
+    timestamp = dt.timestamp()
+
+    @classmethod
+    def _get_ephemeral_models(cls):
+        ephemeral_models = []
+        for c in cls.db.Model._decl_class_registry.values():
+            if isinstance(c, type) and issubclass(c, db.Model):
+                if c not in cls._persistent_models:
+                    ephemeral_models.append(c)
+        return ephemeral_models
+
+    @classmethod
+    def _truncate_tables(cls, models: typing.Iterable[db.Model]):  # type: ignore
+        for model in models:
+            stmt = model.__table__.delete()
+            cls.db.session.execute(stmt)
+            cls.db.session.commit()
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with open("/home/app/app/tests/fixtures/metadata.json") as f:
-            metadata = json.load(f)
-        cls.timestamp = metadata["generated_ts"]
 
-    def run(self, result=None, *args):
-        with mock.patch.object(
-            airq_datetime,
-            "now",
-            return_value=datetime.datetime.fromtimestamp(self.timestamp),
-        ):
-            return super().run(result=result)
+        _clock._impl = MockDateTime(cls.dt)
 
+        if cls.__first_test_case:
+            print("Clearing out ephemeral data")
+            cls._truncate_tables(cls._get_ephemeral_models())
+            cls.__first_test_case = False
 
-class BaseAppTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        # Create a connection and start a transaction. This is needed so that
-        # we can run the drop_all/create_all inside the same transaction as
-        # the tests
-        connection = self.db.engine.connect()
-        transaction = connection.begin()
-
-        session_backup = self.db.session
-        self.db.session = TestingSession(self.db, connection)
-
-        self.savepoint = self.db.session.begin_nested()
-        self.nested_savepoint = self.db.session.begin_nested()
-        self.backup = self.db.session
-        self.db.session = self.nested_savepoint.session
-
-        # This is for using app_context().pop()
-        self.db.session.remove = lambda: None
+        self.maxDiff = None
 
     def tearDown(self):
         super().tearDown()
+        self._truncate_tables(self._get_ephemeral_models())
 
-        self.savepoint.rollback()
-        self.db.session = self.backup
+    def assert_twilio_response(self, expected: str, actual: bytes):
+        self.assertEqual(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response><Message>"
+            "{}"
+            "</Message></Response>".format(expected).encode(),
+            actual,
+        )

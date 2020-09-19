@@ -17,19 +17,15 @@ from tests.mocks.requests import MockRequests
 
 
 class SyncTestCase(BaseTestCase):
-    def _truncate_tables(self):
-        models_to_delete = [SensorZipcodeRelation, Sensor, Zipcode, City]
-        for model in models_to_delete:
-            stmt = model.__table__.delete()
-            self.db.session.execute(stmt)
-            self.db.session.commit()
-            self.assertEqual(0, model.query.count())
-
     def test_sync(self):
         skip_force_rebuild = bool(os.getenv("SKIP_FORCE_REBUILD", False))
         if not skip_force_rebuild:
             print("Truncating tables")
-            self._truncate_tables()
+            self._truncate_tables(self._persistent_models)
+            self.assertEqual(City.query.count(), 0)
+            self.assertEqual(Zipcode.query.count(), 0)
+            self.assertEqual(Sensor.query.count(), 0)
+            self.assertEqual(SensorZipcodeRelation.query.count(), 0)
 
         with MockRequests(
             {
@@ -40,13 +36,7 @@ class SyncTestCase(BaseTestCase):
         ):
             models_sync(only_if_empty=skip_force_rebuild, force_rebuild_geography=True)
 
-        # We run tests on a subset of data so they don't take forever to build,
-        # hence these small counts.
-        self.assertEqual(132, City.query.count())
-        self.assertEqual(227, Zipcode.query.count())
-        self.assertEqual(80, Sensor.query.count())
-        self.assertEqual(1741, SensorZipcodeRelation.query.count())
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertGreater(City.query.count(), 0)
+        self.assertGreater(Zipcode.query.count(), 0)
+        self.assertGreater(Sensor.query.count(), 0)
+        self.assertGreater(SensorZipcodeRelation.query.count(), 0)

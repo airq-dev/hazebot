@@ -5,7 +5,7 @@ import requests
 import typing
 
 from airq.config import db
-from airq.lib.datetime import timestamp
+from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list

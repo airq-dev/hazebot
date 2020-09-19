@@ -2,49 +2,18 @@ version: '3.7'
 
 services:
   app:
-    build: ./app
     command: flask run --host=0.0.0.0 --port=8080
-    volumes:
-      - ./app/:/home/app/app
     env_file:
       - ./.env.test
     ports:
       - 8080:8080
-    depends_on:
-      - db
-      - redis
-    stdin_open: true
-    tty: true
   scheduler:
-    build: ./app
-    command: celery -A airq.celery beat -l info
     env_file:
       - ./.env.test
-    depends_on:
-      - db
-      - redis
   worker:
-    build: ./app
-    command: celery -A airq.celery worker -l info
     env_file:
       - ./.env.test
-    depends_on:
-      - db
-      - redis
   redis:
-    image: redis:alpine
     command: --port 6380
     ports:
       - 6380:6380
-  db:
-    image: postgres
-    restart: always
-    volumes:
-      - pgdata_test:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-
-volumes: 
-  pgdata_test:
