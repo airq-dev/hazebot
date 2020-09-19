@@ -92,15 +92,15 @@ if ! $running; then
 
     echo ""
 
-    docker-compose exec -e SKIP_FORCE_REBUILD=1 app python3 -m unittest tests/test_sync.py
+    docker-compose exec -T -e SKIP_FORCE_REBUILD=1 app python3 -m unittest tests/test_sync.py
 fi
 
 if [ "$module" ]; then
   echo "Running tests for ${module}"
-  docker-compose exec app python3 -m unittest ${module}
+  docker-compose exec -T app python3 -m unittest ${module}
 else
   echo "Running all tests"
-  docker-compose exec app python3 -m unittest discover
+  docker-compose exec -T app python3 -m unittest discover
 fi
 
 exit $?
