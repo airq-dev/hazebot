@@ -1,7 +1,6 @@
 set -eux
 
 export COMPOSE_PROJECT_NAME=airq_test
-export COMPOSE_INTERACTIVE_NO_CLI=true
 
 function usage() {
     echo "Usage:"
