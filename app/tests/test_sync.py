@@ -1,8 +1,4 @@
-import argparse
 import os
-import requests
-import unittest
-from unittest import mock
 
 from airq.models.cities import City
 from airq.models.relations import SensorZipcodeRelation
