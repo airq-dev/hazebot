@@ -43,7 +43,9 @@ You can then test the API by navigating to `http://localhost:5000/test?command=<
 
 ### Running Tests
 
-Run tests with `./test.sh`. This script will start a separate docker cluster (isolated from the development cluster) which uses fixtures taken from a subset of Purpleair and GeoNames data near Portland, Oregon. This "static" data (e.g., zipcodes and cities) is not reset between test runs. Instead, it is rebuilt as part of the test suite (specifically, during the `test_sync` case). This makes it possible to run the test suite without rebuilding this static data before each test, speeding up test time substantially. And any change you make to the sync process will still be exercised when `test_sync` runs.
+Run all tests with `./test.sh` or a specific test with `./test.sh <tests.test_module>`.
+
+This script will start a separate docker cluster (isolated from the development cluster) using fixtures taken from a subset of Purpleair and GeoNames data near Portland, Oregon. This "static" data (e.g., zipcodes and cities) is not deleted between test runs. Instead, it is rebuilt as part of the test suite (specifically, during the `test_sync` case). This makes it possible to run the test suite without rebuilding this data before each test, speeding up test time substantially. And any change you make to the sync process will still be exercised when `test_sync` runs.
 
 ### Opening a PR
 
