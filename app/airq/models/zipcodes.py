@@ -1,8 +1,8 @@
-import datetime
 import typing
 
 from flask_sqlalchemy import BaseQuery
 
+from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
@@ -69,7 +69,7 @@ class Zipcode(db.Model):  # type: ignore
 
     @classmethod
     def cutoff(cls) -> float:
-        return datetime.datetime.now().timestamp() - (60 * 30)
+        return timestamp() - (60 * 30)
 
     @property
     def is_pm25_stale(self) -> bool:

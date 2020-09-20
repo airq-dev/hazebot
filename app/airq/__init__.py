@@ -8,6 +8,7 @@ from airq import management
 app = config.app
 
 # Register management commands
+app.cli.command("generate-fixtures")(management.generate_fixtures)
 app.cli.command("sync")(management.sync)
 
 # Register routes

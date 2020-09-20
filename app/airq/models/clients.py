@@ -1,7 +1,5 @@
-import datetime
 import enum
 import logging
-import pytz
 import typing
 
 from flask_sqlalchemy import BaseQuery
@@ -11,7 +9,9 @@ from sqlalchemy.orm import Query
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
-from airq.lib.datetime import timestamp
+
+from airq.lib.clock import now
+from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
@@ -212,7 +212,7 @@ class Client(db.Model):  # type: ignore
             return False
         # Timezone can be null since our data is incomplete.
         timezone = self.zipcode.timezone or "America/Los_Angeles"
-        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
+        dt = now(timezone=timezone)
         send_start, send_end = self.SEND_WINDOW_HOURS
         return send_start <= dt.hour < send_end
 

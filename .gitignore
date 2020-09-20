@@ -1,10 +1,12 @@
+.DS_Store
 .venv
 .env.dev.secrets
 .env.prod
 __pycache__
 .vscode
-data/*.db
-*.zip
-data/purpleair.json
 .mypy_cache
+
+*.zip
+!app/tests/fixtures/geonames/*.zip
 *.gz
+!app/tests/fixtures/geonames/*.gz

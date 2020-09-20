@@ -1,5 +1,3 @@
-import datetime
-
 from airq.celery import celery
 from airq.lib.logging import get_airq_logger
 
