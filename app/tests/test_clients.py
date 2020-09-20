@@ -76,9 +76,9 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
 
     def test_filter_eligible_for_sending(self):
-        # Don't send if client was messaged less than or equal to an hour ago
+        # Don't send if client was messaged less than or equal to two hours ago
         client = self._make_client(
-            last_alert_sent_at=self.timestamp - (60 * 60),
+            last_alert_sent_at=self.timestamp - (2* 60 * 60),
             last_pm25=self.zipcode.pm25 + 50,
         )
         self.assertEqual(0, Client.query.filter_eligible_for_sending().count())
