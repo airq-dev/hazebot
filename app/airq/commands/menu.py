@@ -1,7 +1,7 @@
 import typing
 
 from airq.commands.base import ApiCommandHandler
-from airq.models.messages import MessageType
+from airq.models.events import EventType
 
 
 class ShowMenuHandler(ApiCommandHandler):
@@ -14,5 +14,5 @@ class ShowMenuHandler(ApiCommandHandler):
             "",
             "Or, enter a new zipcode.",
         ]
-        self._persist_message(MessageType.MENU)
+        self._record_event(EventType.MENU)
         return message

@@ -1,6 +1,6 @@
 set -euxo pipefail
 
-export COMPOSE_PROJECT_NAME=airq_test
+export COMPOSE_PROJECT_NAME=hazebot_test
 
 function usage() {
     echo "Usage:"
@@ -53,7 +53,7 @@ fi
 
 containers=`docker ps`
 running=false
-if echo $containers | grep airq_test; then 
+if echo $containers | grep hazebot_test; then
   running=true
 fi
 

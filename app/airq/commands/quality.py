@@ -3,7 +3,7 @@ import typing
 
 from airq.commands.base import ApiCommandHandler
 from airq.lib.geo import kilometers_to_miles
-from airq.models.messages import MessageType
+from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
 
@@ -58,10 +58,10 @@ class GetQualityHandler(BaseQualityHandler):
             message.append("Reply M for menu, U to stop this alert.")
 
         if self.user_input == "2":
-            type_code = MessageType.LAST
+            type_code = EventType.LAST
         else:
-            type_code = MessageType.QUALITY
-        self._persist_message(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
+            type_code = EventType.QUALITY
+        self._record_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
 
         return message
 
@@ -94,8 +94,8 @@ class GetDetailsHandler(BaseQualityHandler):
             f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
         )
 
-        self._persist_message(
-            MessageType.DETAILS,
+        self._record_event(
+            EventType.DETAILS,
             zipcode=zipcode.zipcode,
             recommendations=[r.zipcode for r in recommended_zipcodes],
             pm25=zipcode.pm25,

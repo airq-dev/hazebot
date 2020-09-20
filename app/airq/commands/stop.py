@@ -1,7 +1,7 @@
 import typing
 
 from airq.commands.base import ApiCommandHandler
-from airq.models.messages import MessageType
+from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
 
@@ -18,9 +18,7 @@ class StopHandler(ApiCommandHandler):
             ]
 
         self.client.disable_alerts()
-        self._persist_message(
-            MessageType.UNSUBSCRIBE, zipcode=self.client.zipcode.zipcode
-        )
+        self._record_event(EventType.UNSUBSCRIBE, zipcode=self.client.zipcode.zipcode)
         return [
             f"Got it! You will no longer recieve alerts for {self.client.zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
         ]

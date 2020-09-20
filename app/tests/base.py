@@ -6,8 +6,13 @@ import unittest
 from airq import models
 from airq.config import app
 from airq.config import db
-from airq.lib.clock import _clock
+from airq.lib.clock import timestamp
+from airq.models.events import Event
+from airq.models.events import EventType
 from tests.mocks.time import MockDateTime
+
+
+_first_test_case = True
 
 
 class BaseTestCase(unittest.TestCase):
@@ -22,19 +27,6 @@ class BaseTestCase(unittest.TestCase):
         models.zipcodes.Zipcode,
         models.cities.City,
     )
-
-    __first_test_case = True
-
-    dt = datetime.datetime(
-        year=2020,
-        month=9,
-        day=18,
-        hour=20,
-        minute=29,
-        second=28,
-        tzinfo=pytz.timezone("America/Los_Angeles"),
-    )
-    timestamp = dt.timestamp()
 
     @classmethod
     def _get_ephemeral_models(cls):
@@ -54,18 +46,37 @@ class BaseTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        global _first_test_case
+
         super().setUpClass()
 
-        _clock._impl = MockDateTime(cls.dt)
-
-        if cls.__first_test_case:
+        if _first_test_case:
             print("Clearing out ephemeral data")
             cls._truncate_tables(cls._get_ephemeral_models())
-            cls.__first_test_case = False
+            _first_test_case = False
+
+    def run(self, result=None):
+        self.clock = MockDateTime(
+            datetime.datetime(
+                year=2020,
+                month=9,
+                day=18,
+                hour=20,
+                minute=29,
+                second=28,
+                tzinfo=pytz.timezone("America/Los_Angeles"),
+            )
+        )
+        with self.clock:
+            return super().run(result=result)
 
     def tearDown(self):
         super().tearDown()
         self._truncate_tables(self._get_ephemeral_models())
+
+    @property
+    def timestamp(self) -> int:
+        return timestamp()
 
     def assert_twilio_response(self, expected: str, actual: bytes):
         self.assertEqual(
@@ -75,3 +86,10 @@ class BaseTestCase(unittest.TestCase):
             "</Message></Response>".format(expected).encode(),
             actual,
         )
+
+    def assert_event(self, client_id: int, event_type: EventType, **data):
+        event = Event.query.filter_by(
+            client_id=client_id, type_code=event_type, timestamp=self.clock.now(),
+        ).first()
+        self.assertIsNotNone(event)
+        self.assertDictEqual(data, event.data)

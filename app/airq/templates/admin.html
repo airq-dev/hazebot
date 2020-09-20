@@ -44,6 +44,30 @@
         </table>
     </section>
 
+    {% if event_stats %}
+        <section>
+            <h2>Message Stats</h2>
+            <table>
+                <thead>
+                    <th></th>
+                    {% with row=event_stats.values()|first %}
+                        {% for key in row %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    {% endwith %}
+                </thead>
+                <tr>
+                    {% for date, counts in event_stats.items() %}
+                        <td>{{ date }}</td>
+                        {% for count in counts.values() %}
+                            <td>{{ count }}</td>
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+            </table>
+        </section>
+    {% endif %}
+
     <section>
         <h2>Actions</h2>
         <ul>

@@ -23,6 +23,7 @@ from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
+from airq.models.events import Event
 from airq.models.requests import Request
 from airq.models.users import User
 from airq.tasks import bulk_send
@@ -85,6 +86,7 @@ def admin_summary() -> str:
             "Total Zipcode Requests": Request.query.get_total_count(),
         },
         activity_counts=Client.query.get_activity_counts(),
+        event_stats=Event.query.get_stats(),
     )
 
 

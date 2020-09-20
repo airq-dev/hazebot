@@ -6,8 +6,8 @@ import typing
 from airq.config import db
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
-from airq.models.messages import Message
-from airq.models.messages import MessageType
+from airq.models.events import Event
+from airq.models.events import EventType
 
 
 class CommandHandlerProtocol(typing.Protocol):
@@ -83,5 +83,5 @@ class ApiCommandHandler(abc.ABC):
     def handle(self) -> typing.List[str]:
         ...
 
-    def _persist_message(self, type_code: MessageType, **data: typing.Any) -> Message:
-        return Message.query.create(self.client.id, type_code, data)
+    def _record_event(self, type_code: EventType, **data: typing.Any) -> Event:
+        return Event.query.create(self.client.id, type_code, **data)
