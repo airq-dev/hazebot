@@ -21,3 +21,7 @@ class User(UserMixin, db.Model):  # type: ignore
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def can_send_sms(self) -> bool:
+        return self.email == "info@hazebot.org"

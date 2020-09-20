@@ -101,6 +101,8 @@ def admin_stats():
 
 @admin_required
 def admin_bulk_sms():
+    if not current_user.can_send_sms:
+        return redirect(url_for("admin_summary"))
     form = BulkSMSForm(last_active_at=now())
     if form.validate_on_submit():
         bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
@@ -115,6 +117,8 @@ def admin_bulk_sms():
 
 @admin_required
 def admin_sms():
+    if not current_user.can_send_sms:
+        return redirect(url_for("admin_summary"))
     form = SMSForm()
     if form.validate_on_submit():
         client = Client.query.get_by_phone_number(form.data["phone_number"])

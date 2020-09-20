@@ -68,11 +68,13 @@
         </section>
     {% endif %}
 
-    <section>
-        <h2>Actions</h2>
-        <ul>
-            <li><a href="/admin/bulk-sms">Send a Bulk SMS Message</a></li>
-            <li><a href="/admin/sms">Send an SMS Message</a></li>
-        </ul>
-    </section>
+    {% if g.user.can_send_sms %}
+        <section>
+            <h2>Actions</h2>
+            <ul>
+                <li><a href="/admin/bulk-sms">Send a Bulk SMS Message</a></li>
+                <li><a href="/admin/sms">Send an SMS Message</a></li>
+            </ul>
+        </section>
+    {% endif %}
 {% endblock %}
