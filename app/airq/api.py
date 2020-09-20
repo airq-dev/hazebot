@@ -16,11 +16,11 @@ from werkzeug import Response
 from airq import commands
 from airq.config import csrf
 from airq.decorators import admin_required
-from airq.lib.clock import timestamp
 from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
 from airq.forms import SMSForm
 from airq.lib.clock import now
+from airq.lib.clock import timestamp
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.requests import Request

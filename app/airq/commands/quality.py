@@ -74,7 +74,7 @@ class GetDetailsHandler(BaseQualityHandler):
                         recommendation.city.name,
                         recommendation.zipcode,
                         recommendation.pm25_level.display.upper(),
-                        round(kilometers_to_miles(recommendation.distance(zipcode)), 1),
+                        round(kilometers_to_miles(recommendation.distance(zipcode)), ndigits=1),
                     )
                 )
             message.append("")

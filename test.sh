@@ -4,12 +4,13 @@ export COMPOSE_PROJECT_NAME=airq_test
 
 function usage() {
     echo "Usage:"
-    echo "    ./test                      Run tests."
-    echo "    ./test your.test.module     Run tests for a given module."
-    echo "    ./test -b                   Rebuild containers, then run tests."
-    echo "    ./test your.test.module -b  Rebuild containers, then run tests for a given module."
-    echo "    ./test -d                   Shut down test containers."
-    echo "    ./test -h                   Display this help message."
+    echo "  ./test                  Run all tests."
+    echo "  ./test path.to.module   Run tests for the given module."
+    echo ""
+    echo "Options:"
+    echo "  -b --build      Rebuild containers before running tests."
+    echo "  -d --down       Stop test containers."
+    echo "  -h --help       Display this message."
     exit
 }
 
@@ -91,7 +92,7 @@ if ! $running; then
 
     echo ""
 
-    docker-compose exec -T -e SKIP_FORCE_REBUILD=1 app python3 -m unittest tests/test_sync.py
+    docker-compose exec -T -e SKIP_FORCE_REBUILD=1 app python3 -m unittest tests.test_sync.SyncTestCase.test_sync
 fi
 
 if [ "$module" ]; then

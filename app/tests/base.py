@@ -12,8 +12,9 @@ from tests.mocks.time import MockDateTime
 
 class BaseTestCase(unittest.TestCase):
     app = app
-    db = db
     client = app.test_client()
+    db = db
+    maxDiff = None
 
     _persistent_models = (
         models.relations.SensorZipcodeRelation,
@@ -61,10 +62,6 @@ class BaseTestCase(unittest.TestCase):
             print("Clearing out ephemeral data")
             cls._truncate_tables(cls._get_ephemeral_models())
             cls.__first_test_case = False
-
-    def setUp(self):
-        super().setUp()
-        self.maxDiff = None
 
     def tearDown(self):
         super().tearDown()
