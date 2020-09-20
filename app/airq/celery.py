@@ -1,3 +1,5 @@
+import os
+
 from celery import Celery
 from celery import signals
 from celery.schedules import crontab
@@ -6,12 +8,13 @@ from kombu.utils.url import safequote
 from airq import config
 
 
-BEAT_SCHEDULE = {
-    "models_sync": {
+BEAT_SCHEDULE = {}
+
+if not config.TESTING:
+    BEAT_SCHEDULE["models_sync"] = {
         "task": "airq.tasks.models_sync",
         "schedule": crontab(minute="*/10"),
     }
-}
 
 
 def get_celery_logger():
@@ -20,9 +23,10 @@ def get_celery_logger():
     return get_task_logger(__name__)
 
 
-if config.FLASK_ENV == "development":
+if config.DEBUG:
     # Use redis in dev so that people don't need to setup AWS credentials.
-    broker_url = "redis://redis:6379/0"
+    redis_port = os.getenv("REDIS_PORT", "6379")
+    broker_url = f"redis://redis:{redis_port}/0"
     transport_options = {}
 else:
     broker_url = "sqs://{}:{}@".format(
@@ -44,6 +48,9 @@ celery.conf.update(
     worker_hijack_root_logger=False,
 )
 celery.conf.update(config.app.config)
+
+if config.TESTING:
+    celery.conf.update(task_always_eager=True, task_eager_propagates=True)
 
 
 class ContextTask(celery.Task):  # type: ignore

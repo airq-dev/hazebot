@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app:
+    command: flask run --host=0.0.0.0 --port=8080
+    env_file:
+      - ./.env.test
+    ports:
+      - 8080:8080
+  scheduler:
+    env_file:
+      - ./.env.test
+  worker:
+    env_file:
+      - ./.env.test
+  redis:
+    command: --port 6380
+    ports:
+      - 6380:6380

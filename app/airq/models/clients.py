@@ -1,7 +1,5 @@
-import datetime
 import enum
 import logging
-import pytz
 import typing
 
 from flask_sqlalchemy import BaseQuery
@@ -11,7 +9,9 @@ from sqlalchemy.orm import Query
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
-from airq.lib.datetime import timestamp
+
+from airq.lib.clock import now
+from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
@@ -146,12 +146,13 @@ class Client(db.Model):  # type: ignore
         ),
     )
 
-    # Send alerts at most every one hour to avoid spamming people.
+    # Send alerts at most every TWO hours to avoid spamming people.
     # One hour seems like a reasonable frequency because AQI
     # doesn't fluctuate very frequently. We should look at implementing
     # logic to smooth out this alerting so that if AQI oscillates
-    # between two levels we don't spam the user every hour.
-    FREQUENCY = 1 * 60 * 60
+    # between two levels we don't spam the user every TWO hour.
+    # TODO: update logic with hysteresis to avoid spamming + save money
+    FREQUENCY = 2 * 60 * 60
 
     # Send alerts between 8 AM and 9 PM.
     SEND_WINDOW_HOURS = (8, 21)
@@ -212,7 +213,7 @@ class Client(db.Model):  # type: ignore
             return False
         # Timezone can be null since our data is incomplete.
         timezone = self.zipcode.timezone or "America/Los_Angeles"
-        dt = datetime.datetime.now(tz=pytz.timezone(timezone))
+        dt = now(timezone=timezone)
         send_start, send_end = self.SEND_WINDOW_HOURS
         return send_start <= dt.hour < send_end
 

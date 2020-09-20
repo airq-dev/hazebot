@@ -6,7 +6,7 @@ Building the 411 for air quality in the United States: a texting platform access
 
 ## Features
 
-To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every hour, and only between the hours of 8AM and 9PM.
+To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every two hours, and only between the hours of 8AM and 9PM.
 
 We also support several SMS "commands":
 * `1`: Get details about the air quality in your zipcode, and recommendations of nearby areas with healthier air.
@@ -41,15 +41,37 @@ Clone this repo and run `docker-compose up --build`. Once the app is running, if
 
 You can then test the API by navigating to `http://localhost:5000/test?command=<YOUR ZIPCODE>`. The `/test` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
 
-Next, install [black](https://github.com/psf/black) and [mypy](http://mypy-lang.org/):
+### Running Tests
+
+Run all tests with `./test.sh` or a specific test with `./test.sh <tests.test_module>`.
+
+This script will start a separate docker cluster (isolated from the development cluster) using fixtures taken from a subset of Purpleair and GeoNames data near Portland, Oregon. This "static" data (e.g., zipcodes and cities) is not deleted between test runs. Instead, it is rebuilt as part of the test suite (specifically, during the `test_sync` case). This makes it possible to run the test suite without rebuilding this data before each test, speeding up test time substantially. And any change you make to the sync process will still be exercised when `test_sync` runs.
+
+### Opening a PR
+
+Before you open a PR, please do the following:
+* Run `black .` from the root of this repo and ensure it exits without error. [Black](https://github.com/psf/black) is a code formatter which will ensure your code-style is compliant with the rest of this repository. You can install Black with `pip install 'black==19.10b0'`.
+* Run `mypy app` from the root of this repo and ensure it exits without error. [Mypy](http://mypy-lang.org/) is a static analysis tool which helps ensure that code is type-safe. You can install Mypy with `pip install mypy`.
+* Ensure tests pass (you can run the whole suite with `./test.sh`).
+* If you're making a non-trivial change, please add or update test cases to cover it.
+
+### Debugging
+
+It is possible to debug during development by attaching to the running docker container. First, get the app container id:
 
 ```
-pip install 'black==19.10b0'
-pip install mypy
+ianhoffman|master:~/github/airq$ docker container ls
+CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                              NAMES
+0f8dcbf12ae0        airq_app              "/home/app/app/entry…"   29 minutes ago      Up 29 minutes       0.0.0.0:5000->5000/tcp             airq_app_1
 ```
 
-Before opening a PR, run `black .` and `mypy app` from the root of this repository and ensure that both exit cleanly (CI will fail otherwise).
+Then, attach to the app container:
 
+```
+ianhoffman|master:~/github/airq$ docker attach 0f8dcbf12ae0
+```
+
+The process should hang. Now open your editor and add a breakpoint using [pdb](https://docs.python.org/3/library/pdb.html): `import pdb; pdb.set_trace()`. When Python hits the breakpoint, it will start a debugger session in the shell attached to the app container.
 
 ### Accessing the Database
 

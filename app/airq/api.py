@@ -1,4 +1,3 @@
-import datetime
 import typing
 
 from flask import flash
@@ -20,7 +19,8 @@ from airq.decorators import admin_required
 from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
 from airq.forms import SMSForm
-from airq.lib.datetime import local_now
+from airq.lib.clock import now
+from airq.lib.clock import timestamp
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.requests import Request
@@ -99,7 +99,7 @@ def admin_stats():
 
 @admin_required
 def admin_bulk_sms():
-    form = BulkSMSForm(last_active_at=local_now())
+    form = BulkSMSForm(last_active_at=now())
     if form.validate_on_submit():
         bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
         flash("Sent!")
@@ -107,9 +107,7 @@ def admin_bulk_sms():
     return render_template(
         "bulk_sms.html",
         form=form,
-        num_inactive=Client.query.filter_inactive_since(
-            datetime.datetime.now().timestamp()
-        ).count(),
+        num_inactive=Client.query.filter_inactive_since(timestamp()).count(),
     )
 
 
