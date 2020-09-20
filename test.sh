@@ -1,4 +1,4 @@
-set -eux
+set -euxo pipefail
 
 export COMPOSE_PROJECT_NAME=airq_test
 
