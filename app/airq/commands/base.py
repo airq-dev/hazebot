@@ -3,8 +3,11 @@ import dataclasses
 import re
 import typing
 
+from airq.config import db
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
+from airq.models.messages import Message
+from airq.models.messages import MessageType
 
 
 class CommandHandlerProtocol(typing.Protocol):
@@ -79,3 +82,6 @@ class ApiCommandHandler(abc.ABC):
     @abc.abstractmethod
     def handle(self) -> typing.List[str]:
         ...
+
+    def _persist_message(self, type_code: MessageType, **data: typing.Any) -> Message:
+        return Message.query.create(self.client.id, type_code, data)
