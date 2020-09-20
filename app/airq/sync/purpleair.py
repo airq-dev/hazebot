@@ -78,6 +78,8 @@ def _sensors_sync(
             sensor = existing_sensor_map.get(result["ID"])
             latitude = result["Lat"]
             longitude = result["Lon"]
+            if result["ID"] == 25201:
+                latitude += 0.01
             pm25 = float(result["PM2_5Value"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["ID"],
@@ -124,9 +126,10 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
     new_relations = []
 
     # Delete the old relations before rebuilding them
-    SensorZipcodeRelation.query.filter(
+    deleted_relations_count = SensorZipcodeRelation.query.filter(
         SensorZipcodeRelation.sensor_id.in_(moved_sensor_ids)
-    ).delete()
+    ).delete(synchronize_session=False)
+    logger.info("Deleting %s relations", deleted_relations_count)
 
     sensors = Sensor.query.filter(Sensor.id.in_(moved_sensor_ids)).all()
     for sensor in sensors:

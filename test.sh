@@ -4,8 +4,8 @@ export COMPOSE_PROJECT_NAME=airq_test
 
 function usage() {
     echo "Usage:"
-    echo "  ./test                  Run all tests."
-    echo "  ./test path.to.module   Run tests for the given module."
+    echo "  ./test.sh                  Run all tests."
+    echo "  ./test.sh path.to.module   Run tests for the given module."
     echo ""
     echo "Options:"
     echo "  -b --build      Rebuild containers before running tests."
@@ -38,7 +38,7 @@ do
       if $is_first; then
         module=$key
         shift
-      else 
+      else
         usage
       fi
       ;;
@@ -53,7 +53,7 @@ fi
 
 containers=`docker ps`
 running=false
-if echo $containers | grep airq_test; then 
+if echo $containers | grep airq_test; then
   running=true
 fi
 
