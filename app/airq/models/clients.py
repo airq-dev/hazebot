@@ -96,10 +96,7 @@ class ClientQuery(BaseQuery):
         """Number of new clients in the last day"""
         return (
             self.filter_phones()
-            .filter(
-                func.timezone("PST", Client.created_at).label("timestamp")
-                > now().date()
-            )
+            .filter(func.timezone("PST", Client.created_at) > now().date())
             .with_entities(func.count(Client.id))
             .scalar()
             or 0
