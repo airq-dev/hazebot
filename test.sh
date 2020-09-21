@@ -1,4 +1,4 @@
-set -euxo pipefail
+set -euo pipefail
 
 export COMPOSE_PROJECT_NAME=hazebot_test
 

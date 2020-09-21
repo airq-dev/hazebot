@@ -40,7 +40,9 @@ LOGGING_CONFIG: typing.Dict[str, typing.Any] = {
     "version": 1,
     "disable_existing_loggers": True,
     "formatters": {
-        "default": {"format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",}
+        "default": {
+            "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+        }
     },
     "handlers": {
         "wsgi": {

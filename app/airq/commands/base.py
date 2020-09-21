@@ -26,8 +26,8 @@ class CommandHandlerFactoryProtocol(typing.Protocol):
 class Route:
     """Routes commands matching the given pattern to the given handler.
 
-    This is used to create declarative mappings from command handlers to user 
-    input (i.e., commands), and should not be instantiated directly: rather, 
+    This is used to create declarative mappings from command handlers to user
+    input (i.e., commands), and should not be instantiated directly: rather,
     use ``ApiCommandHandler.route()`` to create an association between a
     handler and a command. As an example::
 
@@ -38,7 +38,7 @@ class Route:
         ]
 
     This will cause the command "d" to be handled by the ``GetQualityHandler``,
-    which will be instantiated with mode set to 
+    which will be instantiated with mode set to
     ``GetQualityHandler.Mode.DETAILS``.
 
     """
