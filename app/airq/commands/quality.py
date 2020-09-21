@@ -3,6 +3,7 @@ import typing
 
 from airq.commands.base import ApiCommandHandler
 from airq.lib.geo import kilometers_to_miles
+from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
 
@@ -55,6 +56,13 @@ class GetQualityHandler(BaseQualityHandler):
             message.append("")
             message.append("We'll alert you when the air quality changes category.")
             message.append("Reply M for menu, U to stop this alert.")
+
+        if self.user_input == "2":
+            type_code = EventType.LAST
+        else:
+            type_code = EventType.QUALITY
+        self._record_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
+
         return message
 
 
@@ -84,6 +92,14 @@ class GetDetailsHandler(BaseQualityHandler):
 
         message.append(
             f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
+        )
+
+        self._record_event(
+            EventType.DETAILS,
+            zipcode=zipcode.zipcode,
+            recommendations=[r.zipcode for r in recommended_zipcodes],
+            pm25=zipcode.pm25,
+            num_sensors=zipcode.num_sensors,
         )
 
         return message

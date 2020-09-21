@@ -6,6 +6,8 @@ from unittest import mock
 
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
+from airq.models.events import Event
+from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 from tests.base import BaseTestCase
 
@@ -47,6 +49,7 @@ class ClientTestCase(BaseTestCase):
         self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
+        self.assertEqual(0, Event.query.count())
 
         # Don't notify if before 8 AM
         with mock.patch(
@@ -58,6 +61,7 @@ class ClientTestCase(BaseTestCase):
             self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
+        self.assertEqual(0, Event.query.count())
 
         # Don't notify if after 9 PM
         with mock.patch(
@@ -69,11 +73,18 @@ class ClientTestCase(BaseTestCase):
             self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
+        self.assertEqual(0, Event.query.count())
 
         client.last_pm25 += 50
         self.assertTrue(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
+        self.assert_event(
+            client.id,
+            EventType.ALERT,
+            zipcode=self.zipcode.zipcode,
+            pm25=self.zipcode.pm25,
+        )
 
     def test_filter_eligible_for_sending(self):
         # Don't send if client was messaged less than or equal to two hours ago

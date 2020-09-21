@@ -44,11 +44,37 @@
         </table>
     </section>
 
-    <section>
-        <h2>Actions</h2>
-        <ul>
-            <li><a href="/admin/bulk-sms">Send a Bulk SMS Message</a></li>
-            <li><a href="/admin/sms">Send an SMS Message</a></li>
-        </ul>
-    </section>
+    {% if event_stats %}
+        <section>
+            <h2>Message Stats</h2>
+            <table>
+                <thead>
+                    <th></th>
+                    {% with row=event_stats.values()|first %}
+                        {% for key in row %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    {% endwith %}
+                </thead>
+                {% for date, counts in event_stats.items() %}
+                    <tr>
+                        <td>{{ date }}</td>
+                        {% for count in counts.values() %}
+                            <td>{{ count }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </section>
+    {% endif %}
+
+    {% if g.user.can_send_sms %}
+        <section>
+            <h2>Actions</h2>
+            <ul>
+                <li><a href="/admin/bulk-sms">Send a Bulk SMS Message</a></li>
+                <li><a href="/admin/sms">Send an SMS Message</a></li>
+            </ul>
+        </section>
+    {% endif %}
 {% endblock %}

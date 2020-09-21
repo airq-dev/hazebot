@@ -23,6 +23,7 @@ from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
+from airq.models.events import Event
 from airq.models.requests import Request
 from airq.models.users import User
 from airq.tasks import bulk_send
@@ -85,6 +86,7 @@ def admin_summary() -> str:
             "Total Zipcode Requests": Request.query.get_total_count(),
         },
         activity_counts=Client.query.get_activity_counts(),
+        event_stats=Event.query.get_stats(),
     )
 
 
@@ -99,6 +101,8 @@ def admin_stats():
 
 @admin_required
 def admin_bulk_sms():
+    if not current_user.can_send_sms:
+        return redirect(url_for("admin_summary"))
     form = BulkSMSForm(last_active_at=now())
     if form.validate_on_submit():
         bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp())
@@ -113,6 +117,8 @@ def admin_bulk_sms():
 
 @admin_required
 def admin_sms():
+    if not current_user.can_send_sms:
+        return redirect(url_for("admin_summary"))
     form = SMSForm()
     if form.validate_on_submit():
         client = Client.query.get_by_phone_number(form.data["phone_number"])
