@@ -50,7 +50,7 @@ This script will start a separate docker cluster (isolated from the development 
 ### Opening a PR
 
 Before you open a PR, please do the following:
-* Run `black .` from the root of this repo and ensure it exits without error. [Black](https://github.com/psf/black) is a code formatter which will ensure your code-style is compliant with the rest of this repository. You can install Black with `pip install 'black==19.10b0'`.
+* Run `black .` from the root of this repo and ensure it exits without error. [Black](https://github.com/psf/black) is a code formatter which will ensure your code-style is compliant with the rest of this repository. You can install Black with `pip install 'black==20.8b1'`.
 * Run `mypy app` from the root of this repo and ensure it exits without error. [Mypy](http://mypy-lang.org/) is a static analysis tool which helps ensure that code is type-safe. You can install Mypy with `pip install mypy`.
 * Ensure tests pass (you can run the whole suite with `./test.sh`).
 * If you're making a non-trivial change, please add or update test cases to cover it.

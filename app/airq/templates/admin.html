@@ -56,14 +56,14 @@
                         {% endfor %}
                     {% endwith %}
                 </thead>
-                <tr>
-                    {% for date, counts in event_stats.items() %}
+                {% for date, counts in event_stats.items() %}
+                    <tr>
                         <td>{{ date }}</td>
                         {% for count in counts.values() %}
                             <td>{{ count }}</td>
                         {% endfor %}
-                    {% endfor %}
-                </tr>
+                    </tr>
+                {% endfor %}
             </table>
         </section>
     {% endif %}

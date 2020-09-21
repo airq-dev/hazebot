@@ -11,10 +11,14 @@ from airq.forms.validators import PhoneNumberValidator
 
 class LoginForm(FlaskForm):
     email = StringField(
-        "Email", validators=[DataRequired()], render_kw={"placeholder": "Email"},
+        "Email",
+        validators=[DataRequired()],
+        render_kw={"placeholder": "Email"},
     )
     password = PasswordField(
-        "Password", validators=[DataRequired()], render_kw={"placeholder": "Password"},
+        "Password",
+        validators=[DataRequired()],
+        render_kw={"placeholder": "Password"},
     )
     submit = SubmitField("Submit")
 

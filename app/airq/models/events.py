@@ -6,6 +6,7 @@ import pytz
 import typing
 
 from flask_sqlalchemy import BaseQuery
+from sqlalchemy import desc
 from sqlalchemy import func
 
 from airq.config import db
@@ -45,11 +46,12 @@ class EventQuery(BaseQuery):
         for date, type_code, count in (
             self.filter(Event.timestamp > clock.now() - datetime.timedelta(days=30))
             .with_entities(
-                func.DATE(Event.timestamp).label("date"),
+                func.DATE(func.timezone("PST", Event.timestamp)).label("date"),
                 Event.type_code,
                 func.count(Event.id),
             )
             .group_by("date", Event.type_code)
+            .order_by(desc("date"))
             .all()
         ):
             send_date = date.strftime("%Y-%m-%d")
