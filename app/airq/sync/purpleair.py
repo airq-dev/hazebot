@@ -78,8 +78,6 @@ def _sensors_sync(
             sensor = existing_sensor_map.get(result["ID"])
             latitude = result["Lat"]
             longitude = result["Lon"]
-            if result["ID"] == 25201:
-                latitude += 0.01
             pm25 = float(result["PM2_5Value"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["ID"],
