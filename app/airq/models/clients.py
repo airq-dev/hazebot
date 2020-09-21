@@ -15,6 +15,8 @@ from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
+from airq.models.events import Event
+from airq.models.events import EventType
 from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
 
@@ -266,5 +268,9 @@ class Client(db.Model):  # type: ignore
         self.last_pm25 = curr_pm25
         self.num_alerts_sent += 1
         db.session.commit()
+
+        Event.query.create(
+            self.id, EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25
+        )
 
         return True
