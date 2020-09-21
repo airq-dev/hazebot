@@ -14,5 +14,5 @@ class ShowMenuHandler(ApiCommandHandler):
             "",
             "Or, enter a new zipcode.",
         ]
-        self._record_event(EventType.MENU)
+        self.client.log_event(EventType.MENU)
         return message

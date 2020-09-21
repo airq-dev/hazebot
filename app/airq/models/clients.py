@@ -227,9 +227,12 @@ class Client(db.Model):  # type: ignore
         return curr_zipcode_id != self.zipcode_id
 
     def disable_alerts(self):
-        self.last_pm25 = None
-        self.alerts_disabled_at = timestamp()
-        db.session.commit()
+        if self.alerts_disabled_at == 0:
+            self.last_pm25 = None
+            self.alerts_disabled_at = timestamp()
+            db.session.commit()
+
+            self.log_event(EventType.UNSUBSCRIBE, zipcode=self.zipcode.zipcode)
 
     @property
     def is_in_send_window(self) -> bool:
@@ -291,8 +294,13 @@ class Client(db.Model):  # type: ignore
         self.num_alerts_sent += 1
         db.session.commit()
 
-        Event.query.create(
-            self.id, EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25
-        )
+        self.log_event(EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25)
 
         return True
+
+    #
+    # Logging
+    #
+
+    def log_event(self, event_type: EventType, **event_data: typing.Any) -> Event:
+        return Event.query.create(self.id, event_type, **event_data)
