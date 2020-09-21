@@ -43,6 +43,7 @@ class EventQuery(BaseQuery):
         stats: typing.Dict[str, typing.Dict[str, int]] = collections.defaultdict(
             lambda: {name: 0 for name in keys}
         )
+        totals = {name: 0 for name in keys}
         for date, type_code, count in (
             self.filter(Event.timestamp > clock.now() - datetime.timedelta(days=30))
             .with_entities(
@@ -57,6 +58,8 @@ class EventQuery(BaseQuery):
             send_date = date.strftime("%Y-%m-%d")
             event_type = EventType(type_code)
             stats[send_date][event_type.name] = count
+            totals[event_type.name] += count
+        stats["TOTAL"] = totals
         return dict(stats)
 
 

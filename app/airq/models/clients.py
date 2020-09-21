@@ -9,7 +9,6 @@ from sqlalchemy.orm import Query
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
-
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
@@ -93,6 +92,19 @@ class ClientQuery(BaseQuery):
             or 0
         )
 
+    def get_total_new(self) -> int:
+        """Number of new clients in the last day"""
+        return (
+            self.filter_phones()
+            .filter(
+                func.timezone("PST", Client.created_at).label("timestamp")
+                > now().date()
+            )
+            .with_entities(func.count(Client.id))
+            .scalar()
+            or 0
+        )
+
     def get_total_num_subscriptions(self) -> int:
         return (
             self.filter_phones()
@@ -121,6 +133,9 @@ class Client(db.Model):  # type: ignore
     id = db.Column(db.Integer(), primary_key=True)
     identifier = db.Column(db.String(), nullable=False)
     type_code = db.Column(db.Enum(ClientIdentifierType), nullable=False)
+    created_at = db.Column(
+        db.TIMESTAMP(timezone=True), default=now, index=True, nullable=False
+    )
     last_activity_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )
@@ -161,6 +176,9 @@ class Client(db.Model):  # type: ignore
 
     # Send alerts between 8 AM and 9 PM.
     SEND_WINDOW_HOURS = (8, 21)
+
+    def __repr__(self) -> str:
+        return f"<Client {self.identifier}>"
 
     #
     # Presence
