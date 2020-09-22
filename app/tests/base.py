@@ -88,10 +88,14 @@ class BaseTestCase(unittest.TestCase):
         )
 
     def assert_event(self, client_id: int, event_type: EventType, **data):
-        event = Event.query.filter_by(
-            client_id=client_id,
-            type_code=event_type,
-            timestamp=self.clock.now(),
-        ).first()
+        event = (
+            Event.query.filter_by(
+                client_id=client_id,
+                type_code=event_type,
+                timestamp=self.clock.now(),
+            )
+            .order_by(Event.id.desc())
+            .first()
+        )
         self.assertIsNotNone(event)
         self.assertDictEqual(data, event.data)

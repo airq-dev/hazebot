@@ -26,6 +26,7 @@ class EventType(enum.IntEnum):
     ABOUT = 5
     UNSUBSCRIBE = 6
     ALERT = 7
+    RESUBSCRIBE = 8
 
 
 class EventQuery(BaseQuery):
@@ -102,9 +103,11 @@ class Event(db.Model):  # type: ignore
         elif self.type_code == EventType.ABOUT:
             return AboutEventSchema
         elif self.type_code == EventType.UNSUBSCRIBE:
-            return UnsubscribeEventSchema
+            return SubscribeEventSchema
         elif self.type_code == EventType.ALERT:
             return AlertEventSchema
+        elif self.type_code == EventType.RESUBSCRIBE:
+            return SubscribeEventSchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")
 
@@ -138,7 +141,7 @@ class AboutEventSchema:
 
 
 @dataclasses.dataclass
-class UnsubscribeEventSchema:
+class SubscribeEventSchema:
     zipcode: str
 
 

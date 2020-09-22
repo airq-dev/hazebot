@@ -4,12 +4,10 @@ from airq.commands.base import ApiCommandHandler
 from airq.models.zipcodes import Zipcode
 
 
-class StopHandler(ApiCommandHandler):
+class UnsubscribeHandler(ApiCommandHandler):
     def handle(self) -> typing.List[str]:
         if self.client.zipcode is None:
-            return [
-                "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
-            ]
+            return self._get_missing_zipcode_message()
 
         if self.client.alerts_disabled_at:
             return [
@@ -17,6 +15,7 @@ class StopHandler(ApiCommandHandler):
             ]
 
         self.client.disable_alerts()
+
         return [
             f"Got it! You will no longer recieve alerts for {self.client.zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
         ]
