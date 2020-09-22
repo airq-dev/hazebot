@@ -61,7 +61,7 @@ class GetQualityHandler(BaseQualityHandler):
             type_code = EventType.LAST
         else:
             type_code = EventType.QUALITY
-        self._record_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
+        self.client.log_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
 
         return message
 
@@ -94,7 +94,7 @@ class GetDetailsHandler(BaseQualityHandler):
             f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
         )
 
-        self._record_event(
+        self.client.log_event(
             EventType.DETAILS,
             zipcode=zipcode.zipcode,
             recommendations=[r.zipcode for r in recommended_zipcodes],

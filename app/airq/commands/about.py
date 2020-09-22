@@ -9,5 +9,5 @@ class ShowAboutHandler(ApiCommandHandler):
         message = [
             "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. Visit hazebot.org or email info@hazebot.org for feedback."
         ]
-        self._record_event(EventType.ABOUT)
+        self.client.log_event(EventType.ABOUT)
         return message
