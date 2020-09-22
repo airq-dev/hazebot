@@ -18,9 +18,6 @@ from airq.models.zipcodes import Zipcode
 logger = logging.getLogger(__name__)
 
 
-TRelationsMap = typing.Dict[int, typing.Dict[int, float]]
-
-
 PURPLEAIR_URL = "https://www.purpleair.com/json"
 
 # Try to get at least 8 readings per zipcode.
@@ -40,13 +37,6 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
     else:
         results = resp.json().get("results", [])
     return results
-
-
-def _build_relations_map() -> TRelationsMap:
-    relations_map: TRelationsMap = collections.defaultdict(dict)
-    for relation in SensorZipcodeRelation.query.all():
-        relations_map[relation.sensor_id][relation.zipcode_id] = relation.distance
-    return relations_map
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
@@ -76,8 +66,7 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 
 
 def _sensors_sync(
-    purpleair_data: typing.List[typing.Dict[str, typing.Any]],
-    relations_map: TRelationsMap,
+    purpleair_data: typing.List[typing.Dict[str, typing.Any]]
 ) -> typing.List[int]:
     existing_sensor_map = {s.id: s for s in Sensor.query.all()}
 
@@ -127,13 +116,18 @@ def _sensors_sync(
     return moved_sensor_ids
 
 
-def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelationsMap):
+def _relations_sync(moved_sensor_ids: typing.List[int]):
     trie: Trie[Zipcode] = Trie()
     for zipcode in Zipcode.query.all():
         trie.insert(zipcode.geohash, zipcode)
 
     new_relations = []
-    updates = []
+
+    # Delete the old relations before rebuilding them
+    deleted_relations_count = SensorZipcodeRelation.query.filter(
+        SensorZipcodeRelation.sensor_id.in_(moved_sensor_ids)
+    ).delete(synchronize_session=False)
+    logger.info("Deleting %s relations", deleted_relations_count)
 
     sensors = Sensor.query.filter(Sensor.id.in_(moved_sensor_ids)).all()
     for sensor in sensors:
@@ -167,29 +161,18 @@ def _relations_sync(moved_sensor_ids: typing.List[int], relations_map: TRelation
                     done = True
                     break
                 zipcode_ids.add(zipcode_id)
-                current_distance = relations_map.get(sensor.id, {}).get(zipcode_id)
-                if current_distance != distance:
-                    data = {
-                        "zipcode_id": zipcode_id,
-                        "sensor_id": sensor.id,
-                        "distance": distance,
-                    }
-                    if current_distance is None:
-                        new_relations.append(SensorZipcodeRelation(**data))
-                    else:
-                        updates.append(data)
+                data = {
+                    "zipcode_id": zipcode_id,
+                    "sensor_id": sensor.id,
+                    "distance": distance,
+                }
+                new_relations.append(SensorZipcodeRelation(**data))
             gh = gh[:-1]
 
     if new_relations:
         logger.info("Creating %s relations", len(new_relations))
         for objs in chunk_list(new_relations):
             db.session.bulk_save_objects(objs)
-            db.session.commit()
-
-    if updates:
-        logger.info("Updating %s relations", len(updates))
-        for mappings in chunk_list(updates):
-            db.session.bulk_update_mappings(SensorZipcodeRelation, mappings)
             db.session.commit()
 
 
@@ -264,12 +247,11 @@ def purpleair_sync():
     purpleair_data = _get_purpleair_data()
 
     logger.info("Recieved %s sensors", len(purpleair_data))
-    relations_map = _build_relations_map()
-    moved_sensor_ids = _sensors_sync(purpleair_data, relations_map)
+    moved_sensor_ids = _sensors_sync(purpleair_data)
 
     if moved_sensor_ids:
         logger.info("Syncing relations for %s sensors", len(moved_sensor_ids))
-        _relations_sync(moved_sensor_ids, relations_map)
+        _relations_sync(moved_sensor_ids)
 
     logger.info("Syncing metrics")
     _metrics_sync()
