@@ -209,3 +209,46 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(self.timestamp, client.alerts_disabled_at)
         self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
+
+        response = self.client.post(
+            "/sms", data={"Body": "97204", "From": "+12222222222"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(3, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Portland 97204 is GOOD (AQI 33).\n"
+            "\n"
+            'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.',
+            response.data,
+        )
+
+        client = Client.query.first()
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(self.timestamp, client.alerts_disabled_at)
+        self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
+
+        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(4, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Got it! We'll send you timely alerts when air quality in 97204 changes category.",
+            response.data,
+        )
+
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(0, client.alerts_disabled_at)
+        self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
+
+        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(4, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Looks like you're already watching 97204.",
+            response.data,
+        )

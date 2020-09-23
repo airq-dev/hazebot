@@ -15,9 +15,7 @@ class BaseQualityHandler(ApiCommandHandler):
                 return [f"Hmm. Are you sure {raw_zip} is a valid US zipcode?"]
         else:
             if self.client.zipcode is None:
-                return [
-                    "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality"
-                ]
+                return self._get_missing_zipcode_message()
             zipcode = self.client.zipcode
 
         # Mypy gets really confused here, tell it what's what.
@@ -51,8 +49,14 @@ class GetQualityHandler(BaseQualityHandler):
                 f" (AQI {aqi})" if aqi else "",
             )
         )
+
         was_updated = self.client.update_subscription(zipcode)
-        if was_updated:
+        if not self.client.is_enabled_for_alerts:
+            message.append("")
+            message.append(
+                'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
+            )
+        elif was_updated:
             message.append("")
             message.append("We'll alert you when the air quality changes category.")
             message.append("Reply M for menu, U to stop this alert.")

@@ -5,7 +5,8 @@ from airq.commands.about import ShowAboutHandler
 from airq.commands.menu import ShowMenuHandler
 from airq.commands.quality import GetDetailsHandler
 from airq.commands.quality import GetQualityHandler
-from airq.commands.stop import StopHandler
+from airq.commands.resubscribe import ResubscribeHandler
+from airq.commands.unsubscribe import UnsubscribeHandler
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
@@ -19,7 +20,8 @@ ROUTES = [
     GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
     ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
     ShowMenuHandler.route(pattern=r"^m$"),
-    StopHandler.route(pattern=r"^u$"),
+    ResubscribeHandler.route(pattern=r"^y$"),
+    UnsubscribeHandler.route(pattern=r"^u$"),
 ]
 
 
