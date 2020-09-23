@@ -3,7 +3,7 @@ import html
 from airq.commands.invalid import InvalidInputHandler
 from airq.commands.about import ShowAboutHandler
 from airq.commands.feedback import ShowFeedbackHandler
-from airq.commands.feedback import RecieveFeedbackHandler
+from airq.commands.feedback import ReceiveFeedbackHandler
 from airq.commands.menu import ShowMenuHandler
 from airq.commands.quality import GetDetailsHandler
 from airq.commands.quality import GetQualityHandler
@@ -21,7 +21,7 @@ ROUTES = [
     GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
     ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
     ShowFeedbackHandler.route(pattern=r"^4[\.\)]?$"),
-    RecieveFeedbackHandler.route(pattern=MATCH_NONE_REGEX),
+    ReceiveFeedbackHandler.route(pattern=MATCH_NONE_REGEX),
     ShowMenuHandler.route(pattern=r"^m$"),
     StopHandler.route(pattern=r"^u$"),
 ]

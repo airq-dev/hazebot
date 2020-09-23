@@ -14,7 +14,7 @@ class ShowFeedbackHandler(ApiCommandHandler):
         return message
 
 
-class RecieveFeedbackHandler(ApiCommandHandler):
+class ReceiveFeedbackHandler(ApiCommandHandler):
     @classmethod
     def should_handle(cls, pattern: str, client: Client, user_input: str) -> bool:
         return client.should_accept_feedback()
