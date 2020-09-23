@@ -13,17 +13,17 @@ from airq.models.clients import ClientIdentifierType
 from airq.models.events import EventType
 
 ZIPCODE_REGEX = "(?P<raw_zip>\d{5})"
-
+MATCH_NONE_REGEX = r"a^"
 
 ROUTES = [
     GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
     GetDetailsHandler.route(pattern=r"^1[\.\)]?$"),
     GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
     ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
+    ShowFeedbackHandler.route(pattern=r"^4[\.\)]?$"),
+    RecieveFeedbackHandler.route(pattern=MATCH_NONE_REGEX),
     ShowMenuHandler.route(pattern=r"^m$"),
     StopHandler.route(pattern=r"^u$"),
-    ShowFeedbackHandler.route(pattern=r"^f$"),
-    RecieveFeedbackHandler.route(pattern=r"a^"),
 ]
 
 

@@ -27,7 +27,7 @@ class EventType(enum.IntEnum):
     UNSUBSCRIBE = 6
     ALERT = 7
     FEEDBACK_BEGIN = 8
-    FEEDBACK_RECIEVED = 9
+    FEEDBACK_RECEIVED = 9
 
 
 class EventQuery(BaseQuery):
@@ -108,9 +108,9 @@ class Event(db.Model):  # type: ignore
         elif self.type_code == EventType.ALERT:
             return AlertEventSchema
         elif self.type_code == EventType.FEEDBACK_BEGIN:
-            return FeedbackEventSchema
-        elif self.type_code == EventType.FEEDBACK_RECIEVED:
-            return FeedbackEventSchema
+            return FeedbackBeginEventSchema
+        elif self.type_code == EventType.FEEDBACK_RECEIVED:
+            return FeedbackReceivedEventSchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")
 
@@ -153,6 +153,12 @@ class AlertEventSchema:
     zipcode: str
     pm25: float
 
+
 @dataclasses.dataclass
-class FeedbackEventSchema:
+class FeedbackBeginEventSchema:
     pass
+
+
+@dataclasses.dataclass
+class FeedbackReceivedEventSchema:
+    feedback: str
