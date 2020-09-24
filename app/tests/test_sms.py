@@ -142,7 +142,7 @@ class SMSTestCase(BaseTestCase):
             "1. Details and recommendations\n"
             "2. Current AQI\n"
             "3. Hazebot info\n"
-            "4. Give us feedback\n"
+            "4. Give feedback\n"
             "\n"
             "Or, enter a new zipcode.",
             response.data,
@@ -270,6 +270,7 @@ class SMSTestCase(BaseTestCase):
         )
 
         # Go through feedback flow
+        self.clock.advance()
         response = self.client.post("/sms", data={"Body": "4", "From": "+13333333333"})
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -281,6 +282,7 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
 
+        self.clock.advance()
         response = self.client.post(
             "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
         )
@@ -291,4 +293,18 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response("Thank you for your feedback!", response.data)
         self.assert_event(
             client_id, EventType.FEEDBACK_RECEIVED, feedback="Blah Blah Blah"
+        )
+
+        # try to post feedback again
+        self.clock.advance()
+        response = self.client.post(
+            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(2, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
+            response.data,
         )

@@ -20,7 +20,7 @@ class ReceiveFeedbackHandler(ApiCommandHandler):
         return client.should_accept_feedback()
 
     def handle(self) -> typing.List[str]:
-        send_email(config.ADMIN_EMAILS, "User gave feedback", self.user_input)
+        send_email(["info@hazebot.org"], "User gave feedback", self.user_input)
         message = ["Thank you for your feedback!"]
         self.client.log_event(EventType.FEEDBACK_RECEIVED, feedback=self.user_input)
         return message

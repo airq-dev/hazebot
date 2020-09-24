@@ -11,7 +11,7 @@ class ShowMenuHandler(ApiCommandHandler):
             "1. Details and recommendations",
             "2. Current AQI",
             "3. Hazebot info",
-            "4. Give us feedback",
+            "4. Give feedback",
             "",
             "Or, enter a new zipcode.",
         ]
