@@ -261,8 +261,9 @@ class Client(db.Model):  # type: ignore
                     return False
                 else:
                     raise
-            # Other clients types don't yet support message sending.
-            logger.info("Not messaging client %s: %s", self.id, message)
+            else:
+                # Other clients types don't yet support message sending.
+                logger.info("Not messaging client %s: %s", self.id, message)
 
         return True
 
