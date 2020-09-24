@@ -20,9 +20,6 @@ class BaseQualityCommand(RegexCommand):
                 return self._get_missing_zipcode_message()
             zipcode = self.client.zipcode
 
-        # Mypy gets really confused here, tell it what's what.
-        assert zipcode is not None, "Zipcode unexpectedly None"
-
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
                 f'Oops! We couldn\'t determine the air quality for "{zipcode.zipcode}". Please try a different zip code.'
