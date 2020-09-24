@@ -3,7 +3,9 @@ import pytz
 import typing
 
 from unittest import mock
+from twilio.base.exceptions import TwilioRestException
 
+from airq.lib.twilio import TwilioErrorCode
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.events import Event
@@ -136,3 +138,32 @@ class ClientTestCase(BaseTestCase):
         client.update_subscription(other)
         self.assertEqual(other.id, client.zipcode_id)
         self.assertEqual(other.pm25, client.last_pm25)
+
+    def test_send_message_raises_known_error_code(self):
+        client = self._make_client()
+        self.assertTrue(client.is_enabled_for_alerts)
+        self.assertEqual(0, Event.query.count())
+        with mock.patch(
+            "airq.models.clients.send_sms",
+            side_effect=TwilioRestException("", "", code=TwilioErrorCode.OUT_OF_REGION.value),
+        ):
+            client.send_message("testing")
+        client = Client.query.get(client.id)
+        self.assertFalse(client.is_enabled_for_alerts)
+        self.assert_event(
+            client.id, EventType.UNSUBSCRIBE, zipcode=client.zipcode.zipcode
+        )
+
+    def test_send_message_raises_unknown_error_code(self):
+        client = self._make_client()
+        self.assertTrue(client.is_enabled_for_alerts)
+        self.assertEqual(0, Event.query.count())
+        with mock.patch(
+            "airq.models.clients.send_sms",
+            side_effect=TwilioRestException("", "", code=77),
+        ):
+            with self.assertRaises(Exception):
+                client.send_message("testing")
+        client = Client.query.get(client.id)
+        self.assertTrue(client.is_enabled_for_alerts)
+        self.assertEqual(0, Event.query.count())
