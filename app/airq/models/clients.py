@@ -15,6 +15,7 @@ from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
+from airq.lib.twilio import TwilioErrorCode
 from airq.models.events import Event
 from airq.models.events import EventType
 from airq.models.requests import Request
@@ -220,10 +221,7 @@ class Client(db.Model):  # type: ignore
     def update_subscription(self, zipcode: Zipcode) -> bool:
         self.last_pm25 = zipcode.pm25
         curr_zipcode_id = self.zipcode_id
-        if curr_zipcode_id != zipcode.id:
-            # TODO: Command to re-enable alerts instead of auto re-enabling them.
-            self.alerts_disabled_at = 0
-            self.zipcode_id = zipcode.id
+        self.zipcode_id = zipcode.id
         db.session.commit()
         return curr_zipcode_id != self.zipcode_id
 
@@ -232,8 +230,14 @@ class Client(db.Model):  # type: ignore
             self.last_pm25 = None
             self.alerts_disabled_at = timestamp()
             db.session.commit()
-
             self.log_event(EventType.UNSUBSCRIBE, zipcode=self.zipcode.zipcode)
+
+    def enable_alerts(self):
+        if self.alerts_disabled_at > 0:
+            self.last_pm25 = None
+            self.alerts_disabled_at = 0
+            db.session.commit()
+            self.log_event(EventType.RESUBSCRIBE, zipcode=self.zipcode.zipcode)
 
     @property
     def is_in_send_window(self) -> bool:
@@ -250,10 +254,12 @@ class Client(db.Model):  # type: ignore
             try:
                 send_sms(message, self.identifier)
             except TwilioRestException as e:
-                if e.code == 21610:
-                    # The message From/To pair violates a blacklist rule.
+                code = TwilioErrorCode.from_exc(e)
+                if code:
                     logger.warning(
-                        "Disabling alerts for unsubscribed recipient %s", self
+                        "Disabling alerts for recipient %s: %s",
+                        self,
+                        code.name,
                     )
                     self.disable_alerts()
                     return False

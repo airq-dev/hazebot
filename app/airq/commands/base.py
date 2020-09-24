@@ -84,3 +84,8 @@ class ApiCommandHandler(abc.ABC):
     @abc.abstractmethod
     def handle(self) -> typing.List[str]:
         ...
+
+    def _get_missing_zipcode_message(self) -> typing.List[str]:
+        return [
+            "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
+        ]

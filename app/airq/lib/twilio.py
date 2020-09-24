@@ -1,11 +1,26 @@
+import enum
 import logging
+import typing
 
 from airq import config
 
+from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
 
 logger = logging.getLogger(__name__)
+
+
+class TwilioErrorCode(enum.IntEnum):
+    OUT_OF_REGION = 21408
+    UNSUBSCRIBED = 21610
+
+    @classmethod
+    def from_exc(cls, exc: TwilioRestException) -> typing.Optional["TwilioErrorCode"]:
+        for m in cls:
+            if m.value == exc.code:
+                return m
+        return None
 
 
 def send_sms(body: str, phone_number: str):

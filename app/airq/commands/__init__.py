@@ -7,7 +7,8 @@ from airq.commands.feedback import ReceiveFeedbackHandler
 from airq.commands.menu import ShowMenuHandler
 from airq.commands.quality import GetDetailsHandler
 from airq.commands.quality import GetQualityHandler
-from airq.commands.stop import StopHandler
+from airq.commands.resubscribe import ResubscribeHandler
+from airq.commands.unsubscribe import UnsubscribeHandler
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.events import EventType
@@ -23,7 +24,8 @@ ROUTES = [
     ShowFeedbackHandler.route(pattern=r"^4[\.\)]?$"),
     ReceiveFeedbackHandler.route(pattern=MATCH_NONE_REGEX),
     ShowMenuHandler.route(pattern=r"^m$"),
-    StopHandler.route(pattern=r"^u$"),
+    ResubscribeHandler.route(pattern=r"^y$"),
+    UnsubscribeHandler.route(pattern=r"^u$"),
 ]
 
 
