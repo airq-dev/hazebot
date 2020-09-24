@@ -14,6 +14,7 @@ from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.lib.twilio import send_sms
+from airq.lib.twilio import TwilioErrorCode
 from airq.models.events import Event
 from airq.models.events import EventType
 from airq.models.requests import Request
@@ -249,10 +250,12 @@ class Client(db.Model):  # type: ignore
             try:
                 send_sms(message, self.identifier)
             except TwilioRestException as e:
-                if e.code == 21610:
-                    # The message From/To pair violates a blacklist rule.
+                code = TwilioErrorCode.from_exc(e)
+                if code:
                     logger.warning(
-                        "Disabling alerts for unsubscribed recipient %s", self
+                        "Disabling alerts for recipient %s: %s",
+                        self,
+                        code.name,
                     )
                     self.disable_alerts()
                     return False
