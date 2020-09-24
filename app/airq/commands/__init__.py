@@ -1,28 +1,35 @@
 import html
+import typing
 
-from airq.commands.invalid import InvalidInputHandler
-from airq.commands.about import ShowAboutHandler
-from airq.commands.menu import ShowMenuHandler
-from airq.commands.quality import GetDetailsHandler
-from airq.commands.quality import GetQualityHandler
-from airq.commands.resubscribe import ResubscribeHandler
-from airq.commands.unsubscribe import UnsubscribeHandler
+from airq.commands.base import SMSCommand
+from airq.commands.about import ShowAbout
+from airq.commands.invalid import InvalidInput
+from airq.commands.menu import ShowMenu
+from airq.commands.quality import GetDetails
+from airq.commands.quality import GetQuality
+from airq.commands.resubscribe import Resubscribe
+from airq.commands.unsubscribe import Unsubscribe
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
-ZIPCODE_REGEX = "(?P<raw_zip>\d{5})"
-
-
-ROUTES = [
-    GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
-    GetDetailsHandler.route(pattern=r"^1[\.\)]?$"),
-    GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
-    ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
-    ShowMenuHandler.route(pattern=r"^m$"),
-    ResubscribeHandler.route(pattern=r"^y$"),
-    UnsubscribeHandler.route(pattern=r"^u$"),
+COMMANDS: typing.List[typing.Type[SMSCommand]] = [
+    GetQuality,
+    GetDetails,
+    ShowAbout,
+    ShowMenu,
+    Resubscribe,
+    Unsubscribe,
 ]
+
+
+def _parse_command(client: Client, user_input: str) -> SMSCommand:
+    for cmd_type in COMMANDS:
+        cmd = cmd_type(client, user_input)
+        if cmd.should_handle():
+            return cmd
+
+    return InvalidInput(client, user_input)
 
 
 def handle_command(
@@ -32,13 +39,7 @@ def handle_command(
     if not was_created:
         client.mark_seen()
 
-    for route in ROUTES:
-        match = route.match(user_input)
-        if match:
-            message = route.handle(client, user_input, **match.groupdict())
-            break
-    else:
-        message = InvalidInputHandler(client, user_input).handle()
+    message = _parse_command(client, user_input).handle()
 
     if identifier_type == ClientIdentifierType.IP:
         message = [html.escape(s) for s in message]

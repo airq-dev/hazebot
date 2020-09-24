@@ -1,10 +1,12 @@
 import typing
 
-from airq.commands.base import ApiCommandHandler
+from airq.commands.base import RegexCommand
 from airq.models.zipcodes import Zipcode
 
 
-class UnsubscribeHandler(ApiCommandHandler):
+class Unsubscribe(RegexCommand):
+    pattern = r"^u$"
+
     def handle(self) -> typing.List[str]:
         if self.client.zipcode is None:
             return self._get_missing_zipcode_message()
