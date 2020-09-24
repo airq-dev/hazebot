@@ -16,7 +16,7 @@ class TwilioErrorCode(enum.IntEnum):
     UNSUBSCRIBED = 21610
 
     @classmethod
-    def from_exc(cls, exc: TwilioRestException) -> typing.Optional['TwilioErrorCode']:
+    def from_exc(cls, exc: TwilioRestException) -> typing.Optional["TwilioErrorCode"]:
         for m in cls:
             if m.value == exc.code:
                 return m

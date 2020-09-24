@@ -145,7 +145,9 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(0, Event.query.count())
         with mock.patch(
             "airq.models.clients.send_sms",
-            side_effect=TwilioRestException("", "", code=TwilioErrorCode.OUT_OF_REGION.value),
+            side_effect=TwilioRestException(
+                "", "", code=TwilioErrorCode.OUT_OF_REGION.value
+            ),
         ):
             client.send_message("testing")
         client = Client.query.get(client.id)
