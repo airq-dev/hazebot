@@ -1,3 +1,4 @@
+import datetime
 import enum
 import logging
 import typing
@@ -175,6 +176,9 @@ class Client(db.Model):  # type: ignore
     # Send alerts between 8 AM and 9 PM.
     SEND_WINDOW_HOURS = (8, 21)
 
+    # Time alotted between feedback command and feedback response.
+    FEEDBACK_RESPONSE_TIME = datetime.timedelta(hours=1)
+
     def __repr__(self) -> str:
         return f"<Client {self.identifier}>"
 
@@ -307,3 +311,21 @@ class Client(db.Model):  # type: ignore
 
     def log_event(self, event_type: EventType, **event_data: typing.Any) -> Event:
         return Event.query.create(self.id, event_type, **event_data)
+
+    def get_last_client_event(self) -> typing.Optional[Event]:
+        return (
+            Event.query.filter(Event.client_id == self.id)
+            .filter(
+                Event.type_code != EventType.ALERT
+            )  # filter for only inbound events
+            .order_by(Event.timestamp.desc())
+            .first()
+        )
+
+    def should_accept_feedback(self) -> bool:
+        last_event = self.get_last_client_event()
+        return bool(
+            last_event
+            and last_event.type_code == EventType.FEEDBACK_BEGIN
+            and now() - last_event.timestamp < Client.FEEDBACK_RESPONSE_TIME
+        )

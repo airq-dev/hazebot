@@ -77,6 +77,10 @@ class ApiCommandHandler(abc.ABC):
         """
         return Route(pattern=pattern, factory=cls, extra=extra)
 
+    @classmethod
+    def should_handle(cls, pattern: str, client: Client, user_input: str) -> bool:
+        return False
+
     @abc.abstractmethod
     def handle(self) -> typing.List[str]:
         ...

@@ -2,6 +2,8 @@ import html
 
 from airq.commands.invalid import InvalidInputHandler
 from airq.commands.about import ShowAboutHandler
+from airq.commands.feedback import ShowFeedbackHandler
+from airq.commands.feedback import ReceiveFeedbackHandler
 from airq.commands.menu import ShowMenuHandler
 from airq.commands.quality import GetDetailsHandler
 from airq.commands.quality import GetQualityHandler
@@ -9,16 +11,18 @@ from airq.commands.resubscribe import ResubscribeHandler
 from airq.commands.unsubscribe import UnsubscribeHandler
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
-
+from airq.models.events import EventType
 
 ZIPCODE_REGEX = "(?P<raw_zip>\d{5})"
-
+MATCH_NONE_REGEX = r"a^"
 
 ROUTES = [
     GetQualityHandler.route(pattern=r"^{}$".format(ZIPCODE_REGEX)),
     GetDetailsHandler.route(pattern=r"^1[\.\)]?$"),
     GetQualityHandler.route(pattern=r"^2[\.\)]?$"),
     ShowAboutHandler.route(pattern=r"^3[\.\)]?$"),
+    ShowFeedbackHandler.route(pattern=r"^4[\.\)]?$"),
+    ReceiveFeedbackHandler.route(pattern=MATCH_NONE_REGEX),
     ShowMenuHandler.route(pattern=r"^m$"),
     ResubscribeHandler.route(pattern=r"^y$"),
     UnsubscribeHandler.route(pattern=r"^u$"),
@@ -36,6 +40,9 @@ def handle_command(
         match = route.match(user_input)
         if match:
             message = route.handle(client, user_input, **match.groupdict())
+            break
+        elif route.factory.should_handle(route.pattern, client, user_input):
+            message = route.handle(client, user_input)
             break
     else:
         message = InvalidInputHandler(client, user_input).handle()

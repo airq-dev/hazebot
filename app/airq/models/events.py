@@ -27,6 +27,8 @@ class EventType(enum.IntEnum):
     UNSUBSCRIBE = 6
     ALERT = 7
     RESUBSCRIBE = 8
+    FEEDBACK_BEGIN = 9
+    FEEDBACK_RECEIVED = 10
 
 
 class EventQuery(BaseQuery):
@@ -106,6 +108,10 @@ class Event(db.Model):  # type: ignore
             return SubscribeEventSchema
         elif self.type_code == EventType.ALERT:
             return AlertEventSchema
+        elif self.type_code == EventType.FEEDBACK_BEGIN:
+            return FeedbackBeginEventSchema
+        elif self.type_code == EventType.FEEDBACK_RECEIVED:
+            return FeedbackReceivedEventSchema
         elif self.type_code == EventType.RESUBSCRIBE:
             return SubscribeEventSchema
         else:
@@ -149,3 +155,13 @@ class SubscribeEventSchema:
 class AlertEventSchema:
     zipcode: str
     pm25: float
+
+
+@dataclasses.dataclass
+class FeedbackBeginEventSchema:
+    pass
+
+
+@dataclasses.dataclass
+class FeedbackReceivedEventSchema:
+    feedback: str

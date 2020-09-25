@@ -142,6 +142,7 @@ class SMSTestCase(BaseTestCase):
             "1. Details and recommendations\n"
             "2. Current AQI\n"
             "3. Hazebot info\n"
+            "4. Give feedback\n"
             "\n"
             "Or, enter a new zipcode.",
             response.data,
@@ -209,7 +210,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(self.timestamp, client.alerts_disabled_at)
         self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
-
         response = self.client.post(
             "/sms", data={"Body": "97204", "From": "+12222222222"}
         )
@@ -250,5 +250,61 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Looks like you're already watching 97204.",
+            response.data,
+        )
+
+    def test_feedback(self):
+        # Give feedback before feedback begin command
+        response = self.client.post(
+            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        client_id = Client.query.filter_by(identifier="+13333333333").first().id
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(0, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
+            response.data,
+        )
+
+        # Go through feedback flow
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "4", "From": "+13333333333"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(1, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Please enter your feedback below:",
+            response.data,
+        )
+        self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(2, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response("Thank you for your feedback!", response.data)
+        self.assert_event(
+            client_id, EventType.FEEDBACK_RECEIVED, feedback="Blah Blah Blah"
+        )
+
+        # try to post feedback again
+        self.clock.advance()
+        response = self.client.post(
+            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(2, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
             response.data,
         )
