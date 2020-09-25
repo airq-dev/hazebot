@@ -37,7 +37,9 @@ class BaseQualityCommand(RegexCommand):
 
 
 class GetQuality(BaseQualityCommand):
-    pattern = r"^(?:(?P<zipcode>\d{5})|2[\.\)]?)$"
+    zipcode_regex = r"(?P<zipcode>\d{5})"
+    repeat_regex = r"(?:2[\.\)]?)"
+    pattern = r"^(?:{}|{})$".format(zipcode_regex, repeat_regex)
 
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
