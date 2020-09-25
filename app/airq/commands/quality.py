@@ -1,25 +1,24 @@
 import abc
 import typing
 
-from airq.commands.base import ApiCommandHandler
+from airq.commands.base import RegexCommand
 from airq.lib.geo import kilometers_to_miles
 from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
 
-class BaseQualityHandler(ApiCommandHandler):
-    def handle(self, raw_zip: typing.Optional[str] = None) -> typing.List[str]:
-        if raw_zip:
-            zipcode = Zipcode.query.get_by_zipcode(raw_zip)
+class BaseQualityCommand(RegexCommand):
+    def handle(self) -> typing.List[str]:
+        if self.params.get("zipcode"):
+            zipcode = Zipcode.query.get_by_zipcode(self.params["zipcode"])
             if zipcode is None:
-                return [f"Hmm. Are you sure {raw_zip} is a valid US zipcode?"]
+                return [
+                    f"Hmm. Are you sure {self.params['zipcode']} is a valid US zipcode?"
+                ]
         else:
             if self.client.zipcode is None:
                 return self._get_missing_zipcode_message()
             zipcode = self.client.zipcode
-
-        # Mypy gets really confused here, tell it what's what.
-        assert zipcode is not None, "Zipcode unexpectedly None"
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
@@ -37,7 +36,11 @@ class BaseQualityHandler(ApiCommandHandler):
         ...
 
 
-class GetQualityHandler(BaseQualityHandler):
+class GetQuality(BaseQualityCommand):
+    zipcode_regex = r"(?P<zipcode>\d{5})"
+    repeat_regex = r"(?:2[\.\)]?)"
+    pattern = r"^(?:{}|{})$".format(zipcode_regex, repeat_regex)
+
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
         aqi = zipcode.aqi
@@ -70,7 +73,9 @@ class GetQualityHandler(BaseQualityHandler):
         return message
 
 
-class GetDetailsHandler(BaseQualityHandler):
+class GetDetails(BaseQualityCommand):
+    pattern = r"^1[\.\)]?$"
+
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
         message.append(zipcode.pm25_level.description)

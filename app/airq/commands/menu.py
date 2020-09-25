@@ -1,12 +1,15 @@
 import typing
 
-from airq.commands.base import ApiCommandHandler
+from airq.commands.base import RegexCommand
 from airq.models.events import EventType
 
 
-class ShowMenuHandler(ApiCommandHandler):
+class ShowMenu(RegexCommand):
+    pattern = r"^m$"
+
     def handle(self) -> typing.List[str]:
-        message = [
+        self.client.log_event(EventType.MENU)
+        return [
             "Reply",
             "1. Details and recommendations",
             "2. Current AQI",
@@ -15,5 +18,3 @@ class ShowMenuHandler(ApiCommandHandler):
             "",
             "Or, enter a new zipcode.",
         ]
-        self.client.log_event(EventType.MENU)
-        return message

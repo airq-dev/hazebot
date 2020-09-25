@@ -1,9 +1,12 @@
 import typing
 
-from airq.commands.base import ApiCommandHandler
+from airq.commands.base import SMSCommand
 
 
-class InvalidInputHandler(ApiCommandHandler):
+class InvalidInput(SMSCommand):
+    def should_handle(self) -> bool:
+        return True
+
     def handle(self) -> typing.List[str]:
         return [
             'Unrecognized option "{}". Reply with M for the menu{}.'.format(

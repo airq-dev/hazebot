@@ -1,13 +1,15 @@
 import typing
 
-from airq.commands.base import ApiCommandHandler
+from airq.commands.base import RegexCommand
 from airq.models.events import EventType
 
 
-class ShowAboutHandler(ApiCommandHandler):
+class ShowAbout(RegexCommand):
+    pattern = r"^3[\.\)]?$"
+
     def handle(self) -> typing.List[str]:
-        message = [
-            "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. Visit hazebot.org or email info@hazebot.org for feedback."
-        ]
         self.client.log_event(EventType.ABOUT)
-        return message
+        return [
+            "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. "
+            "Visit hazebot.org or email info@hazebot.org for feedback."
+        ]
