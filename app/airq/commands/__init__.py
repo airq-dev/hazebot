@@ -4,6 +4,8 @@ import typing
 from airq.commands.base import SMSCommand
 from airq.commands.about import ShowAbout
 from airq.commands.invalid import InvalidInput
+from airq.commands.feedback import ReceiveFeedback
+from airq.commands.feedback import ShowFeedback
 from airq.commands.menu import ShowMenu
 from airq.commands.quality import GetDetails
 from airq.commands.quality import GetQuality
@@ -14,11 +16,13 @@ from airq.models.clients import ClientIdentifierType
 
 
 COMMANDS: typing.List[typing.Type[SMSCommand]] = [
-    GetQuality,
     GetDetails,
-    ShowAbout,
-    ShowMenu,
+    GetQuality,
+    ReceiveFeedback,
     Resubscribe,
+    ShowAbout,
+    ShowFeedback,
+    ShowMenu,
     Unsubscribe,
 ]
 
