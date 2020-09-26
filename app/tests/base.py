@@ -61,7 +61,7 @@ class BaseTestCase(unittest.TestCase):
                 year=2020,
                 month=9,
                 day=18,
-                hour=20,
+                hour=16,
                 minute=29,
                 second=28,
                 tzinfo=pytz.timezone("America/Los_Angeles"),

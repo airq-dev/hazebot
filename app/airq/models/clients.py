@@ -227,14 +227,13 @@ class Client(db.Model):  # type: ignore
 
     def disable_alerts(self):
         if self.alerts_disabled_at == 0:
-            self.last_pm25 = None
             self.alerts_disabled_at = timestamp()
             db.session.commit()
             self.log_event(EventType.UNSUBSCRIBE, zipcode=self.zipcode.zipcode)
 
     def enable_alerts(self):
         if self.alerts_disabled_at > 0:
-            self.last_pm25 = None
+            self.last_pm25 = self.zipcode.pm25
             self.alerts_disabled_at = 0
             db.session.commit()
             self.log_event(EventType.RESUBSCRIBE, zipcode=self.zipcode.zipcode)
