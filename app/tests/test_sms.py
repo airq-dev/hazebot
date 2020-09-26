@@ -259,7 +259,12 @@ class SMSTestCase(BaseTestCase):
         client.last_pm25 += 50
         self.db.session.commit()
         self.assertTrue(client.maybe_notify())
-        self.assert_event(client.id, EventType.ALERT, zipcode=client.zipcode.zipcode, pm25=client.last_pm25)
+        self.assert_event(
+            client.id,
+            EventType.ALERT,
+            zipcode=client.zipcode.zipcode,
+            pm25=client.last_pm25,
+        )
 
     def test_feedback(self):
         # Give feedback before feedback begin command
