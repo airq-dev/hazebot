@@ -254,7 +254,7 @@ class SMSTestCase(BaseTestCase):
         )
 
         # Now test that we can send the alert
-        self.clock.advance(Client.FREQUENCY + 1)
+        self.clock.advance()
         client = Client.query.first()
         client.last_pm25 += 50
         self.db.session.commit()
