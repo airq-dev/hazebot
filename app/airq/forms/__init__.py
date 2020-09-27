@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from wtforms import FileField
 from wtforms import PasswordField
 from wtforms import StringField
 from wtforms import SubmitField
@@ -39,3 +40,8 @@ class SMSForm(FlaskForm):
         "Phone Number", validators=[PhoneNumberValidator(), DataRequired()]
     )
     submit_btn = SubmitField("Submit")
+
+
+class BulkClientUploadForm(FlaskForm):
+    csv_file = FileField("File", validators=[DataRequired()])
+    submit_btn = SubmitField("Upload")

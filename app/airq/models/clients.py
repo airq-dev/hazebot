@@ -14,6 +14,7 @@ from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
+from airq.lib.sms import coerce_phone_number
 from airq.lib.twilio import send_sms
 from airq.lib.twilio import TwilioErrorCode
 from airq.models.events import Event
@@ -52,10 +53,7 @@ class ClientQuery(BaseQuery):
         return client, was_created
 
     def get_by_phone_number(self, phone_number: str) -> typing.Optional["Client"]:
-        if len(phone_number) == 10:
-            phone_number = "1" + phone_number
-        if len(phone_number) == 11:
-            phone_number = "+" + phone_number
+        phone_number = coerce_phone_number(phone_number)
         return self.filter_phones().filter_by(identifier=phone_number).first()
 
     #
