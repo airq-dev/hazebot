@@ -43,5 +43,5 @@ class SMSForm(FlaskForm):
 
 
 class BulkClientUploadForm(FlaskForm):
-    csv_file = FileField("CSV File", validators=[DataRequired()])
+    csv_file = FileField("CSV File", validators=[DataRequired()], render_kw={'accept': '.csv'})
     submit_btn = SubmitField("Upload")
