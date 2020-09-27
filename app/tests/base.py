@@ -92,7 +92,6 @@ class BaseTestCase(unittest.TestCase):
             Event.query.filter_by(
                 client_id=client_id,
                 type_code=event_type,
-                timestamp=self.clock.now(),
             )
             .order_by(Event.id.desc())
             .first()
