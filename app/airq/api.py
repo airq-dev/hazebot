@@ -144,7 +144,7 @@ def upload_users():
         headers = reader.fieldnames
         if "phone_number" not in headers or "zipcode" not in headers:
             flash(
-                "You must upload a CSV with a column titled 'phone_number' and a colum titled 'zipcode'"
+                "You must upload a CSV with a column titled 'phone_number' and a column titled 'zipcode'"
             )
         else:
             num_created = 0
