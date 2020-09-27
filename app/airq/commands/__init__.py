@@ -16,9 +16,16 @@ from airq.models.clients import ClientIdentifierType
 
 
 COMMANDS: typing.List[typing.Type[SMSCommand]] = [
+    #
+    # ReceiveFeedback needs to come first because it interprets certain
+    # input (e.g., "1") as selecting an option instead of choosing a command.
+    #
+    ReceiveFeedback,
+    #
+    # The "regular" commands come next. Order does not matter for these.
+    #
     GetDetails,
     GetQuality,
-    ReceiveFeedback,
     Resubscribe,
     ShowAbout,
     ShowFeedback,

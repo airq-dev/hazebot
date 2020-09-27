@@ -321,10 +321,17 @@ class Client(db.Model):  # type: ignore
             .first()
         )
 
+    def get_last_client_event_type(self) -> typing.Optional[EventType]:
+        last_event = self.get_last_client_event()
+        if last_event:
+            return EventType(last_event.type_code)
+        return None
+
     def should_accept_feedback(self) -> bool:
         last_event = self.get_last_client_event()
         return bool(
             last_event
-            and last_event.type_code == EventType.FEEDBACK_BEGIN
+            and last_event.type_code
+            in (EventType.FEEDBACK_BEGIN, EventType.UNSUBSCRIBE)
             and now() - last_event.timestamp < Client.FEEDBACK_RESPONSE_TIME
         )
