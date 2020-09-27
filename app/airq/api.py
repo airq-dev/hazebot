@@ -1,3 +1,5 @@
+import codecs
+import csv
 import typing
 
 from flask import flash
@@ -16,15 +18,19 @@ from werkzeug import Response
 from airq import commands
 from airq.config import csrf
 from airq.decorators import admin_required
+from airq.forms import BulkClientUploadForm
 from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
 from airq.forms import SMSForm
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
+from airq.lib.sms import coerce_phone_number
+from airq.lib.sms import is_valid_phone_number
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.events import Event
 from airq.models.requests import Request
+from airq.models.zipcodes import Zipcode
 from airq.models.users import User
 from airq.tasks import bulk_send
 
@@ -127,3 +133,57 @@ def admin_sms():
         flash("Sent!")
         return redirect(url_for("admin_summary"))
     return render_template("sms.html", form=form)
+
+
+@admin_required
+def upload_users():
+    form = BulkClientUploadForm()
+    if form.validate_on_submit():
+        buffer = form.csv_file.data.stream
+        reader = csv.DictReader(codecs.iterdecode(buffer, "utf-8"))
+        headers = reader.fieldnames
+        if "phone_number" not in headers or "zipcode" not in headers:
+            flash(
+                "You must upload a CSV with a column titled 'phone_number' and a column titled 'zipcode'"
+            )
+        else:
+            num_created = 0
+            num_duplicates = 0
+            all_errors = []
+            for i, row in enumerate(reader, start=1):
+                errors = []
+
+                zipcode = Zipcode.query.get_by_zipcode(row["zipcode"].strip())
+                if zipcode is None:
+                    errors.append(f"Row {i}: {row['zipcode']} is not a valid zipcode")
+
+                phone_number = coerce_phone_number(row["phone_number"].strip())
+                if not is_valid_phone_number(phone_number):
+                    errors.append(
+                        f"Row {i}: {row['phone_number']} is not a valid US phone number"
+                    )
+
+                if errors:
+                    all_errors.extend(errors)
+                else:
+                    client, was_created = Client.query.get_or_create(
+                        phone_number, ClientIdentifierType.PHONE_NUMBER
+                    )
+                    if was_created:
+                        client.update_subscription(zipcode)
+                        num_created += 1
+                    else:
+                        num_duplicates += 1
+
+            if num_created:
+                flash(f"Created {num_created} users")
+            if num_duplicates:
+                flash(
+                    f"Skipped {num_duplicates} phone numbers because they're already in the system"
+                )
+            for error in all_errors:
+                flash(error)
+
+        return redirect(url_for("upload_users"))
+
+    return render_template("bulk_upload.html", form=form)

@@ -24,5 +24,6 @@ app.route("/sms", methods=["POST"])(api.sms_reply)
 # Admin routes
 app.route("/admin", methods=["GET"])(api.admin_summary)
 app.route("/admin/bulk-sms", methods=["GET", "POST"])(api.admin_bulk_sms)
+app.route("/admin/bulk-upload", methods=["GET", "POST"])(api.upload_users)
 app.route("/admin/sms", methods=["GET", "POST"])(api.admin_sms)
 app.route("/admin/stats", methods=["GET"])(api.admin_stats)
