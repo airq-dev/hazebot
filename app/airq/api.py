@@ -181,9 +181,8 @@ def upload_users():
                 flash(
                     f"Skipped {num_duplicates} phone numbers because they're already in the system"
                 )
-            if all_errors:
-                for error in all_errors:
-                    flash(error)
+            for error in all_errors:
+                flash(error)
 
         return redirect(url_for("upload_users"))
 
