@@ -83,8 +83,8 @@ class BaseTestCase(unittest.TestCase):
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response><Message>"
             "{}"
-            "</Message></Response>".format(expected).encode(),
-            actual,
+            "</Message></Response>".format(expected),
+            actual.decode(),
         )
 
     def assert_event(self, client_id: int, event_type: EventType, **data):

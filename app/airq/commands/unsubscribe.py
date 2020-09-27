@@ -1,6 +1,7 @@
 import typing
 
 from airq.commands.base import RegexCommand
+from airq.commands.feedback import ReceiveFeedback
 from airq.models.zipcodes import Zipcode
 
 
@@ -18,6 +19,11 @@ class Unsubscribe(RegexCommand):
 
         self.client.disable_alerts()
 
-        return [
-            f"Got it! You will no longer recieve alerts for {self.client.zipcode.zipcode}. Text another zipcode if you'd like updates or reply M for menu."
+        message = [
+            "Got it! You will not receive air quality updates until you text a new zipcode.",
+            "",
+            "Tell us why you're leaving so we can improve our service:",
         ]
+        for key, choice in ReceiveFeedback.feedback_choices().items():
+            message.append(f"{key}. {choice}")
+        return message
