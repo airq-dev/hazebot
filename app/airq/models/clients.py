@@ -156,10 +156,7 @@ class Client(db.Model):  # type: ignore
 
     __table_args__ = (
         db.Index(
-            "_client_identifier_type_code",
-            "identifier",
-            "type_code",
-            unique=True,
+            "_client_identifier_type_code", "identifier", "type_code", unique=True,
         ),
     )
 
@@ -186,8 +183,7 @@ class Client(db.Model):  # type: ignore
 
     def log_request(self, zipcode: Zipcode):
         request = Request.query.filter_by(
-            client_id=self.id,
-            zipcode_id=zipcode.id,
+            client_id=self.id, zipcode_id=zipcode.id,
         ).first()
         now = timestamp()
         if request is None:
@@ -254,9 +250,7 @@ class Client(db.Model):  # type: ignore
                 code = TwilioErrorCode.from_exc(e)
                 if code:
                     logger.warning(
-                        "Disabling alerts for recipient %s: %s",
-                        self,
-                        code.name,
+                        "Disabling alerts for recipient %s: %s", self, code.name,
                     )
                     self.disable_alerts()
                     return False

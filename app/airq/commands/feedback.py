@@ -15,7 +15,9 @@ class ShowFeedback(RegexCommand):
     pattern = r"^4[\.\)]?$"
 
     def handle(self) -> typing.List[str]:
-        message = ["Please text us your feedback:"]  #TODO consider adding cancel option
+        message = [
+            "Please text us your feedback:"
+        ]  # TODO consider adding cancel option
         self.client.log_event(EventType.FEEDBACK_BEGIN)
         return message
 

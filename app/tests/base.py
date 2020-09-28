@@ -89,10 +89,7 @@ class BaseTestCase(unittest.TestCase):
 
     def assert_event(self, client_id: int, event_type: EventType, **data):
         event = (
-            Event.query.filter_by(
-                client_id=client_id,
-                type_code=event_type,
-            )
+            Event.query.filter_by(client_id=client_id, type_code=event_type,)
             .order_by(Event.id.desc())
             .first()
         )

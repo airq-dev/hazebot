@@ -52,7 +52,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk.\n"
             "\n"
-            "Average PM2.5 from 8 sensor(s) near 97204 is 7.945 ug/m^3.",
+            "Average PM2.5 from 8 sensor(s) near 97204 is 7.945 micrograms per cubic meter.",
             response.data,
         )
         self.assert_event(
@@ -226,8 +226,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(3, Event.query.count())
         self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Thank you for your feedback!",
-            response.data,
+            "Thank you for your feedback!", response.data,
         )
         client = Client.query.first()
         self.assert_event(
@@ -279,8 +278,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(5, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Looks like you're already watching 97204.",
-            response.data,
+            "Looks like you're already watching 97204.", response.data,
         )
 
         # Now test that we can send the alert
@@ -326,8 +324,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(7, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Please enter your feedback below:",
-            response.data,
+            "Please enter your feedback below:", response.data,
         )
         client = Client.query.first()
         self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
@@ -343,8 +340,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(8, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Thank you for your feedback!",
-            response.data,
+            "Thank you for your feedback!", response.data,
         )
         client = Client.query.first()
         self.assert_event(client.id, EventType.FEEDBACK_RECEIVED, feedback="foobar")
@@ -375,8 +371,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Event.query.count())
         self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Please enter your feedback below:",
-            response.data,
+            "Please enter your feedback below:", response.data,
         )
         self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
 
@@ -415,8 +410,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(3, Event.query.count())
         self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Please enter your feedback below:",
-            response.data,
+            "Please enter your feedback below:", response.data,
         )
         self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
 

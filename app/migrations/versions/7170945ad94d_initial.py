@@ -90,10 +90,7 @@ def upgrade():
         sa.Column("geohash_bit_10", sa.String(), nullable=False),
         sa.Column("geohash_bit_11", sa.String(), nullable=False),
         sa.Column("geohash_bit_12", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["city_id"],
-            ["cities.id"],
-        ),
+        sa.ForeignKeyConstraint(["city_id"], ["cities.id"],),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_zipcodes_zipcode"), "zipcodes", ["zipcode"], unique=True)
@@ -102,14 +99,8 @@ def upgrade():
         sa.Column("sensor_id", sa.Integer(), nullable=False),
         sa.Column("zipcode_id", sa.Integer(), nullable=False),
         sa.Column("distance", sa.Float(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["sensor_id"],
-            ["sensors.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["zipcode_id"],
-            ["zipcodes.id"],
-        ),
+        sa.ForeignKeyConstraint(["sensor_id"], ["sensors.id"],),
+        sa.ForeignKeyConstraint(["zipcode_id"], ["zipcodes.id"],),
         sa.PrimaryKeyConstraint("sensor_id", "zipcode_id"),
     )
     # ### end Alembic commands ###

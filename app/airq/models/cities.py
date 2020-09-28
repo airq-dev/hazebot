@@ -11,10 +11,5 @@ class City(db.Model):  # type: ignore
     zipcodes = db.relationship("Zipcode")
 
     __table_args__ = (
-        db.Index(
-            "_name_state_code_index",
-            "name",
-            "state_code",
-            unique=True,
-        ),
+        db.Index("_name_state_code_index", "name", "state_code", unique=True,),
     )
