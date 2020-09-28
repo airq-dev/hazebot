@@ -1,6 +1,7 @@
 import re
 import typing
 
+from flask_babel import gettext
 from werkzeug.utils import cached_property
 
 from airq import config
@@ -15,7 +16,9 @@ class ShowFeedback(RegexCommand):
     pattern = r"^4[\.\)]?$"
 
     def handle(self) -> typing.List[str]:
-        message = ["Please enter your feedback below:"]  # consider adding cancel option
+        message = [
+            gettext("Please enter your feedback below:")
+        ]  # consider adding cancel option
         self.client.log_event(EventType.FEEDBACK_BEGIN)
         return message
 
@@ -27,7 +30,7 @@ class ReceiveFeedback(SMSCommand):
     def handle(self) -> typing.List[str]:
         selected_choice = self._get_selected_choice()
         if selected_choice == "5":
-            return ["Please enter your feedback below:"]
+            return [gettext("Please enter your feedback below:")]
 
         feedback = self.user_input
         if selected_choice:
@@ -41,7 +44,7 @@ class ReceiveFeedback(SMSCommand):
             f'User feedback: "{feedback}"',
         )
         self.client.log_event(EventType.FEEDBACK_RECEIVED, feedback=feedback)
-        return ["Thank you for your feedback!"]
+        return [gettext("Thank you for your feedback!")]
 
     @cached_property
     def is_unsubscribe(self) -> bool:
@@ -66,11 +69,11 @@ class ReceiveFeedback(SMSCommand):
             str(i): choice
             for i, choice in enumerate(
                 [
-                    "Air quality is not a concern in my area",
-                    "SMS texts are not my preferred information source",
-                    "Alerts are too frequent",
-                    "Information is inaccurate",
-                    "Other",
+                    gettext("Air quality is not a concern in my area"),
+                    gettext("SMS texts are not my preferred information source"),
+                    gettext("Alerts are too frequent"),
+                    gettext("Information is inaccurate"),
+                    gettext("Other"),
                 ],
                 start=1,
             )

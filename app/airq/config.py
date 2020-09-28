@@ -70,6 +70,7 @@ import flask_sqlalchemy
 import flask_wtf
 from flask import g
 from flask import got_request_exception
+from flask_babel import Babel
 from airq import middleware
 
 app = flask.Flask(__name__)
@@ -87,17 +88,23 @@ setattr(
 )
 
 config = {
+    "BABEL_DEFAULT_LOCALE": 'en',
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
     "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
 app.config.from_mapping(config)
-
+babel = Babel(app)
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
 login = flask_login.LoginManager(app)
 
 csrf = flask_wtf.csrf.CSRFProtect()
 csrf.init_app(app)
+
+
+@babel.localeselector
+def get_locale():
+    return 'en'
 
 
 @login.user_loader
