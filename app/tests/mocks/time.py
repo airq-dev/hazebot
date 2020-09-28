@@ -20,9 +20,10 @@ class MockDateTime:
     def now(self, tz: typing.Optional[pytz.BaseTzInfo] = None) -> datetime.datetime:
         return self.dt
 
-    def advance(self, amount: int = 1):
+    def advance(self, amount: int = 1) -> datetime.datetime:
         delta = datetime.timedelta(seconds=amount)
         if amount > 0:
             self.dt += delta
         else:
             self.dt -= delta
+        return self.dt

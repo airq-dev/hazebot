@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Bulk Upload{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    {% with enctype="multipart/form-data" %}
+        {% include 'partials/_form.html' %}
+    {% endwith %}
+{% endblock %}

@@ -175,6 +175,7 @@ class SMSTestCase(BaseTestCase):
             response.data,
         )
 
+        self.clock.advance()
         response = self.client.post(
             "/sms", data={"Body": "97204", "From": "+12222222222"}
         )
@@ -195,27 +196,53 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(0, client.alerts_disabled_at)
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
+        alerts_disabled_at = self.clock.advance().timestamp()
         response = self.client.post("/sms", data={"Body": "U", "From": "+12222222222"})
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
         self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Got it! "
-            "You will no longer recieve alerts for 97204. "
-            "Text another zipcode if you'd like updates or reply M for menu.",
+            "Got it! You will not receive air quality updates until you text a new zipcode.\n"
+            "\n"
+            "Tell us why you're leaving so we can improve our service:\n"
+            "1. Air quality is not a concern in my area\n"
+            "2. SMS texts are not my preferred information source\n"
+            "3. Alerts are too frequent\n"
+            "4. Information is inaccurate\n"
+            "5. Other",
             response.data,
         )
-
-        self.assertEqual("97204", client.zipcode.zipcode)
-        self.assertEqual(self.timestamp, client.alerts_disabled_at)
+        client = Client.query.first()
         self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
+
+        # Give some feedback
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "1", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(3, Event.query.count())
+        self.assertEqual(1, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Thank you for your feedback!",
+            response.data,
+        )
+        client = Client.query.first()
+        self.assert_event(
+            client.id,
+            EventType.FEEDBACK_RECEIVED,
+            feedback="Air quality is not a concern in my area",
+        )
+
+        self.clock.advance()
         response = self.client.post(
             "/sms", data={"Body": "97204", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
-        self.assertEqual(3, Event.query.count())
+        self.assertEqual(4, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
@@ -226,27 +253,30 @@ class SMSTestCase(BaseTestCase):
 
         client = Client.query.first()
         self.assertEqual("97204", client.zipcode.zipcode)
-        self.assertEqual(self.timestamp, client.alerts_disabled_at)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
+        self.clock.advance()
         response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
-        self.assertEqual(4, Event.query.count())
+        self.assertEqual(5, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! We'll send you timely alerts when air quality in 97204 changes category.",
             response.data,
         )
 
+        client = Client.query.first()
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(0, client.alerts_disabled_at)
         self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
 
+        self.clock.advance()
         response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
-        self.assertEqual(4, Event.query.count())
+        self.assertEqual(5, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Looks like you're already watching 97204.",
@@ -259,12 +289,67 @@ class SMSTestCase(BaseTestCase):
         client.last_pm25 += 50
         self.db.session.commit()
         self.assertTrue(client.maybe_notify())
+        self.assertEqual(6, Event.query.count())
         self.assert_event(
             client.id,
             EventType.ALERT,
             zipcode=client.zipcode.zipcode,
             pm25=client.last_pm25,
         )
+
+        alerts_disabled_at = self.clock.advance().timestamp()
+        response = self.client.post("/sms", data={"Body": "U", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(7, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Got it! You will not receive air quality updates until you text a new zipcode.\n"
+            "\n"
+            "Tell us why you're leaving so we can improve our service:\n"
+            "1. Air quality is not a concern in my area\n"
+            "2. SMS texts are not my preferred information source\n"
+            "3. Alerts are too frequent\n"
+            "4. Information is inaccurate\n"
+            "5. Other",
+            response.data,
+        )
+        client = Client.query.first()
+        self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
+
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "5", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(7, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Please enter your feedback below:",
+            response.data,
+        )
+        client = Client.query.first()
+        self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms", data={"Body": "foobar", "From": "+12222222222"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(8, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Thank you for your feedback!",
+            response.data,
+        )
+        client = Client.query.first()
+        self.assert_event(client.id, EventType.FEEDBACK_RECEIVED, feedback="foobar")
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
     def test_feedback(self):
         # Give feedback before feedback begin command
@@ -321,3 +406,27 @@ class SMSTestCase(BaseTestCase):
             'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
             response.data,
         )
+
+        # Now give feedback again
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "4", "From": "+13333333333"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(3, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Please enter your feedback below:",
+            response.data,
+        )
+        self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
+
+        # Use a custom option. This shouldn't work because we're not coming from the
+        # unsubscribe flow.
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "1", "From": "+13333333333"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(4, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response("Thank you for your feedback!", response.data)
+        self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="1")

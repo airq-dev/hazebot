@@ -83,8 +83,8 @@ class BaseTestCase(unittest.TestCase):
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response><Message>"
             "{}"
-            "</Message></Response>".format(expected).encode(),
-            actual,
+            "</Message></Response>".format(expected),
+            actual.decode(),
         )
 
     def assert_event(self, client_id: int, event_type: EventType, **data):
@@ -92,7 +92,6 @@ class BaseTestCase(unittest.TestCase):
             Event.query.filter_by(
                 client_id=client_id,
                 type_code=event_type,
-                timestamp=self.clock.now(),
             )
             .order_by(Event.id.desc())
             .first()
