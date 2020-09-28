@@ -29,6 +29,7 @@ class EventType(enum.IntEnum):
     RESUBSCRIBE = 8
     FEEDBACK_BEGIN = 9
     FEEDBACK_RECEIVED = 10
+    UNSUBSCRIBE_AUTO = 11
 
 
 class EventQuery(BaseQuery):
@@ -113,6 +114,8 @@ class Event(db.Model):  # type: ignore
         elif self.type_code == EventType.FEEDBACK_RECEIVED:
             return FeedbackReceivedEventSchema
         elif self.type_code == EventType.RESUBSCRIBE:
+            return SubscribeEventSchema
+        elif self.type_code == EventType.UNSUBSCRIBE_AUTO:
             return SubscribeEventSchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")

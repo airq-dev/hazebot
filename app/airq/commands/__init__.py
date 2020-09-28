@@ -8,6 +8,7 @@ from airq.commands.feedback import ReceiveFeedback
 from airq.commands.feedback import ShowFeedback
 from airq.commands.menu import ShowMenu
 from airq.commands.quality import GetDetails
+from airq.commands.quality import GetLast
 from airq.commands.quality import GetQuality
 from airq.commands.resubscribe import Resubscribe
 from airq.commands.unsubscribe import Unsubscribe
@@ -17,20 +18,24 @@ from airq.models.clients import ClientIdentifierType
 
 COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     #
-    # ReceiveFeedback needs to come first because it interprets certain
-    # input (e.g., "1") as selecting an option instead of choosing a command.
+    # Commands which should always take precedence come first
+    #
+    GetQuality,
+    ShowMenu,
+    Unsubscribe,
+    #
+    # ReceiveFeedback needs to come before numbered commands because it interprets
+    # certain input (e.g., "1") as selecting an option instead of choosing a command.
     #
     ReceiveFeedback,
     #
-    # The "regular" commands come next. Order does not matter for these.
+    # The "regular" (number-based) commands come next. Order does not matter for these.
     #
     GetDetails,
-    GetQuality,
+    GetLast,
     Resubscribe,
     ShowAbout,
     ShowFeedback,
-    ShowMenu,
-    Unsubscribe,
 ]
 
 

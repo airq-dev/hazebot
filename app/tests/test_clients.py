@@ -153,7 +153,7 @@ class ClientTestCase(BaseTestCase):
         client = Client.query.get(client.id)
         self.assertFalse(client.is_enabled_for_alerts)
         self.assert_event(
-            client.id, EventType.UNSUBSCRIBE, zipcode=client.zipcode.zipcode
+            client.id, EventType.UNSUBSCRIBE_AUTO, zipcode=client.zipcode.zipcode
         )
 
     def test_send_message_raises_unknown_error_code(self):
