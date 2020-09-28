@@ -100,7 +100,7 @@ class GetDetails(BaseQualityCommand):
             message.append("")
 
         message.append(
-            f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
+            f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} micrograms per cubic meter."
         )
 
         self.client.log_event(
