@@ -227,7 +227,10 @@ class Client(db.Model):  # type: ignore
         if self.alerts_disabled_at == 0:
             self.alerts_disabled_at = timestamp()
             db.session.commit()
-            self.log_event(EventType.UNSUBSCRIBE_AUTO if is_automatic else EventType.UNSUBSCRIBE, zipcode=self.zipcode.zipcode)
+            self.log_event(
+                EventType.UNSUBSCRIBE_AUTO if is_automatic else EventType.UNSUBSCRIBE,
+                zipcode=self.zipcode.zipcode,
+            )
 
     def enable_alerts(self):
         if self.alerts_disabled_at > 0:
