@@ -37,9 +37,8 @@ class BaseQualityCommand(RegexCommand):
 
 
 class GetQuality(BaseQualityCommand):
-    zipcode_regex = r"(?P<zipcode>\d{5})"
-    repeat_regex = r"(?:2[\.\)]?)"
-    pattern = r"^(?:{}|{})$".format(zipcode_regex, repeat_regex)
+    pattern = r"^(?P<zipcode>\d{5})$"
+    event_type = EventType.QUALITY
 
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
@@ -64,13 +63,16 @@ class GetQuality(BaseQualityCommand):
             message.append("We'll alert you when the air quality changes category.")
             message.append("Reply M for menu, U to stop this alert.")
 
-        if self.user_input == "2":
-            type_code = EventType.LAST
-        else:
-            type_code = EventType.QUALITY
-        self.client.log_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
+        self.client.log_event(
+            self.event_type, zipcode=zipcode.zipcode, pm25=zipcode.pm25
+        )
 
         return message
+
+
+class GetLast(GetQuality):
+    pattern = r"^2[\.\)]?$"
+    event_type = EventType.LAST
 
 
 class GetDetails(BaseQualityCommand):
