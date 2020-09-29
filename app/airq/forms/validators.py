@@ -22,7 +22,7 @@ class PhoneNumberValidator:
             return
 
         if self.message is None:
-            message = field.gettext(f"Couldn't find a user with number {data}")
+            message = f"Couldn't find a user with number {data}"
         else:
             message = self.message
 

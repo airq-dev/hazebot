@@ -1,6 +1,8 @@
 import abc
 import typing
 
+from flask_babel import gettext
+
 from airq.commands.base import RegexCommand
 from airq.lib.geo import kilometers_to_miles
 from airq.models.events import EventType
@@ -13,7 +15,9 @@ class BaseQualityCommand(RegexCommand):
             zipcode = Zipcode.query.get_by_zipcode(self.params["zipcode"])
             if zipcode is None:
                 return [
-                    f"Hmm. Are you sure {self.params['zipcode']} is a valid US zipcode?"
+                    gettext("Hmm. Are you sure {} is a valid US zipcode?").format(
+                        self.params['zipcode']
+                    )
                 ]
         else:
             if self.client.zipcode is None:
@@ -22,7 +26,9 @@ class BaseQualityCommand(RegexCommand):
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
-                f'Oops! We couldn\'t determine the air quality for "{zipcode.zipcode}". Please try a different zip code.'
+                gettext(
+                    'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'
+                ).format(zipcode.zipcode)
             ]
 
         message = self._get_message(zipcode)
@@ -45,7 +51,7 @@ class GetQuality(BaseQualityCommand):
         message = []
         aqi = zipcode.aqi
         message.append(
-            "{} {} is {}{}.".format(
+            gettext("{} {} is {}{}.").format(
                 zipcode.city.name,
                 zipcode.zipcode,
                 zipcode.pm25_level.display,
@@ -57,12 +63,12 @@ class GetQuality(BaseQualityCommand):
         if not self.client.is_enabled_for_alerts:
             message.append("")
             message.append(
-                'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
+                gettext('Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.')
             )
         elif was_updated:
             message.append("")
-            message.append("We'll alert you when the air quality changes category.")
-            message.append("Reply M for menu, U to stop this alert.")
+            message.append(gettext("We'll alert you when the air quality changes category."))
+            message.append(gettext("Reply M for menu, U to stop this alert."))
 
         if self.user_input == "2":
             type_code = EventType.LAST
@@ -84,23 +90,27 @@ class GetDetails(BaseQualityCommand):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append("Here are the closest places with better air quality:")
+            message.append(gettext("Here are the closest places with better air quality:"))
             for recommendation in recommended_zipcodes:
                 message.append(
-                    " - {} {}: {} ({} mi)".format(
+                    gettext(" - {} {}: {} ({} mi)").format(
                         recommendation.city.name,
                         recommendation.zipcode,
                         recommendation.pm25_level.display.upper(),
                         round(
                             kilometers_to_miles(recommendation.distance(zipcode)),
                             ndigits=1,
-                        ),
+                        ),  # TODO: Make this based on locale
                     )
                 )
             message.append("")
 
         message.append(
-            f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
+            "Average PM2.5 from {} sensor(s) near {} is {} ug/m^3.".format(
+                zipcode.num_sensors,
+                zipcode.zipcode,
+                zipcode.pm25,
+            )
         )
 
         self.client.log_event(
