@@ -86,9 +86,10 @@ setattr(
         app.wsgi_app, restrictions=[30], sort_by=("cumtime", "tottime")
     ),
 )
-
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config = {
-    "BABEL_DEFAULT_LOCALE": 'en',
+    "BABEL_DEFAULT_LOCALE": "en",
+    "BABEL_TRANSLATION_DIRECTORIES": os.path.join(base_dir, "translations"),
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
     "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
@@ -101,9 +102,13 @@ login = flask_login.LoginManager(app)
 csrf = flask_wtf.csrf.CSRFProtect()
 csrf.init_app(app)
 
+SUPPORTED_LANGUAGES = ["en", "es"]
 
 @babel.localeselector
 def get_locale():
+    print(g.__dict__)
+    if g.locale in SUPPORTED_LANGUAGES:
+        return g.locale
     return 'en'
 
 

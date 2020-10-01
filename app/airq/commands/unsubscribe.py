@@ -14,15 +14,15 @@ class Unsubscribe(RegexCommand):
 
         if self.client.alerts_disabled_at:
             return [
-                gettext("Looks like you already stopped watching {}.").format(self.client.zipcode.zipcode)
+                "Looks like you already stopped watching {}.".format(self.client.zipcode.zipcode)
             ]
 
         self.client.disable_alerts()
 
         message = [
-            gettext("Got it! You will not receive air quality updates until you text a new zipcode."),
+            "Got it! You will not receive air quality updates until you text a new zipcode.",
             "",
-            gettext("Tell us why you're leaving so we can improve our service:"),
+            "Tell us why you're leaving so we can improve our service:",
         ]
         for key, choice in ReceiveFeedback.feedback_choices().items():
             message.append(f"{key}. {choice}")

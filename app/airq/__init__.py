@@ -18,8 +18,8 @@ app.route("/", methods=["GET"])(api.healthcheck)
 app.route("/healthcheck", methods=["GET"])(api.healthcheck)
 app.route("/login", methods=["GET", "POST"])(api.login)
 app.route("/logout", methods=["GET"])(api.logout)
-app.route("/test", methods=["GET"])(api.test_command)
-app.route("/sms", methods=["POST"])(api.sms_reply)
+app.route("/<string:locale>/test", methods=["GET"])(api.test_command)
+app.route("/<string:locale>/sms", methods=["POST"])(api.sms_reply)
 
 # Admin routes
 app.route("/admin", methods=["GET"])(api.admin_summary)

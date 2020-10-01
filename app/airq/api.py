@@ -3,6 +3,7 @@ import csv
 import typing
 
 from flask import flash
+from flask import g
 from flask import jsonify
 from flask import redirect
 from flask import render_template
@@ -40,7 +41,8 @@ def healthcheck() -> str:
 
 
 @csrf.exempt
-def sms_reply() -> str:
+def sms_reply(locale="en") -> str:
+    g.locale = locale
     resp = MessagingResponse()
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
@@ -51,7 +53,8 @@ def sms_reply() -> str:
     return str(resp)
 
 
-def test_command() -> str:
+def test_command(locale="en") -> str:
+    g.locale = locale
     command = request.args.get("command", "").strip()
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]

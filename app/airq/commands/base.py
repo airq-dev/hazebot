@@ -22,9 +22,7 @@ class SMSCommand(abc.ABC):
 
     def _get_missing_zipcode_message(self) -> typing.List[str]:
         return [
-            gettext(
-                "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
-            )
+            "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
         ]
 
 

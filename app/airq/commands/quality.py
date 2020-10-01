@@ -15,7 +15,7 @@ class BaseQualityCommand(RegexCommand):
             zipcode = Zipcode.query.get_by_zipcode(self.params["zipcode"])
             if zipcode is None:
                 return [
-                    gettext("Hmm. Are you sure {} is a valid US zipcode?").format(
+                    "Hmm. Are you sure {} is a valid US zipcode?".format(
                         self.params['zipcode']
                     )
                 ]
@@ -26,9 +26,7 @@ class BaseQualityCommand(RegexCommand):
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
-                gettext(
-                    'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'
-                ).format(zipcode.zipcode)
+                'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'.format(zipcode.zipcode)
             ]
 
         message = self._get_message(zipcode)
@@ -51,7 +49,7 @@ class GetQuality(BaseQualityCommand):
         message = []
         aqi = zipcode.aqi
         message.append(
-            gettext("{} {} is {}{}.").format(
+            "{} {} is {}{}.".format(
                 zipcode.city.name,
                 zipcode.zipcode,
                 zipcode.pm25_level.display,
@@ -63,12 +61,12 @@ class GetQuality(BaseQualityCommand):
         if not self.client.is_enabled_for_alerts:
             message.append("")
             message.append(
-                gettext('Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.')
+                'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
             )
         elif was_updated:
             message.append("")
-            message.append(gettext("We'll alert you when the air quality changes category."))
-            message.append(gettext("Reply M for menu, U to stop this alert."))
+            message.append("We'll alert you when the air quality changes category.")
+            message.append("Reply M for menu, U to stop this alert.")
 
         if self.user_input == "2":
             type_code = EventType.LAST
@@ -90,10 +88,10 @@ class GetDetails(BaseQualityCommand):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append(gettext("Here are the closest places with better air quality:"))
+            message.append("Here are the closest places with better air quality:")
             for recommendation in recommended_zipcodes:
                 message.append(
-                    gettext(" - {} {}: {} ({} mi)").format(
+                    " - {} {}: {} ({} mi)".format(
                         recommendation.city.name,
                         recommendation.zipcode,
                         recommendation.pm25_level.display.upper(),

@@ -12,8 +12,5 @@ class ShowAbout(RegexCommand):
     def handle(self) -> typing.List[str]:
         self.client.log_event(EventType.ABOUT)
         return [
-            gettext(
-                "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. "
-                "Visit hazebot.org or email info@hazebot.org for feedback."
-            )
+            "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. Visit hazebot.org or email info@hazebot.org for feedback."
         ]
