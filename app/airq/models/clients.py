@@ -3,6 +3,7 @@ import enum
 import logging
 import typing
 
+from flask_babel import gettext
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -38,12 +39,15 @@ class ClientQuery(BaseQuery):
     #
 
     def get_or_create(
-        self, identifier: str, type_code: ClientIdentifierType
+        self, identifier: str, type_code: ClientIdentifierType, locale: str
     ) -> typing.Tuple["Client", bool]:
         client = self.filter_by(identifier=identifier, type_code=type_code).first()
         if not client:
             client = Client(
-                identifier=identifier, type_code=type_code, last_activity_at=timestamp()
+                identifier=identifier,
+                type_code=type_code,
+                last_activity_at=timestamp(),
+                locale=locale
             )
             db.session.add(client)
             db.session.commit()
@@ -150,6 +154,7 @@ class Client(db.Model):  # type: ignore
         db.Integer(), nullable=False, index=True, server_default="0"
     )
     num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
+    locale = db.Column(db.String(), nullable=False, server_default="en")
 
     requests = db.relationship("Request")
     zipcode = db.relationship("Zipcode")
@@ -204,8 +209,10 @@ class Client(db.Model):  # type: ignore
             request.last_ts = now
         db.session.commit()
 
-    def mark_seen(self):
+    def mark_seen(self, locale: str):
         self.last_activity_at = timestamp()
+        if self.locale != locale:
+            self.locale = locale
         db.session.commit()
 
     #

@@ -102,14 +102,10 @@ login = flask_login.LoginManager(app)
 csrf = flask_wtf.csrf.CSRFProtect()
 csrf.init_app(app)
 
-SUPPORTED_LANGUAGES = ["en", "es"]
 
 @babel.localeselector
 def get_locale():
-    print(g.__dict__)
-    if g.locale in SUPPORTED_LANGUAGES:
-        return g.locale
-    return 'en'
+    return g.locale
 
 
 @login.user_loader

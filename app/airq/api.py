@@ -36,31 +36,50 @@ from airq.models.users import User
 from airq.tasks import bulk_send
 
 
+SUPPORTED_LANGUAGES = ["en", "es"]
+
+
 def healthcheck() -> str:
     return "OK"
 
 
+def _get_supported_locale(locale="en") -> str:
+    if locale in SUPPORTED_LANGUAGES:
+        return locale
+    return 'en'
+
+
 @csrf.exempt
-def sms_reply(locale="en") -> str:
-    g.locale = locale
+def sms_reply(locale: typing.Optional[str]) -> str:
+    supported_locale = _get_supported_locale(locale)
+    g.locale = supported_locale
     resp = MessagingResponse()
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     message = commands.handle_command(
-        zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER
+        zipcode,
+        phone_number,
+        ClientIdentifierType.PHONE_NUMBER,
+        supported_locale
     )
     resp.message(message)
     return str(resp)
 
 
-def test_command(locale="en") -> str:
-    g.locale = locale
+def test_command(locale: typing.Optional[str]) -> str:
+    supported_locale = _get_supported_locale(locale)
+    g.locale = supported_locale
     command = request.args.get("command", "").strip()
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    return commands.handle_command(command, ip, ClientIdentifierType.IP)
+    return commands.handle_command(
+        command,
+        ip,
+        ClientIdentifierType.IP,
+        supported_locale
+    )
 
 
 def login() -> typing.Union[Response, str]:
