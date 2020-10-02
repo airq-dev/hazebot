@@ -231,3 +231,20 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(
             2, Event.query.filter_by(type_code=EventType.SHARE_REQUEST).count()
         )
+
+    def test_get_last_client_event(self):
+        client = self._make_client()
+        self.assertIsNone(client.get_last_client_event())
+
+        client.log_event(
+            EventType.ALERT, zipcode=client.zipcode.zipcode, pm25=client.zipcode.pm25
+        )
+        self.assertIsNone(client.get_last_client_event())
+
+        client.log_event(EventType.MENU)
+        last_event = client.get_last_client_event()
+        self.assertEqual(EventType.MENU, last_event.type_code)
+
+        client.log_event(EventType.SHARE_REQUEST)
+        last_event = client.get_last_client_event()
+        self.assertEqual(EventType.MENU, last_event.type_code)
