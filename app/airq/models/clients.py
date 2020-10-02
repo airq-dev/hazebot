@@ -316,6 +316,11 @@ class Client(db.Model):  # type: ignore
         if curr_aqi_level == last_aqi_level:
             return False
 
+        # Do not alert clients who received an alert recently unless AQI has changed markedly.
+        was_alerted_recently = self.last_alert_sent_at and self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
+        if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
+            return False
+
         message = (
             "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi}).\n"
             "\n"
