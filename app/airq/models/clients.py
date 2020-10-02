@@ -240,6 +240,14 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
 
     #
+    # AQI
+    #
+
+    @property
+    def last_aqi(self) -> typing.Optional[int]:
+        return pm25_to_aqi(self.last_pm25)
+
+    #
     # Alerting
     #
 
@@ -306,19 +314,22 @@ class Client(db.Model):  # type: ignore
         if not self.is_in_send_window:
             return False
 
+        if self.last_alert_sent_at >= timestamp() - self.FREQUENCY:
+            return False
+
         curr_pm25 = self.zipcode.pm25
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
         curr_aqi = pm25_to_aqi(curr_pm25)
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
-        last_aqi = pm25_to_aqi(self.last_pm25)
         if curr_aqi_level == last_aqi_level:
             return False
 
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
-        was_alerted_recently = self.last_alert_sent_at and self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
-        if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
+        was_alerted_recently = self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
+        last_aqi = self.last_aqi
+        if was_alerted_recently and last_aqi and abs(curr_aqi - last_aqi) < 20:
             return False
 
         message = (

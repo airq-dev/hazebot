@@ -64,6 +64,10 @@ class Zipcode(db.Model):  # type: ignore
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
 
     @property
+    def aqi(self) -> typing.Optional[int]:
+        return pm25_to_aqi(self.pm25)
+
+    @property
     def pm25_level(self) -> Pm25:
         return Pm25.from_measurement(self.pm25)
 
