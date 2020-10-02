@@ -315,7 +315,9 @@ class Client(db.Model):  # type: ignore
             return False
 
         message = (
-            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})."
+            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi}).\n"
+            "\n"
+            'Reply "M" for Menu or "E" to end alerts.'
         ).format(
             city=self.zipcode.city.name,
             zipcode=self.zipcode.zipcode,
@@ -339,7 +341,6 @@ class Client(db.Model):  # type: ignore
             return False
 
         # Double check that we're all good to go
-        ts = timestamp()
         share_window_start, share_window_end = self.get_share_window()
         if (
             not self.last_alert_sent_at
@@ -356,7 +357,7 @@ class Client(db.Model):  # type: ignore
         message = (
             "Has Hazebot been helpful? "
             "We’re looking for ways to grow and improve, and we’d love your help. "
-            "Save our contact and share Hazebot with a friend, or text “feedback” to share feedback"
+            "Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
         )
         if not self.send_message(message):
             return False
