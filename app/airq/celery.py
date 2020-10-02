@@ -1,5 +1,6 @@
 import os
 
+import flask
 from celery import Celery
 from celery import signals
 from celery.schedules import crontab
@@ -55,6 +56,9 @@ if config.TESTING:
 
 class ContextTask(celery.Task):  # type: ignore
     def __call__(self, *args, **kwargs):
+        # If an "app_context" has already been loaded, just pass through
+        if flask._app_ctx_stack.top is not None:
+            return super().__call__(*args, **kwargs)
         with config.app.app_context():
             return self.run(*args, **kwargs)
 

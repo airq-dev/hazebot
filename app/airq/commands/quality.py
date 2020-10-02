@@ -1,8 +1,11 @@
 import abc
 import typing
 
+from airq import config
+from airq import tasks
 from airq.commands.base import RegexCommand
 from airq.lib.geo import kilometers_to_miles
+from airq.models.clients import Client
 from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
@@ -51,28 +54,23 @@ class GetQuality(BaseQualityCommand):
                 f" (AQI {aqi})" if aqi else "",
             )
         )
-        message.append("")
 
         has_zipcode = self.client.zipcode_id is not None
         was_updated = self.client.update_subscription(zipcode)
         if not self.client.is_enabled_for_alerts:
+            message.append("")
             message.append(
                 'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
             )
         elif was_updated:
-            zipcode_updated_message = (
-                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting "E".'
-            )
             if has_zipcode:
-                message.append(zipcode_updated_message)
-            else:
-                message.append(f"Thanks for texting Hazebot! {zipcode_updated_message}")
+                # Zipcode changed.
                 message.append("")
-                message.append(
-                    "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
-                )
+                message.append(f"You are now receiving alerts for {zipcode.zipcode}.")
+            else:
+                tasks.send_intro_message.apply_async((self.client.id,), countdown=30)
         else:
+            message.append("")
             message.append('Text "M" for Menu, "E" to end alerts.')
 
         self.client.log_event(
