@@ -29,6 +29,7 @@ class ClientTestCase(BaseTestCase):
         last_pm25: float = 0.0,
         alerts_disabled_at: int = 0,
         num_alerts_sent: int = 0,
+        created_at: typing.Optional[datetime.datetime] = None,
     ) -> Client:
         assert self.zipcode is not None, "Zipcode not set"
         client = Client(
@@ -40,6 +41,7 @@ class ClientTestCase(BaseTestCase):
             last_pm25=last_pm25,
             alerts_disabled_at=alerts_disabled_at,
             num_alerts_sent=num_alerts_sent,
+            created_at=created_at or self.clock.now(),
         )
         self.db.session.add(client)
         self.db.session.commit()
@@ -172,7 +174,8 @@ class ClientTestCase(BaseTestCase):
 
     def test_filter_eligible_for_share_requests(self):
         client = self._make_client(
-            last_alert_sent_at=self.clock.now().timestamp() - 60 * 15
+            last_alert_sent_at=self.clock.now().timestamp() - 60 * 15,
+            created_at=self.clock.now() - datetime.timedelta(days=7, seconds=1),
         )
         self.assertEqual(0, Client.query.filter_eligible_for_share_requests().count())
 
@@ -180,6 +183,11 @@ class ClientTestCase(BaseTestCase):
         self.db.session.commit()
         self.assertEqual(1, Client.query.filter_eligible_for_share_requests().count())
 
+        client.created_at += datetime.timedelta(seconds=1)
+        self.db.session.commit()
+        self.assertEqual(0, Client.query.filter_eligible_for_share_requests().count())
+
+        client.created_at -= datetime.timedelta(seconds=1)
         client.last_alert_sent_at += 60 * 10 - 1
         self.db.session.commit()
         self.assertEqual(0, Client.query.filter_eligible_for_share_requests().count())
@@ -201,7 +209,8 @@ class ClientTestCase(BaseTestCase):
 
     def test_request_share(self):
         client = self._make_client(
-            last_alert_sent_at=self.clock.now().timestamp() - 60 * 15
+            last_alert_sent_at=self.clock.now().timestamp() - 60 * 15,
+            created_at=self.clock.now() - datetime.timedelta(days=7, seconds=1),
         )
         self.assertFalse(client.request_share())
         self.assertEqual(0, Event.query.count())
@@ -230,6 +239,22 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(share_request.timestamp, self.clock.now())
         self.assertEqual(
             2, Event.query.filter_by(type_code=EventType.SHARE_REQUEST).count()
+        )
+
+        share_request.timestamp -= datetime.timedelta(days=60, seconds=1)
+        client.created_at += datetime.timedelta(seconds=1)
+        self.db.session.commit()
+        self.assertFalse(client.request_share())
+        self.assertEqual(2, Event.query.count())
+
+        client.created_at -= datetime.timedelta(seconds=1)
+        self.assertTrue(client.request_share())
+        self.assertEqual(3, Event.query.count())
+        self.assert_event(client.id, EventType.SHARE_REQUEST)
+        share_request = client.get_last_share_request()
+        self.assertEqual(share_request.timestamp, self.clock.now())
+        self.assertEqual(
+            3, Event.query.filter_by(type_code=EventType.SHARE_REQUEST).count()
         )
 
     def test_get_last_client_event(self):

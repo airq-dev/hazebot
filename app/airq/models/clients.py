@@ -93,6 +93,8 @@ class ClientQuery(BaseQuery):
             self.filter_phones()
             .outerjoin(subq, and_(subq.c.client_id == Client.id))
             .filter(subq.c.timestamp == None)
+            # Client must have signed up more than 7 days ago
+            .filter(Client.created_at < now() - datetime.timedelta(days=7))
             .filter(Client.last_alert_sent_at > share_window_start)
             .filter(Client.last_alert_sent_at < share_window_end)
         )
@@ -338,6 +340,9 @@ class Client(db.Model):  # type: ignore
 
     def request_share(self) -> bool:
         if not self.is_in_send_window:
+            return False
+
+        if self.created_at >= now() - datetime.timedelta(days=7):
             return False
 
         # Double check that we're all good to go
