@@ -62,7 +62,7 @@ class GetQuality(BaseQualityCommand):
         elif was_updated:
             zipcode_updated_message = (
                 "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").'
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting "E".'
             )
             if has_zipcode:
                 message.append(zipcode_updated_message)

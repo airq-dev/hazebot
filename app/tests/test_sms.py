@@ -28,7 +28,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
@@ -80,7 +80,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Molalla 97038 is MODERATE (AQI 98).\n"
             "\n"
-            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
@@ -155,7 +155,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            'You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").',
+            'You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".',
             response.data,
         )
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
@@ -237,7 +237,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
