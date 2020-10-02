@@ -22,7 +22,6 @@ COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     #
     GetQuality,
     ShowMenu,
-    Unsubscribe,
     #
     # ReceiveFeedback needs to come before numbered commands because it interprets
     # certain input (e.g., "1") as selecting an option instead of choosing a command.
@@ -36,6 +35,7 @@ COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     Resubscribe,
     ShowAbout,
     ShowFeedback,
+    Unsubscribe,
 ]
 
 

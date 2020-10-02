@@ -51,17 +51,29 @@ class GetQuality(BaseQualityCommand):
                 f" (AQI {aqi})" if aqi else "",
             )
         )
+        message.append("")
 
+        has_zipcode = self.client.zipcode_id is not None
         was_updated = self.client.update_subscription(zipcode)
         if not self.client.is_enabled_for_alerts:
-            message.append("")
             message.append(
                 'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
             )
         elif was_updated:
-            message.append("")
-            message.append("We'll alert you when the air quality changes category.")
-            message.append("Reply M for menu, U to stop this alert.")
+            zipcode_updated_message = (
+                "We'll send you timely updates when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").'
+            )
+            if has_zipcode:
+                message.append(zipcode_updated_message)
+            else:
+                message.append(f"Thanks for texting Hazebot! {zipcode_updated_message}")
+                message.append("")
+                message.append(
+                    "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                )
+        else:
+            message.append('Text "M" for Menu, "E" to end alerts.')
 
         self.client.log_event(
             self.event_type, zipcode=zipcode.zipcode, pm25=zipcode.pm25

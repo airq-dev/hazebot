@@ -12,7 +12,7 @@ from airq.models.events import EventType
 
 
 class ShowFeedback(RegexCommand):
-    pattern = r"^4[\.\)]?$"
+    pattern = r"^(4[\.\)]?|feedback)$"
 
     def handle(self) -> typing.List[str]:
         message = ["Please enter your feedback below:"]  # consider adding cancel option
