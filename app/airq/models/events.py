@@ -30,6 +30,7 @@ class EventType(enum.IntEnum):
     FEEDBACK_BEGIN = 9
     FEEDBACK_RECEIVED = 10
     UNSUBSCRIBE_AUTO = 11
+    SHARE_REQUEST = 12
 
 
 class EventQuery(BaseQuery):
@@ -102,21 +103,23 @@ class Event(db.Model):  # type: ignore
         elif self.type_code == EventType.LAST:
             return QualityEventSchema
         elif self.type_code == EventType.MENU:
-            return MenuEventSchema
+            return EmptySchema
         elif self.type_code == EventType.ABOUT:
-            return AboutEventSchema
+            return EmptySchema
         elif self.type_code == EventType.UNSUBSCRIBE:
             return SubscribeEventSchema
         elif self.type_code == EventType.ALERT:
             return AlertEventSchema
         elif self.type_code == EventType.FEEDBACK_BEGIN:
-            return FeedbackBeginEventSchema
+            return EmptySchema
         elif self.type_code == EventType.FEEDBACK_RECEIVED:
             return FeedbackReceivedEventSchema
         elif self.type_code == EventType.RESUBSCRIBE:
             return SubscribeEventSchema
         elif self.type_code == EventType.UNSUBSCRIBE_AUTO:
             return SubscribeEventSchema
+        elif self.type_code == EventType.SHARE_REQUEST:
+            return EmptySchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")
 
@@ -140,12 +143,7 @@ class DetailsEventSchema:
 
 
 @dataclasses.dataclass
-class MenuEventSchema:
-    pass
-
-
-@dataclasses.dataclass
-class AboutEventSchema:
+class EmptySchema:
     pass
 
 
@@ -158,11 +156,6 @@ class SubscribeEventSchema:
 class AlertEventSchema:
     zipcode: str
     pm25: float
-
-
-@dataclasses.dataclass
-class FeedbackBeginEventSchema:
-    pass
 
 
 @dataclasses.dataclass

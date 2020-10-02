@@ -242,6 +242,18 @@ def _send_alerts():
     logger.info("Sent %s alerts", num_sent)
 
 
+def _send_share_requests():
+    num_sent = 0
+    for client in Client.query.filter_eligible_for_share_requests().all():
+        try:
+            if client.request_share():
+                num_sent += 1
+        except Exception as e:
+            logger.exception("Failed to request share from %s: %s", client, e)
+
+    logger.info("Requests %s shares", num_sent)
+
+
 def purpleair_sync():
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_data()
@@ -258,3 +270,6 @@ def purpleair_sync():
 
     logger.info("Sending alerts")
     _send_alerts()
+
+    logger.info("Requesting shares")
+    _send_share_requests()

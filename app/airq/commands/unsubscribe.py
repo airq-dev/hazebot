@@ -6,7 +6,7 @@ from airq.models.zipcodes import Zipcode
 
 
 class Unsubscribe(RegexCommand):
-    pattern = r"^u$"
+    pattern = r"^(5[\.\)]?|u|e|end|unsubscribe)$"
 
     def handle(self) -> typing.List[str]:
         if self.client.zipcode is None:
