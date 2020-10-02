@@ -43,14 +43,14 @@ def healthcheck() -> str:
     return "OK"
 
 
-def _get_supported_locale(locale="en") -> str:
+def _get_supported_locale(locale: str) -> str:
     if locale in SUPPORTED_LANGUAGES:
         return locale
     return "en"
 
 
 @csrf.exempt
-def sms_reply(locale: typing.Optional[str]) -> str:
+def sms_reply(locale: str) -> str:
     supported_locale = _get_supported_locale(locale)
     g.locale = supported_locale
     resp = MessagingResponse()
@@ -63,7 +63,7 @@ def sms_reply(locale: typing.Optional[str]) -> str:
     return str(resp)
 
 
-def test_command(locale: typing.Optional[str]) -> str:
+def test_command(locale: str) -> str:
     supported_locale = _get_supported_locale(locale)
     g.locale = supported_locale
     command = request.args.get("command", "").strip()
