@@ -7,7 +7,7 @@ from airq.models.requests import Request
 from tests.base import BaseTestCase
 
 
-@mock.patch('airq.models.clients.send_sms')
+@mock.patch("airq.models.clients.send_sms")
 class SMSTestCase(BaseTestCase):
     def test_get_quality(self, mock_send_sms):
         response = self.client.post(
@@ -38,7 +38,7 @@ class SMSTestCase(BaseTestCase):
             'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222"
+            "+12222222222",
         )
         mock_send_sms.reset_mock()
 
@@ -95,7 +95,7 @@ class SMSTestCase(BaseTestCase):
             'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+13333333333"
+            "+13333333333",
         )
         mock_send_sms.reset_mock()
 
@@ -168,7 +168,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            'You are now receiving alerts for 97204.',
+            "You are now receiving alerts for 97204.",
             response.data,
         )
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
@@ -257,7 +257,7 @@ class SMSTestCase(BaseTestCase):
             'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
             "\n"
             "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222"
+            "+12222222222",
         )
         mock_send_sms.reset_mock()
 
