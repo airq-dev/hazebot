@@ -46,7 +46,7 @@ def healthcheck() -> str:
 def _get_supported_locale(locale="en") -> str:
     if locale in SUPPORTED_LANGUAGES:
         return locale
-    return 'en'
+    return "en"
 
 
 @csrf.exempt
@@ -57,10 +57,7 @@ def sms_reply(locale: typing.Optional[str]) -> str:
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     message = commands.handle_command(
-        zipcode,
-        phone_number,
-        ClientIdentifierType.PHONE_NUMBER,
-        supported_locale
+        zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER, supported_locale
     )
     resp.message(message)
     return str(resp)
@@ -75,10 +72,7 @@ def test_command(locale: typing.Optional[str]) -> str:
     else:
         ip = request.remote_addr
     return commands.handle_command(
-        command,
-        ip,
-        ClientIdentifierType.IP,
-        supported_locale
+        command, ip, ClientIdentifierType.IP, supported_locale
     )
 
 

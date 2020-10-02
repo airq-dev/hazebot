@@ -47,7 +47,7 @@ class ClientQuery(BaseQuery):
                 identifier=identifier,
                 type_code=type_code,
                 last_activity_at=timestamp(),
-                locale=locale
+                locale=locale,
             )
             db.session.add(client)
             db.session.commit()

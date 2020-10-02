@@ -16,7 +16,7 @@ class BaseQualityCommand(RegexCommand):
             if zipcode is None:
                 return [
                     "Hmm. Are you sure {} is a valid US zipcode?".format(
-                        self.params['zipcode']
+                        self.params["zipcode"]
                     )
                 ]
         else:
@@ -26,7 +26,9 @@ class BaseQualityCommand(RegexCommand):
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
-                'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'.format(zipcode.zipcode)
+                'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'.format(
+                    zipcode.zipcode
+                )
             ]
 
         message = self._get_message(zipcode)
