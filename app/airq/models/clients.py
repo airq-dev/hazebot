@@ -5,6 +5,7 @@ import typing
 
 from flask_babel import gettext
 from flask_sqlalchemy import BaseQuery
+from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Query
@@ -84,6 +85,24 @@ class ClientQuery(BaseQuery):
             .filter(Client.zipcode_id.isnot(None))
         )
 
+    def filter_eligible_for_share_requests(self) -> "ClientQuery":
+        subq = (
+            Event.query.filter(Event.type_code == EventType.SHARE_REQUEST)
+            .filter(Event.timestamp > Client.get_share_request_cutoff())
+            .with_entities(Event.client_id, Event.timestamp)
+            .subquery()
+        )
+        share_window_start, share_window_end = Client.get_share_window()
+        return (
+            self.filter_phones()
+            .outerjoin(subq, and_(subq.c.client_id == Client.id))
+            .filter(subq.c.timestamp == None)
+            # Client must have signed up more than 7 days ago
+            .filter(Client.created_at < now() - datetime.timedelta(days=7))
+            .filter(Client.last_alert_sent_at > share_window_start)
+            .filter(Client.last_alert_sent_at < share_window_end)
+        )
+
     #
     # Stats
     #
@@ -158,6 +177,7 @@ class Client(db.Model):  # type: ignore
 
     requests = db.relationship("Request")
     zipcode = db.relationship("Zipcode")
+    events = db.relationship("Event")
 
     __table_args__ = (
         db.Index(
@@ -167,6 +187,9 @@ class Client(db.Model):  # type: ignore
             unique=True,
         ),
     )
+
+    def __repr__(self) -> str:
+        return f"<Client {self.identifier}>"
 
     # Send alerts at most every TWO hours to avoid spamming people.
     # One hour seems like a reasonable frequency because AQI
@@ -182,8 +205,16 @@ class Client(db.Model):  # type: ignore
     # Time alotted between feedback command and feedback response.
     FEEDBACK_RESPONSE_TIME = datetime.timedelta(hours=1)
 
-    def __repr__(self) -> str:
-        return f"<Client {self.identifier}>"
+    @classmethod
+    def get_share_window(self) -> typing.Tuple[int, int]:
+        ts = timestamp()
+        share_window_start = ts - 60 * 15
+        share_window_end = ts - 60 * 5
+        return share_window_start, share_window_end
+
+    @classmethod
+    def get_share_request_cutoff(self) -> datetime.datetime:
+        return now() - datetime.timedelta(days=60)
 
     #
     # Presence
@@ -230,11 +261,14 @@ class Client(db.Model):  # type: ignore
         db.session.commit()
         return curr_zipcode_id != self.zipcode_id
 
-    def disable_alerts(self):
+    def disable_alerts(self, is_automatic=False):
         if self.alerts_disabled_at == 0:
             self.alerts_disabled_at = timestamp()
             db.session.commit()
-            self.log_event(EventType.UNSUBSCRIBE, zipcode=self.zipcode.zipcode)
+            self.log_event(
+                EventType.UNSUBSCRIBE_AUTO if is_automatic else EventType.UNSUBSCRIBE,
+                zipcode=self.zipcode.zipcode,
+            )
 
     def enable_alerts(self):
         if self.alerts_disabled_at > 0:
@@ -265,7 +299,7 @@ class Client(db.Model):  # type: ignore
                         self,
                         code.name,
                     )
-                    self.disable_alerts()
+                    self.disable_alerts(is_automatic=True)
                     return False
                 else:
                     raise
@@ -290,7 +324,9 @@ class Client(db.Model):  # type: ignore
             return False
 
         message = (
-            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi})"
+            "Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi}).\n"
+            "\n"
+            'Reply "M" for Menu or "E" to end alerts.'
         ).format(
             city=self.zipcode.city.name,
             zipcode=self.zipcode.zipcode,
@@ -309,18 +345,64 @@ class Client(db.Model):  # type: ignore
 
         return True
 
+    def request_share(self) -> bool:
+        if not self.is_in_send_window:
+            return False
+
+        if self.created_at >= now() - datetime.timedelta(days=7):
+            return False
+
+        # Double check that we're all good to go
+        share_window_start, share_window_end = self.get_share_window()
+        if (
+            not self.last_alert_sent_at
+            or self.last_alert_sent_at <= share_window_start
+            or self.last_alert_sent_at >= share_window_end
+        ):
+            return False
+
+        # Check the last share request we sent was a long time ago
+        share_request = self.get_last_share_request()
+        if share_request and share_request.timestamp >= self.get_share_request_cutoff():
+            return False
+
+        message = (
+            "Has Hazebot been helpful? "
+            "We’re looking for ways to grow and improve, and we’d love your help. "
+            "Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
+        )
+        if not self.send_message(message):
+            return False
+
+        Event.query.create(self.id, EventType.SHARE_REQUEST)
+        return True
+
     #
-    # Logging
+    # Events
     #
 
     def log_event(self, event_type: EventType, **event_data: typing.Any) -> Event:
         return Event.query.create(self.id, event_type, **event_data)
 
+    def _get_last_event_by_type(self, event_type: EventType) -> typing.Optional[Event]:
+        return (
+            Event.query.filter(Event.client_id == self.id)
+            .filter(Event.type_code == event_type)
+            .order_by(Event.timestamp.desc())
+            .first()
+        )
+
+    def get_last_alert(self) -> typing.Optional[Event]:
+        return self._get_last_event_by_type(EventType.ALERT)
+
+    def get_last_share_request(self) -> typing.Optional[Event]:
+        return self._get_last_event_by_type(EventType.SHARE_REQUEST)
+
     def get_last_client_event(self) -> typing.Optional[Event]:
         return (
             Event.query.filter(Event.client_id == self.id)
             .filter(
-                Event.type_code != EventType.ALERT
+                ~Event.type_code.in_([EventType.ALERT, EventType.SHARE_REQUEST])
             )  # filter for only inbound events
             .order_by(Event.timestamp.desc())
             .first()

@@ -5,7 +5,7 @@ from airq.models.zipcodes import Zipcode
 
 
 class Resubscribe(RegexCommand):
-    pattern = r"^y$"
+    pattern = r"^(y|yes)$"
 
     def handle(self) -> typing.List[str]:
         if self.client.zipcode is None:

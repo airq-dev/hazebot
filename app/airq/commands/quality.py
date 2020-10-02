@@ -43,9 +43,8 @@ class BaseQualityCommand(RegexCommand):
 
 
 class GetQuality(BaseQualityCommand):
-    zipcode_regex = r"(?P<zipcode>\d{5})"
-    repeat_regex = r"(?:2[\.\)]?)"
-    pattern = r"^(?:{}|{})$".format(zipcode_regex, repeat_regex)
+    pattern = r"^(?P<zipcode>\d{5})$"
+    event_type = EventType.QUALITY
 
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
@@ -58,25 +57,40 @@ class GetQuality(BaseQualityCommand):
                 f" (AQI {aqi})" if aqi else "",
             )
         )
+        message.append("")
 
+        has_zipcode = self.client.zipcode_id is not None
         was_updated = self.client.update_subscription(zipcode)
         if not self.client.is_enabled_for_alerts:
-            message.append("")
             message.append(
                 'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
             )
         elif was_updated:
-            message.append("")
-            message.append("We'll alert you when the air quality changes category.")
-            message.append("Reply M for menu, U to stop this alert.")
-
-        if self.user_input == "2":
-            type_code = EventType.LAST
+            zipcode_updated_message = (
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting "E".'
+            )
+            if has_zipcode:
+                message.append(zipcode_updated_message)
+            else:
+                message.append(f"Thanks for texting Hazebot! {zipcode_updated_message}")
+                message.append("")
+                message.append(
+                    "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                )
         else:
-            type_code = EventType.QUALITY
-        self.client.log_event(type_code, zipcode=zipcode.zipcode, pm25=zipcode.pm25)
+            message.append('Text "M" for Menu, "E" to end alerts.')
+
+        self.client.log_event(
+            self.event_type, zipcode=zipcode.zipcode, pm25=zipcode.pm25
+        )
 
         return message
+
+
+class GetLast(GetQuality):
+    pattern = r"^2[\.\)]?$"
+    event_type = EventType.LAST
 
 
 class GetDetails(BaseQualityCommand):

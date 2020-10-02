@@ -28,8 +28,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            "We'll alert you when the air quality changes category.\n"
-            "Reply M for menu, U to stop this alert.",
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
+            "\n"
+            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
         )
 
@@ -41,7 +42,12 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
         self.assertEqual(2, Request.query.get_total_count())
-        self.assert_twilio_response("Portland 97204 is GOOD (AQI 33).", response.data)
+        self.assert_twilio_response(
+            "Portland 97204 is GOOD (AQI 33).\n"
+            "\n"
+            'Text "M" for Menu, "E" to end alerts.',
+            response.data,
+        )
         self.assert_event(client_id, EventType.LAST, zipcode="97204", pm25=7.945)
 
         response = self.client.post("/sms", data={"Body": "1", "From": "+12222222222"})
@@ -74,8 +80,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Molalla 97038 is MODERATE (AQI 98).\n"
             "\n"
-            "We'll alert you when the air quality changes category.\n"
-            "Reply M for menu, U to stop this alert.",
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
+            "\n"
+            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
         )
 
@@ -88,7 +95,10 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(5, Event.query.count())
         self.assertEqual(5, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Molalla 97038 is MODERATE (AQI 98).", response.data
+            "Molalla 97038 is MODERATE (AQI 98).\n"
+            "\n"
+            'Text "M" for Menu, "E" to end alerts.',
+            response.data,
         )
         self.assert_event(client_id, EventType.LAST, zipcode="97038", pm25=34.655)
 
@@ -127,9 +137,28 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(7, Event.query.count())
         self.assertEqual(7, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Molalla 97038 is MODERATE (AQI 98).", response.data
+            "Molalla 97038 is MODERATE (AQI 98).\n"
+            "\n"
+            'Text "M" for Menu, "E" to end alerts.',
+            response.data,
         )
         self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=34.655)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms", data={"Body": "97204", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, Client.query.count())
+        self.assertEqual(8, Event.query.count())
+        self.assertEqual(8, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Portland 97204 is GOOD (AQI 33).\n"
+            "\n"
+            'You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".',
+            response.data,
+        )
+        self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
     def test_get_menu(self):
         response = self.client.post("/sms", data={"Body": "M", "From": "+13333333333"})
@@ -143,6 +172,28 @@ class SMSTestCase(BaseTestCase):
             "2. Current AQI\n"
             "3. Hazebot info\n"
             "4. Give feedback\n"
+            "5. Stop alerts\n"
+            "\n"
+            "Or, enter a new zipcode.",
+            response.data,
+        )
+        client_id = Client.query.filter_by(identifier="+13333333333").first().id
+        self.assert_event(client_id, EventType.MENU)
+
+        response = self.client.post(
+            "/sms", data={"Body": "MENU", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(2, Event.query.count())
+        self.assertEqual(0, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Reply\n"
+            "1. Details and recommendations\n"
+            "2. Current AQI\n"
+            "3. Hazebot info\n"
+            "4. Give feedback\n"
+            "5. Stop alerts\n"
             "\n"
             "Or, enter a new zipcode.",
             response.data,
@@ -186,8 +237,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
-            "We'll alert you when the air quality changes category.\n"
-            "Reply M for menu, U to stop this alert.",
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting "E".\n'
+            "\n"
+            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
             response.data,
         )
 
@@ -197,7 +249,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms", data={"Body": "U", "From": "+12222222222"})
+        response = self.client.post("/sms", data={"Body": "E", "From": "+12222222222"})
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
@@ -298,7 +350,9 @@ class SMSTestCase(BaseTestCase):
         )
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms", data={"Body": "U", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms", data={"Body": "END", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(7, Event.query.count())
@@ -348,6 +402,45 @@ class SMSTestCase(BaseTestCase):
         )
         client = Client.query.first()
         self.assert_event(client.id, EventType.FEEDBACK_RECEIVED, feedback="foobar")
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
+
+        self.clock.advance()
+        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(9, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Got it! We'll send you timely alerts when air quality in 97204 changes category.",
+            response.data,
+        )
+
+        client = Client.query.first()
+        self.assertEqual("97204", client.zipcode.zipcode)
+        self.assertEqual(0, client.alerts_disabled_at)
+        self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
+
+        alerts_disabled_at = self.clock.advance().timestamp()
+        response = self.client.post("/sms", data={"Body": "5", "From": "+12222222222"})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(10, Event.query.count())
+        self.assertEqual(2, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Got it! You will not receive air quality updates until you text a new zipcode.\n"
+            "\n"
+            "Tell us why you're leaving so we can improve our service:\n"
+            "1. Air quality is not a concern in my area\n"
+            "2. SMS texts are not my preferred information source\n"
+            "3. Alerts are too frequent\n"
+            "4. Information is inaccurate\n"
+            "5. Other",
+            response.data,
+        )
+
+        client = Client.query.first()
+        self.assert_event(client.id, EventType.UNSUBSCRIBE, zipcode="97204")
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
