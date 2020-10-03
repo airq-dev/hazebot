@@ -2,7 +2,7 @@
 
 Building the 411 for air quality in the United States: a texting platform accessible to all, that provides actionable local information to protect your and your community. Simply text your zipcode to (262) 747-2332 to receive timely alerts when the air quality nea you changes.
 
-You can also visit us at [hazebot.org](https://www.hazebot.org).
+You can also visit us at [hazebot.org](https://www.hazebot.org). Hazebot is built on top of data from [PurpleAir](https://www2.purpleair.com/).
 
 ![Build](https://github.com/ianhoffman/airq/workflows/Deploy/badge.svg?branch=master)
 
