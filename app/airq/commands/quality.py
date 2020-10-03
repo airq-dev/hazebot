@@ -68,7 +68,7 @@ class GetQuality(BaseQualityCommand):
                 message.append("")
                 message.append(f"You are now receiving alerts for {zipcode.zipcode}.")
             else:
-                tasks.send_intro_message.apply_async((self.client.id,), countdown=30)
+                tasks.send_intro_message.apply_async((self.client.id,), countdown=5)
         else:
             message.append("")
             message.append('Text "M" for Menu, "E" to end alerts.')
