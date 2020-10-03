@@ -81,7 +81,10 @@ if ! $running; then
     max_attempts=20
     until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
         if [ ${attempt_counter} -eq ${max_attempts} ]; then
-          echo "Server failed to start in time"
+          echo "[Fatal] Server failed to start in time.\n"
+          echo "Dumping logs:\n"
+          echo ""
+          docker-compose logs
           exit 1
         fi
 
