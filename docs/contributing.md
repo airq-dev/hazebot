@@ -1,9 +1,9 @@
 # Contributing
 
-We're thrilled you want to contribute to hazebot. Please check out our [issues](https://github.com/airq-dev/hazebot/issues) to get a sense of the projects we're focusing on. If you want to work on something which is not in the issues section, please open a new issue or visit us on our [Slack](https://join.slack.com/t/hazebot/shared_invite/zt-hoogtwy8-9yeYFKyg0MRCtyC9US0k3Q).
+We're thrilled you want to contribute to Hazebot. Please check out our [issues](https://github.com/airq-dev/hazebot/issues) to get a sense of the projects we're focusing on. If you want to work on something which is not in the issues section, please open a new issue or visit us on our [Slack](https://join.slack.com/t/hazebot/shared_invite/zt-hoogtwy8-9yeYFKyg0MRCtyC9US0k3Q).
 
 The following is a technical overview of how to make contributions to hazebot. We cover:
-1. [Getting setup for local development](#Getting-Started)
+1. [Getting setup for local development](#Setting-up-local-development)
 2. [Running tests](#Running-Tests)
 3. [Opening a PR](#Opening-a-PR)
 4. [Using the debugger](#Debugging)
