@@ -61,29 +61,31 @@ class Zipcode(db.Model):  # type: ignore
 
     @property
     def geohash(self) -> str:
+        """This zipcode's geohash."""
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
 
     @property
     def aqi(self) -> typing.Optional[int]:
+        """The AQI for this zipcode (e.g., 35)."""
         return pm25_to_aqi(self.pm25)
 
     @property
     def pm25_level(self) -> Pm25:
+        """The pm25 category for this zipcode (e.g., Moderate)."""
         return Pm25.from_measurement(self.pm25)
 
     @classmethod
-    def cutoff(cls) -> float:
+    def pm25_stale_cutoff(cls) -> float:
+        """Timestamp before which pm25 measurements are considered stale."""
         return timestamp() - (60 * 30)
 
     @property
     def is_pm25_stale(self) -> bool:
-        return self.pm25_updated_at < self.cutoff()
-
-    @property
-    def aqi(self) -> typing.Optional[int]:
-        return pm25_to_aqi(self.pm25)
+        """Whether this zipcode's pm25 measurements are considered stale."""
+        return self.pm25_updated_at < self.pm25_stale_cutoff()
 
     def distance(self, other: "Zipcode") -> float:
+        """Distance between this zip and the given zip."""
         if other.id in self._distance_cache:
             return self._distance_cache[other.id]
         if self.id in other._distance_cache:
@@ -97,10 +99,11 @@ class Zipcode(db.Model):  # type: ignore
         return self._distance_cache[other.id]
 
     def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:
+        """Get n recommended zipcodes near this zipcode, sorted by distance."""
         if not self.pm25_level or self.is_pm25_stale:
             return []
 
-        cutoff = self.cutoff()
+        cutoff = self.pm25_stale_cutoff()
         zipcodes = (
             Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff)
             .filter(Zipcode.pm25 < self.pm25_level)
