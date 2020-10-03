@@ -45,7 +45,9 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+12222222222").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
-        response = self.client.post("/sms/en", data={"Body": "2", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
@@ -58,7 +60,9 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.LAST, zipcode="97204", pm25=7.945)
 
-        response = self.client.post("/sms/en", data={"Body": "1", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -102,7 +106,9 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=34.655)
 
-        response = self.client.post("/sms/en", data={"Body": "2", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -115,7 +121,9 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.LAST, zipcode="97038", pm25=34.655)
 
-        response = self.client.post("/sms/en", data={"Body": "1", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(6, Event.query.count())
@@ -174,7 +182,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
     def test_get_menu(self, *args):
-        response = self.client.post("/sms/en", data={"Body": "M", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "M", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -215,7 +225,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client_id, EventType.MENU)
 
     def test_get_info(self, *args):
-        response = self.client.post("/sms/en", data={"Body": "3", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -229,7 +241,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client_id, EventType.ABOUT)
 
     def test_unsubscribe(self, mock_send_sms):
-        response = self.client.post("/sms/en", data={"Body": "U", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "U", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(0, Request.query.get_total_count())
@@ -267,7 +281,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms/en", data={"Body": "E", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "E", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
@@ -290,7 +306,9 @@ class SMSTestCase(BaseTestCase):
 
         # Give some feedback
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "1", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -327,7 +345,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -343,7 +363,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
 
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -392,7 +414,9 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "5", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(7, Event.query.count())
@@ -424,7 +448,9 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(9, Event.query.count())
@@ -440,7 +466,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms/en", data={"Body": "5", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(10, Event.query.count())
@@ -480,7 +508,9 @@ class SMSTestCase(BaseTestCase):
 
         # Go through feedback flow
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "4", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -520,7 +550,9 @@ class SMSTestCase(BaseTestCase):
 
         # Now give feedback again
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "4", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -534,7 +566,9 @@ class SMSTestCase(BaseTestCase):
         # Use a custom option. This shouldn't work because we're not coming from the
         # unsubscribe flow.
         self.clock.advance()
-        response = self.client.post("/sms/en", data={"Body": "1", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
