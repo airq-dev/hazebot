@@ -33,7 +33,7 @@ else:
     broker_url = "sqs://{}:{}@".format(
         safequote(config.AWS_ACCESS_KEY_ID), safequote(config.AWS_SECRET_ACCESS_KEY)
     )
-    transport_options = {"region": "us-west-1"}
+    transport_options = {"region": "us-west-1", "visibility_timeout": 120}
 
 
 celery = Celery(config.app.import_name)
