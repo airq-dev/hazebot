@@ -14,7 +14,7 @@ You should also read our [architecture docs](architecture.md#Architecture) for a
 
 ## Setting up local development
 
-Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker-compose exec app flask sync --geography`. This runs the synchronization process described above to populate your database.
+Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker-compose exec app flask sync --geography`. This runs the synchronization process described [here](architecture.md#Synchronizing-Data) to populate your database.
 
 You can then test the API by navigating to `http://localhost:5000/test?command=<YOUR ZIPCODE>`. The `/test` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
 
@@ -37,7 +37,7 @@ Before you open a PR, please do the following:
 It is possible to debug during development by attaching to the running docker container. First, get the app container id:
 
 ```
-ianhoffman|master:~/github/airq$ docker container ls
+$ docker container ls
 CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                              NAMES
 0f8dcbf12ae0        airq_app              "/home/app/app/entry…"   29 minutes ago      Up 29 minutes       0.0.0.0:5000->5000/tcp             airq_app_1
 ```
@@ -45,7 +45,7 @@ CONTAINER ID        IMAGE                 COMMAND                  CREATED      
 Then, attach to the app container:
 
 ```
-ianhoffman|master:~/github/airq$ docker attach 0f8dcbf12ae0
+$ docker attach 0f8dcbf12ae0
 ```
 
 The process should hang. Now open your editor and add a breakpoint using [pdb](https://docs.python.org/3/library/pdb.html): `import pdb; pdb.set_trace()`. When Python hits the breakpoint, it will start a debugger session in the shell attached to the app container.
