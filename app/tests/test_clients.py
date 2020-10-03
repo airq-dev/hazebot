@@ -49,7 +49,8 @@ class ClientTestCase(BaseTestCase):
 
     def test_maybe_notify(self):
         # Don't notify if pm25 hasn't changed
-        client = self._make_client(last_pm25=self.zipcode.pm25)
+        last_pm25 = self.zipcode.pm25
+        client = self._make_client(last_pm25=last_pm25)
         self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
@@ -58,9 +59,9 @@ class ClientTestCase(BaseTestCase):
         # Don't notify if before 8 AM
         with mock.patch(
             "airq.models.clients.timestamp",
-            return_value=datetime.datetime.fromtimestamp(self.timestamp).replace(
-                hour=7, minute=59, tzinfo=pytz.timezone("America/Los_Angeles")
-            ),
+            return_value=datetime.datetime.fromtimestamp(self.timestamp)
+            .replace(hour=7, minute=59, tzinfo=pytz.timezone("America/Los_Angeles"))
+            .timestamp(),
         ):
             self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
@@ -70,18 +71,65 @@ class ClientTestCase(BaseTestCase):
         # Don't notify if after 9 PM
         with mock.patch(
             "airq.models.clients.timestamp",
-            return_value=datetime.datetime.fromtimestamp(self.timestamp).replace(
-                hour=21, minute=0, tzinfo=pytz.timezone("America/Los_Angeles")
-            ),
+            return_value=datetime.datetime.fromtimestamp(self.timestamp)
+            .replace(hour=21, minute=0, tzinfo=pytz.timezone("America/Los_Angeles"))
+            .timestamp(),
         ):
             self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
         self.assertEqual(0, Event.query.count())
 
-        client.last_pm25 += 50
+        last_pm25 += 4.1  # tips us over into moderate
+        client.last_pm25 = last_pm25
         self.assertTrue(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
+        self.assertEqual(self.timestamp, client.last_alert_sent_at)
+        self.assert_event(
+            client.id,
+            EventType.ALERT,
+            zipcode=self.zipcode.zipcode,
+            pm25=self.zipcode.pm25,
+        )
+
+        # Do not resend if 2 hours haven't passed
+        last_alert_sent_at = self.clock.now().timestamp()
+        self.clock.advance()
+        self.assertFalse(client.maybe_notify())
+        self.assertEqual(1, client.num_alerts_sent)
+        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
+
+        # Do not resend if 2 hours have passed but AQI levels haven't changed
+        self.clock.advance(Client.FREQUENCY).timestamp()
+        self.assertFalse(client.maybe_notify())
+        self.assertEqual(1, client.num_alerts_sent)
+        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
+
+        # Do not resend if 2 hours have passed but AQI levels have changed by under 20 points
+        self.assertFalse(client.maybe_notify())
+        self.assertEqual(1, client.num_alerts_sent)
+        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
+
+        last_pm25 += 0.9
+        client.last_pm25 = last_pm25
+        self.assertEqual(20, client.last_aqi - self.zipcode.aqi)
+        self.assertTrue(client.maybe_notify())
+        self.assertEqual(2, client.num_alerts_sent)
+        self.assertEqual(self.timestamp, client.last_alert_sent_at)
+        self.assert_event(
+            client.id,
+            EventType.ALERT,
+            zipcode=self.zipcode.zipcode,
+            pm25=self.zipcode.pm25,
+        )
+
+        # Resend if 6 hours have passed, even if AQI hasn't changed much
+        last_pm25 -= 0.9
+        client.last_pm25 = last_pm25
+        self.clock.advance(60 * 60 * 6 + 1)
+        with mock.patch.object(Client, "is_in_send_window", return_value=True):
+            self.assertTrue(client.maybe_notify())
+        self.assertEqual(3, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
         self.assert_event(
             client.id,

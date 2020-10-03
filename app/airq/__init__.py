@@ -18,9 +18,7 @@ app.route("/", methods=["GET"])(api.healthcheck)
 app.route("/healthcheck", methods=["GET"])(api.healthcheck)
 app.route("/login", methods=["GET", "POST"])(api.login)
 app.route("/logout", methods=["GET"])(api.logout)
-app.route("/test", defaults={"locale": "en"}, methods=["GET"])(api.test_command)
 app.route("/test/<string:locale>", methods=["GET"])(api.test_command)
-app.route("/sms", defaults={"locale": "en"}, methods=["POST"])(api.sms_reply)
 app.route("/sms/<string:locale>", methods=["POST"])(api.sms_reply)
 
 # Admin routes
