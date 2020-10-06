@@ -3,6 +3,7 @@ import csv
 import typing
 
 from flask import flash
+from flask import g
 from flask import jsonify
 from flask import redirect
 from flask import render_template
@@ -35,29 +36,44 @@ from airq.models.users import User
 from airq.tasks import bulk_send
 
 
+SUPPORTED_LANGUAGES = ["en", "es"]
+
+
 def healthcheck() -> str:
     return "OK"
 
 
+def _get_supported_locale(locale: str) -> str:
+    if locale in SUPPORTED_LANGUAGES:
+        return locale
+    return "en"
+
+
 @csrf.exempt
-def sms_reply() -> str:
+def sms_reply(locale: str) -> str:
+    supported_locale = _get_supported_locale(locale)
+    g.locale = supported_locale
     resp = MessagingResponse()
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
     message = commands.handle_command(
-        zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER
+        zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER, supported_locale
     )
     resp.message(message)
     return str(resp)
 
 
-def test_command() -> str:
+def test_command(locale: str) -> str:
+    supported_locale = _get_supported_locale(locale)
+    g.locale = supported_locale
     command = request.args.get("command", "").strip()
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    return commands.handle_command(command, ip, ClientIdentifierType.IP)
+    return commands.handle_command(
+        command, ip, ClientIdentifierType.IP, supported_locale
+    )
 
 
 def login() -> typing.Union[Response, str]:

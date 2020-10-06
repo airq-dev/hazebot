@@ -2,6 +2,8 @@ import abc
 import re
 import typing
 
+from flask_babel import gettext
+
 from airq.models.clients import Client
 
 

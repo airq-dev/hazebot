@@ -49,11 +49,13 @@ def _parse_command(client: Client, user_input: str) -> SMSCommand:
 
 
 def handle_command(
-    user_input: str, identifier: str, identifier_type: ClientIdentifierType
+    user_input: str, identifier: str, identifier_type: ClientIdentifierType, locale: str
 ) -> str:
-    client, was_created = Client.query.get_or_create(identifier, identifier_type)
+    client, was_created = Client.query.get_or_create(
+        identifier, identifier_type, locale
+    )
     if not was_created:
-        client.mark_seen()
+        client.mark_seen(locale)
 
     message = _parse_command(client, user_input).handle()
 

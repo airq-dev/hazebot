@@ -1,5 +1,4 @@
-from unittest import mock
-
+from airq import config
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
@@ -7,11 +6,10 @@ from airq.models.requests import Request
 from tests.base import BaseTestCase
 
 
-@mock.patch("airq.models.clients.send_sms")
 class SMSTestCase(BaseTestCase):
-    def test_get_quality(self, mock_send_sms):
+    def test_get_quality(self):
         response = self.client.post(
-            "/sms", data={"Body": "00000", "From": "+12222222222"}
+            "/sms/en", data={"Body": "00000", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -22,7 +20,7 @@ class SMSTestCase(BaseTestCase):
         )
 
         response = self.client.post(
-            "/sms", data={"Body": "97204", "From": "+12222222222"}
+            "/sms/en", data={"Body": "97204", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -32,20 +30,25 @@ class SMSTestCase(BaseTestCase):
             "Portland 97204 is GOOD (AQI 33).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+12222222222",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+12222222222").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
-        response = self.client.post("/sms", data={"Body": "2", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
@@ -58,7 +61,9 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.LAST, zipcode="97204", pm25=7.945)
 
-        response = self.client.post("/sms", data={"Body": "1", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -79,7 +84,7 @@ class SMSTestCase(BaseTestCase):
         )
 
         response = self.client.post(
-            "/sms", data={"Body": "97038", "From": "+13333333333"}
+            "/sms/en", data={"Body": "97038", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
@@ -89,20 +94,25 @@ class SMSTestCase(BaseTestCase):
             "Molalla 97038 is MODERATE (AQI 98).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+13333333333",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+13333333333",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=34.655)
 
-        response = self.client.post("/sms", data={"Body": "2", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -115,7 +125,9 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.LAST, zipcode="97038", pm25=34.655)
 
-        response = self.client.post("/sms", data={"Body": "1", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(6, Event.query.count())
@@ -143,7 +155,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "97038", "From": "+13333333333"}
+            "/sms/en", data={"Body": "97038", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
@@ -159,7 +171,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "97204", "From": "+13333333333"}
+            "/sms/en", data={"Body": "97204", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
@@ -173,8 +185,10 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
-    def test_get_menu(self, *args):
-        response = self.client.post("/sms", data={"Body": "M", "From": "+13333333333"})
+    def test_get_menu(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "M", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -194,7 +208,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client_id, EventType.MENU)
 
         response = self.client.post(
-            "/sms", data={"Body": "MENU", "From": "+13333333333"}
+            "/sms/en", data={"Body": "MENU", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -214,8 +228,10 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.MENU)
 
-    def test_get_info(self, *args):
-        response = self.client.post("/sms", data={"Body": "3", "From": "+13333333333"})
+    def test_get_info(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -228,8 +244,10 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.ABOUT)
 
-    def test_unsubscribe(self, mock_send_sms):
-        response = self.client.post("/sms", data={"Body": "U", "From": "+12222222222"})
+    def test_unsubscribe(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "U", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(0, Request.query.get_total_count())
@@ -241,7 +259,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "97204", "From": "+12222222222"}
+            "/sms/en", data={"Body": "97204", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -251,15 +269,18 @@ class SMSTestCase(BaseTestCase):
             "Portland 97204 is GOOD (AQI 33).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+12222222222",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client = Client.query.first()
         self.assertEqual("97204", client.zipcode.zipcode)
@@ -267,7 +288,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms", data={"Body": "E", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "E", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
@@ -290,7 +313,9 @@ class SMSTestCase(BaseTestCase):
 
         # Give some feedback
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "1", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -308,7 +333,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "97204", "From": "+12222222222"}
+            "/sms/en", data={"Body": "97204", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -327,7 +352,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -343,7 +370,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
 
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
@@ -369,7 +398,7 @@ class SMSTestCase(BaseTestCase):
 
         alerts_disabled_at = self.clock.advance().timestamp()
         response = self.client.post(
-            "/sms", data={"Body": "END", "From": "+12222222222"}
+            "/sms/en", data={"Body": "END", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -392,7 +421,9 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "5", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(7, Event.query.count())
@@ -408,7 +439,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "foobar", "From": "+12222222222"}
+            "/sms/en", data={"Body": "foobar", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -424,7 +455,9 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "Y", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "Y", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(9, Event.query.count())
@@ -440,7 +473,9 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client.id, EventType.RESUBSCRIBE, zipcode="97204")
 
         alerts_disabled_at = self.clock.advance().timestamp()
-        response = self.client.post("/sms", data={"Body": "5", "From": "+12222222222"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(10, Event.query.count())
@@ -462,10 +497,10 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
-    def test_feedback(self, *args):
+    def test_feedback(self):
         # Give feedback before feedback begin command
         response = self.client.post(
-            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+            "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
         )
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
 
@@ -480,7 +515,9 @@ class SMSTestCase(BaseTestCase):
 
         # Go through feedback flow
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "4", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
@@ -493,7 +530,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+            "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -507,7 +544,7 @@ class SMSTestCase(BaseTestCase):
         # try to post feedback again
         self.clock.advance()
         response = self.client.post(
-            "/sms", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+            "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -520,7 +557,9 @@ class SMSTestCase(BaseTestCase):
 
         # Now give feedback again
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "4", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
@@ -534,10 +573,46 @@ class SMSTestCase(BaseTestCase):
         # Use a custom option. This shouldn't work because we're not coming from the
         # unsubscribe flow.
         self.clock.advance()
-        response = self.client.post("/sms", data={"Body": "1", "From": "+13333333333"})
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
         self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response("Thank you for your feedback!", response.data)
         self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="1")
+
+    def test_translations(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        self.assertEqual("en", client.locale)
+
+        response = self.client.post(
+            "/sms/es", data={"Body": "97204", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(1, Event.query.count())
+        self.assertEqual(1, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Portland 97204 is GOOD (AQI 33).",
+            response.data,
+        )
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+13333333333",
+            from_=config.TWILIO_NUMBERS["es"],
+        )
+        self._mocks["send_sms"].reset_mock()
+
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        self.assertEqual("es", client.locale)

@@ -7,8 +7,9 @@ if typing.TYPE_CHECKING:
 
 
 FLASK_ENV = os.getenv("FLASK_ENV", "development")
-DEBUG = FLASK_ENV != "production"
+DEV = FLASK_ENV == "development"
 TESTING = FLASK_ENV == "test"
+DEBUG = DEV or TESTING
 
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
@@ -23,7 +24,10 @@ SES_REGION = os.getenv("SES_REGION", "us-west-2")
 SES_EMAIL_SOURCE = os.getenv("SES_EMAIL_SOURCE", "info@hazebot.org")
 
 TWILIO_AUTHTOKEN = os.getenv("TWILIO_AUTHTOKEN", "")
-TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
+TWILIO_NUMBERS = {
+    "en": os.getenv("TWILIO_NUMBER_EN", ""),
+    "es": os.getenv("TWILIO_NUMBER_ES", ""),
+}
 TWILIO_SID = os.getenv("TWILIO_SID", "")
 
 PG_DB = os.getenv("POSTGRES_DB", "postgres")
@@ -70,6 +74,7 @@ import flask_sqlalchemy
 import flask_wtf
 from flask import g
 from flask import got_request_exception
+from flask_babel import Babel
 from airq import middleware
 
 app = flask.Flask(__name__)
@@ -85,19 +90,26 @@ setattr(
         app.wsgi_app, restrictions=[30], sort_by=("cumtime", "tottime")
     ),
 )
-
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config = {
+    "BABEL_DEFAULT_LOCALE": "en",
+    "BABEL_TRANSLATION_DIRECTORIES": os.path.join(base_dir, "translations"),
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
     "SQLALCHEMY_TRACK_MODIFICATIONS": False,
 }
 app.config.from_mapping(config)
-
+babel = Babel(app)
 db = flask_sqlalchemy.SQLAlchemy(app)
 migrate = flask_migrate.Migrate(app, db)
 login = flask_login.LoginManager(app)
 
 csrf = flask_wtf.csrf.CSRFProtect()
 csrf.init_app(app)
+
+
+@babel.localeselector
+def get_locale():
+    return g.locale
 
 
 @login.user_loader

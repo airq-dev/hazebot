@@ -1,6 +1,7 @@
 import re
 import typing
 
+from flask_babel import gettext
 from werkzeug.utils import cached_property
 
 from airq import config

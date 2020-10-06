@@ -1,5 +1,7 @@
 import typing
 
+from flask_babel import gettext
+
 from airq.commands.base import RegexCommand
 from airq.models.events import EventType
 

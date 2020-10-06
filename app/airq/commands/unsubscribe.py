@@ -14,7 +14,9 @@ class Unsubscribe(RegexCommand):
 
         if self.client.alerts_disabled_at:
             return [
-                f"Looks like you already stopped watching {self.client.zipcode.zipcode}."
+                "Looks like you already stopped watching {}.".format(
+                    self.client.zipcode.zipcode
+                )
             ]
 
         self.client.disable_alerts()

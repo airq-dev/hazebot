@@ -16,7 +16,9 @@ class BaseQualityCommand(RegexCommand):
             zipcode = Zipcode.query.get_by_zipcode(self.params["zipcode"])
             if zipcode is None:
                 return [
-                    f"Hmm. Are you sure {self.params['zipcode']} is a valid US zipcode?"
+                    "Hmm. Are you sure {} is a valid US zipcode?".format(
+                        self.params["zipcode"]
+                    )
                 ]
         else:
             if self.client.zipcode is None:
@@ -25,7 +27,9 @@ class BaseQualityCommand(RegexCommand):
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
-                f'Oops! We couldn\'t determine the air quality for "{zipcode.zipcode}". Please try a different zip code.'
+                'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'.format(
+                    zipcode.zipcode
+                )
             ]
 
         message = self._get_message(zipcode)
@@ -106,13 +110,17 @@ class GetDetails(BaseQualityCommand):
                         round(
                             kilometers_to_miles(recommendation.distance(zipcode)),
                             ndigits=1,
-                        ),
+                        ),  # TODO: Make this based on locale
                     )
                 )
             message.append("")
 
         message.append(
-            f"Average PM2.5 from {zipcode.num_sensors} sensor(s) near {zipcode.zipcode} is {zipcode.pm25} ug/m^3."
+            "Average PM2.5 from {} sensor(s) near {} is {} ug/m^3.".format(
+                zipcode.num_sensors,
+                zipcode.zipcode,
+                zipcode.pm25,
+            )
         )
 
         self.client.log_event(

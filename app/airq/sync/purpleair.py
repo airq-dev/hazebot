@@ -4,6 +4,8 @@ import logging
 import requests
 import typing
 
+from flask_babel import force_locale
+
 from airq.config import db
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
@@ -233,11 +235,12 @@ def _metrics_sync():
 def _send_alerts():
     num_sent = 0
     for client in Client.query.filter_eligible_for_sending().all():
-        try:
-            if client.maybe_notify():
-                num_sent += 1
-        except Exception as e:
-            logger.exception("Failed to send alert to %s: %s", client, e)
+        with force_locale(client.locale):
+            try:
+                if client.maybe_notify():
+                    num_sent += 1
+            except Exception as e:
+                logger.exception("Failed to send alert to %s: %s", client, e)
 
     logger.info("Sent %s alerts", num_sent)
 
