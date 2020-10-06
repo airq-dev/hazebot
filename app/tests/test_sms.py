@@ -278,7 +278,7 @@ class SMSTestCase(BaseTestCase):
                 "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
             ),
             to="+12222222222",
-            from_=config.TWILIO_NUMBERS["es"],
+            from_=config.TWILIO_NUMBERS["en"],
         )
         self._mocks["send_sms"].reset_mock()
 
