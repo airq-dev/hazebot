@@ -298,7 +298,7 @@ class Client(db.Model):  # type: ignore
     def send_message(self, message: str) -> bool:
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
             try:
-                send_sms(message, self.identifier)
+                send_sms(message, self.identifier, self.locale)
             except TwilioRestException as e:
                 code = TwilioErrorCode.from_exc(e)
                 if code:

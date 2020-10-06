@@ -29,6 +29,14 @@
                 {
                     "name": "TWILIO_NUMBER",
                     "value": "+12627472332"
+                },
+                {
+                    "name": "TWILIO_NUMBER_EN",
+                    "value": "+12627472332"
+                },
+                {
+                    "name": "TWILIO_NUMBER_ES",
+                    "value": "+17732506640"
                 }
             ],
             "secrets": [

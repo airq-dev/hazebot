@@ -3,6 +3,8 @@ import pytz
 import typing
 import unittest
 
+from twilio.rest.api.v2010.account.message import MessageList
+
 from airq import models
 from airq.config import app
 from airq.config import db
@@ -27,6 +29,10 @@ class BaseTestCase(unittest.TestCase):
         models.zipcodes.Zipcode,
         models.cities.City,
     )
+
+    # We use duck-typing for some stuff here and I haven't had time to figure out how to type that.
+    _patchings = {}  # type: ignore
+    _mocks = {}  # type: ignore
 
     @classmethod
     def _get_ephemeral_models(cls):
@@ -56,7 +62,16 @@ class BaseTestCase(unittest.TestCase):
             _first_test_case = False
 
     def run(self, result=None):
-        self.clock = MockDateTime(
+        self._setup_mocks()
+        return super().run(result=result)
+
+    def tearDown(self):
+        super().tearDown()
+        self._teardown_mocks()
+        self._truncate_tables(self._get_ephemeral_models())
+
+    def _setup_mocks(self):
+        self._patchings["clock"] = MockDateTime(
             datetime.datetime(
                 year=2020,
                 month=9,
@@ -67,12 +82,19 @@ class BaseTestCase(unittest.TestCase):
                 tzinfo=pytz.timezone("America/Los_Angeles"),
             )
         )
-        with self.clock:
-            return super().run(result=result)
+        self._patchings["send_sms"] = unittest.mock.patch.object(MessageList, "create")
+        for name, patching in self._patchings.items():
+            self._mocks[name] = patching.start()
 
-    def tearDown(self):
-        super().tearDown()
-        self._truncate_tables(self._get_ephemeral_models())
+    def _teardown_mocks(self):
+        for patching in self._patchings.values():
+            patching.stop()
+        self._patchings.clear()
+        self._mocks.clear()
+
+    @property
+    def clock(self) -> MockDateTime:
+        return self._mocks["clock"]
 
     @property
     def timestamp(self) -> int:
