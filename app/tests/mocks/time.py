@@ -8,13 +8,19 @@ from airq.lib.clock import _clock
 class MockDateTime:
     def __init__(self, dt: datetime.datetime):
         self.dt = dt
-        self._old_impl = None
 
     def __enter__(self):
-        self._old_impl = _clock._impl
-        _clock._impl = self
+        self.start()
 
     def __exit__(self, *args, **kwargs):
+        self.stop()
+
+    def start(self) -> "MockDateTime":
+        self._old_impl = _clock._impl
+        _clock._impl = self  # type: ignore
+        return self
+
+    def stop(self):
         _clock._impl = self._old_impl
 
     def now(self, tz: typing.Optional[pytz.BaseTzInfo] = None) -> datetime.datetime:

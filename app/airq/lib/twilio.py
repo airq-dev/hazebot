@@ -23,9 +23,14 @@ class TwilioErrorCode(enum.IntEnum):
         return None
 
 
-def send_sms(body: str, phone_number: str):
-    if config.DEBUG:
-        logger.info("Would send SMS to %s: %s", phone_number, body)
+def send_sms(body: str, to_number: str, locale: str):
+    from_number = config.TWILIO_NUMBERS.get(locale)
+    if not from_number:
+        logger.exception("Couldn't find a Twilio number for %s", locale)
+        return
+
+    if config.DEV:
+        logger.info("Would send SMS to %s from %s: %s", to_number, from_number, body)
     else:
         client = Client(config.TWILIO_SID, config.TWILIO_AUTHTOKEN)
-        client.messages.create(body=body, to=phone_number, from_=config.TWILIO_NUMBER)
+        client.messages.create(body=body, to=to_number, from_=from_number)

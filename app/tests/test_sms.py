@@ -1,5 +1,4 @@
-from unittest import mock
-
+from airq import config
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
@@ -7,9 +6,8 @@ from airq.models.requests import Request
 from tests.base import BaseTestCase
 
 
-@mock.patch("airq.models.clients.send_sms")
 class SMSTestCase(BaseTestCase):
-    def test_get_quality(self, mock_send_sms):
+    def test_get_quality(self):
         response = self.client.post(
             "/sms/en", data={"Body": "00000", "From": "+12222222222"}
         )
@@ -32,15 +30,18 @@ class SMSTestCase(BaseTestCase):
             "Portland 97204 is GOOD (AQI 33).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+12222222222",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+12222222222").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
@@ -93,15 +94,18 @@ class SMSTestCase(BaseTestCase):
             "Molalla 97038 is MODERATE (AQI 98).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+13333333333",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+13333333333",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=34.655)
@@ -181,7 +185,7 @@ class SMSTestCase(BaseTestCase):
         )
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
 
-    def test_get_menu(self, *args):
+    def test_get_menu(self):
         response = self.client.post(
             "/sms/en", data={"Body": "M", "From": "+13333333333"}
         )
@@ -224,7 +228,7 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.MENU)
 
-    def test_get_info(self, *args):
+    def test_get_info(self):
         response = self.client.post(
             "/sms/en", data={"Body": "3", "From": "+13333333333"}
         )
@@ -240,7 +244,7 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.ABOUT)
 
-    def test_unsubscribe(self, mock_send_sms):
+    def test_unsubscribe(self):
         response = self.client.post(
             "/sms/en", data={"Body": "U", "From": "+12222222222"}
         )
@@ -265,15 +269,18 @@ class SMSTestCase(BaseTestCase):
             "Portland 97204 is GOOD (AQI 33).",
             response.data,
         )
-        mock_send_sms.assert_called_once_with(
-            "Thanks for texting Hazebot! "
-            "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-            'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-            "\n"
-            "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.",
-            "+12222222222",
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+12222222222",
+            from_=config.TWILIO_NUMBERS["en"],
         )
-        mock_send_sms.reset_mock()
+        self._mocks["send_sms"].reset_mock()
 
         client = Client.query.first()
         self.assertEqual("97204", client.zipcode.zipcode)
@@ -490,7 +497,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual("97204", client.zipcode.zipcode)
         self.assertEqual(alerts_disabled_at, client.alerts_disabled_at)
 
-    def test_feedback(self, *args):
+    def test_feedback(self):
         # Give feedback before feedback begin command
         response = self.client.post(
             "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
@@ -576,7 +583,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response("Thank you for your feedback!", response.data)
         self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="1")
 
-    def test_translations(self, *args):
+    def test_translations(self):
         response = self.client.post(
             "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
         )
@@ -584,7 +591,28 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual("en", client.locale)
 
         response = self.client.post(
-            "/sms/es", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+            "/sms/es", data={"Body": "97204", "From": "+13333333333"}
         )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(1, Event.query.count())
+        self.assertEqual(1, Request.query.get_total_count())
+        self.assert_twilio_response(
+            "Portland 97204 is GOOD (AQI 33).",
+            response.data,
+        )
+        self._mocks["send_sms"].assert_called_once_with(
+            body=(
+                "Thanks for texting Hazebot! "
+                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
+                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
+                "\n"
+                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+            ),
+            to="+13333333333",
+            from_=config.TWILIO_NUMBERS["es"],
+        )
+        self._mocks["send_sms"].reset_mock()
+
         client = Client.query.filter_by(identifier="+13333333333").first()
         self.assertEqual("es", client.locale)
