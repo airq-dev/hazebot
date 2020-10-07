@@ -54,10 +54,10 @@ class GetQuality(BaseQualityCommand):
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
         aqi = zipcode.aqi
-        aqi_display = gettext(" (AQI $(aqi)s)", aqi) if aqi else ""
+        aqi_display = gettext(" (AQI %(aqi)s)", aqi=aqi) if aqi else ""
         message.append(
             gettext(
-                "%(city)s %(ziipcode)s is %(pm25_level)s%(aqi_display)s.",
+                "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s.",
                 city=zipcode.city.name,
                 zipcode=zipcode.zipcode,
                 pm25_level=zipcode.pm25_level.display,
@@ -80,7 +80,7 @@ class GetQuality(BaseQualityCommand):
                 message.append("")
                 message.append(
                     gettext(
-                        "You are now receiving alerts for $(zipcode)s.",
+                        "You are now receiving alerts for %(zipcode)s.",
                         zipcode=zipcode.zipcode,
                     )
                 )
@@ -119,7 +119,7 @@ class GetDetails(BaseQualityCommand):
             for recommendation in recommended_zipcodes:
                 message.append(
                     gettext(
-                        " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)f mi)",
+                        " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)",
                         city=recommendation.city.name,
                         zipcode=recommendation.zipcode,
                         pm25_level=recommendation.pm25_level.display.upper(),
@@ -133,9 +133,9 @@ class GetDetails(BaseQualityCommand):
 
         message.append(
             ngettext(
-                "Average PM2.5 from %(num_sensors)d sensor near %(zipcode)s is %(pm25)s ug/m^3.",
-                "Average PM2.5 from %(num_sensors)d sensors near %(zipcode)s is %(pm25)s ug/m^3.",
-                num_sensors=zipcode.num_sensors,
+                "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3.",
+                "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3.",
+                zipcode.num_sensors,
                 zipcode=zipcode.zipcode,
                 pm25=zipcode.pm25,
             )

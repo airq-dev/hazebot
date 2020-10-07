@@ -25,7 +25,7 @@ class Resubscribe(RegexCommand):
 
         return [
             gettext(
-                "Got it! We'll send you timely alerts when air quality in %(zipcode) changes category.",
+                "Got it! We'll send you timely alerts when air quality in %(zipcode)s changes category.",
                 zipcode=self.client.zipcode.zipcode,
             )
         ]

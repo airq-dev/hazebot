@@ -4,6 +4,7 @@ import typing
 
 from flask_babel import gettext
 
+
 @enum.unique
 class Pm25(enum.IntEnum):
     GOOD = 0
