@@ -20,7 +20,7 @@ class BaseQualityCommand(RegexCommand):
                 return [
                     gettext(
                         "Hmm. Are you sure %(zipcode)s is a valid US zipcode?",
-                        zipcode=self.params["zipcode"]
+                        zipcode=self.params["zipcode"],
                     )
                 ]
         else:
@@ -32,7 +32,7 @@ class BaseQualityCommand(RegexCommand):
             return [
                 gettext(
                     'Oops! We couldn\'t determine the air quality for "%(zipcode)s". Please try a different zip code.',
-                    zipcode=zipcode.zipcode
+                    zipcode=zipcode.zipcode,
                 )
             ]
 
@@ -57,12 +57,11 @@ class GetQuality(BaseQualityCommand):
         aqi_display = gettext(" (AQI $(aqi)s)", aqi) if aqi else ""
         message.append(
             gettext(
-                    "%(city)s %(ziipcode)s is %(pm25_level)s%(aqi_display)s.",
-                    city=zipcode.city.name,
-                    zipcode=zipcode.zipcode,
-                    pm25_level=zipcode.pm25_level.display,
-                    aqi_display=aqi_display
-                )
+                "%(city)s %(ziipcode)s is %(pm25_level)s%(aqi_display)s.",
+                city=zipcode.city.name,
+                zipcode=zipcode.zipcode,
+                pm25_level=zipcode.pm25_level.display,
+                aqi_display=aqi_display,
             )
         )
 
@@ -71,16 +70,20 @@ class GetQuality(BaseQualityCommand):
         if not self.client.is_enabled_for_alerts:
             message.append("")
             message.append(
-                gettext('Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.')
+                gettext(
+                    'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
+                )
             )
         elif was_updated:
             if has_zipcode:
                 # Zipcode changed.
                 message.append("")
-                message.append(gettext(
-                    "You are now receiving alerts for $(zipcode)s.",
-                    zipcode=zipcode.zipcode
-                ))
+                message.append(
+                    gettext(
+                        "You are now receiving alerts for $(zipcode)s.",
+                        zipcode=zipcode.zipcode,
+                    )
+                )
             else:
                 tasks.send_intro_message.apply_async((self.client.id,), countdown=5)
         else:
@@ -110,10 +113,13 @@ class GetDetails(BaseQualityCommand):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append(gettext("Here are the closest places with better air quality:"))
+            message.append(
+                gettext("Here are the closest places with better air quality:")
+            )
             for recommendation in recommended_zipcodes:
                 message.append(
-                    gettext(" - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)f mi)",
+                    gettext(
+                        " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)f mi)",
                         city=recommendation.city.name,
                         zipcode=recommendation.zipcode,
                         pm25_level=recommendation.pm25_level.display.upper(),

@@ -16,7 +16,9 @@ class ShowFeedback(RegexCommand):
     pattern = r"^(4[\.\)]?|feedback)$"
 
     def handle(self) -> typing.List[str]:
-        message = [gettext("Please enter your feedback below:")]  # consider adding cancel option
+        message = [
+            gettext("Please enter your feedback below:")
+        ]  # consider adding cancel option
         self.client.log_event(EventType.FEEDBACK_BEGIN)
         return message
 

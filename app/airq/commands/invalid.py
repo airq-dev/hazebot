@@ -14,6 +14,8 @@ class InvalidInput(SMSCommand):
             gettext(
                 'Unrecognized option "%(user_input)s". Reply with M for the menu%(alert_message)s.',
                 user_input=self.user_input,
-                alert_message=" or U to stop this alert" if self.client.is_enabled_for_alerts else "",
+                alert_message=" or U to stop this alert"
+                if self.client.is_enabled_for_alerts
+                else "",
             )
         ]

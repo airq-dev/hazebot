@@ -1,5 +1,7 @@
 import typing
 
+from flask_babel import gettext
+
 from airq.commands.base import RegexCommand
 from airq.models.zipcodes import Zipcode
 
@@ -15,7 +17,7 @@ class Resubscribe(RegexCommand):
             return [
                 gettext(
                     "Looks like you're already watching %(zipcode)s.",
-                    zipcode=self.client.zipcode.zipcode
+                    zipcode=self.client.zipcode.zipcode,
                 )
             ]
 
@@ -24,6 +26,6 @@ class Resubscribe(RegexCommand):
         return [
             gettext(
                 "Got it! We'll send you timely alerts when air quality in %(zipcode) changes category.",
-                zipcode=self.client.zipcode.zipcode
+                zipcode=self.client.zipcode.zipcode,
             )
         ]

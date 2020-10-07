@@ -1,5 +1,7 @@
 import typing
 
+from flask_babel import gettext
+
 from airq.commands.base import RegexCommand
 from airq.commands.feedback import ReceiveFeedback
 from airq.models.zipcodes import Zipcode
@@ -16,14 +18,16 @@ class Unsubscribe(RegexCommand):
             return [
                 gettext(
                     "Looks like you already stopped watching %(zipcode)s.",
-                    zipcode=self.client.zipcode.zipcode
+                    zipcode=self.client.zipcode.zipcode,
                 )
             ]
 
         self.client.disable_alerts()
 
         message = [
-            gettext("Got it! You will not receive air quality updates until you text a new zipcode."),
+            gettext(
+                "Got it! You will not receive air quality updates until you text a new zipcode."
+            ),
             "",
             gettext("Tell us why you're leaving so we can improve our service:"),
         ]
