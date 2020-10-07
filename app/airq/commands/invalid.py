@@ -11,8 +11,9 @@ class InvalidInput(SMSCommand):
 
     def handle(self) -> typing.List[str]:
         return [
-            'Unrecognized option "{}". Reply with M for the menu{}.'.format(
-                self.user_input,
-                " or U to stop this alert" if self.client.is_enabled_for_alerts else "",
+            gettext(
+                'Unrecognized option "%(user_input)s". Reply with M for the menu%(alert_message)s.',
+                user_input=self.user_input,
+                alert_message=" or U to stop this alert" if self.client.is_enabled_for_alerts else "",
             )
         ]

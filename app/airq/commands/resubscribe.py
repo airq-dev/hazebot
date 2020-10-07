@@ -13,15 +13,17 @@ class Resubscribe(RegexCommand):
 
         if self.client.is_enabled_for_alerts:
             return [
-                "Looks like you're already watching {}.".format(
-                    self.client.zipcode.zipcode
+                gettext(
+                    "Looks like you're already watching %(zipcode)s.",
+                    zipcode=self.client.zipcode.zipcode
                 )
             ]
 
         self.client.enable_alerts()
 
         return [
-            "Got it! We'll send you timely alerts when air quality in {} changes category.".format(
-                self.client.zipcode.zipcode
+            gettext(
+                "Got it! We'll send you timely alerts when air quality in %(zipcode) changes category.",
+                zipcode=self.client.zipcode.zipcode
             )
         ]
