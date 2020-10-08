@@ -1,3 +1,4 @@
+from flask_babel import force_locale
 from flask_babel import gettext
 
 from airq.celery import celery
@@ -38,7 +39,8 @@ def send_intro_message(client_id: int):
         logger.exception("Couldn't find client with id %s", client_id)
         return
 
-    message = gettext(
-        'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n\nSave this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.'
-    )
-    client.send_message(message)
+    with force_locale(client.locale):
+        message = gettext(
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n\nSave this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.'
+        )
+        client.send_message(message)
