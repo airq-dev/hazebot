@@ -1,6 +1,8 @@
 import abc
 import typing
 
+from flask_babel import ngettext, gettext
+
 from airq import config
 from airq import tasks
 from airq.commands.base import RegexCommand
@@ -16,8 +18,9 @@ class BaseQualityCommand(RegexCommand):
             zipcode = Zipcode.query.get_by_zipcode(self.params["zipcode"])
             if zipcode is None:
                 return [
-                    "Hmm. Are you sure {} is a valid US zipcode?".format(
-                        self.params["zipcode"]
+                    gettext(
+                        "Hmm. Are you sure %(zipcode)s is a valid US zipcode?",
+                        zipcode=self.params["zipcode"],
                     )
                 ]
         else:
@@ -27,8 +30,9 @@ class BaseQualityCommand(RegexCommand):
 
         if not zipcode.pm25 or zipcode.is_pm25_stale:
             return [
-                'Oops! We couldn\'t determine the air quality for "{}". Please try a different zip code.'.format(
-                    zipcode.zipcode
+                gettext(
+                    'Oops! We couldn\'t determine the air quality for "%(zipcode)s". Please try a different zip code.',
+                    zipcode=zipcode.zipcode,
                 )
             ]
 
@@ -50,12 +54,14 @@ class GetQuality(BaseQualityCommand):
     def _get_message(self, zipcode: Zipcode) -> typing.List[str]:
         message = []
         aqi = zipcode.aqi
+        aqi_display = gettext(" (AQI %(aqi)s)", aqi=aqi) if aqi else ""
         message.append(
-            "{} {} is {}{}.".format(
-                zipcode.city.name,
-                zipcode.zipcode,
-                zipcode.pm25_level.display,
-                f" (AQI {aqi})" if aqi else "",
+            gettext(
+                "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s.",
+                city=zipcode.city.name,
+                zipcode=zipcode.zipcode,
+                pm25_level=zipcode.pm25_level.display,
+                aqi_display=aqi_display,
             )
         )
 
@@ -64,18 +70,25 @@ class GetQuality(BaseQualityCommand):
         if not self.client.is_enabled_for_alerts:
             message.append("")
             message.append(
-                'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
+                gettext(
+                    'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.'
+                )
             )
         elif was_updated:
             if has_zipcode:
                 # Zipcode changed.
                 message.append("")
-                message.append(f"You are now receiving alerts for {zipcode.zipcode}.")
+                message.append(
+                    gettext(
+                        "You are now receiving alerts for %(zipcode)s.",
+                        zipcode=zipcode.zipcode,
+                    )
+                )
             else:
                 tasks.send_intro_message.apply_async((self.client.id,), countdown=5)
         else:
             message.append("")
-            message.append('Text "M" for Menu, "E" to end alerts.')
+            message.append(gettext('Text "M" for Menu, "E" to end alerts.'))
 
         self.client.log_event(
             self.event_type, zipcode=zipcode.zipcode, pm25=zipcode.pm25
@@ -100,14 +113,17 @@ class GetDetails(BaseQualityCommand):
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
         if recommended_zipcodes:
-            message.append("Here are the closest places with better air quality:")
+            message.append(
+                gettext("Here are the closest places with better air quality:")
+            )
             for recommendation in recommended_zipcodes:
                 message.append(
-                    " - {} {}: {} ({} mi)".format(
-                        recommendation.city.name,
-                        recommendation.zipcode,
-                        recommendation.pm25_level.display.upper(),
-                        round(
+                    gettext(
+                        " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)",
+                        city=recommendation.city.name,
+                        zipcode=recommendation.zipcode,
+                        pm25_level=recommendation.pm25_level.display.upper(),
+                        distance=round(
                             kilometers_to_miles(recommendation.distance(zipcode)),
                             ndigits=1,
                         ),  # TODO: Make this based on locale
@@ -116,10 +132,12 @@ class GetDetails(BaseQualityCommand):
             message.append("")
 
         message.append(
-            "Average PM2.5 from {} sensor(s) near {} is {} ug/m^3.".format(
+            ngettext(
+                "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3.",
+                "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3.",
                 zipcode.num_sensors,
-                zipcode.zipcode,
-                zipcode.pm25,
+                zipcode=zipcode.zipcode,
+                pm25=zipcode.pm25,
             )
         )
 

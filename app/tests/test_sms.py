@@ -71,7 +71,7 @@ class SMSTestCase(BaseTestCase):
         self.assert_twilio_response(
             "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk.\n"
             "\n"
-            "Average PM2.5 from 8 sensor(s) near 97204 is 7.945 ug/m^3.",
+            "Average PM2.5 from 8 sensors near 97204 is 7.945 ug/m^3.",
             response.data,
         )
         self.assert_event(
@@ -141,7 +141,7 @@ class SMSTestCase(BaseTestCase):
             " - West Linn 97068: GOOD (17.3 mi)\n"
             " - Gladstone 97027: GOOD (18.5 mi)\n"
             "\n"
-            "Average PM2.5 from 2 sensor(s) near 97038 is 34.655 ug/m^3.",
+            "Average PM2.5 from 2 sensors near 97038 is 34.655 ug/m^3.",
             response.data,
         )
         self.assert_event(

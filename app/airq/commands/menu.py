@@ -12,12 +12,12 @@ class ShowMenu(RegexCommand):
     def handle(self) -> typing.List[str]:
         self.client.log_event(EventType.MENU)
         return [
-            "Reply",
-            "1. Details and recommendations",
-            "2. Current AQI",
-            "3. Hazebot info",
-            "4. Give feedback",
-            "5. Stop alerts",
+            gettext("Reply"),
+            gettext("1. Details and recommendations"),
+            gettext("2. Current AQI"),
+            gettext("3. Hazebot info"),
+            gettext("4. Give feedback"),
+            gettext("5. Stop alerts"),
             "",
-            "Or, enter a new zipcode.",
+            gettext("Or, enter a new zipcode."),
         ]
