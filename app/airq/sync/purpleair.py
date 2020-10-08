@@ -248,11 +248,12 @@ def _send_alerts():
 def _send_share_requests():
     num_sent = 0
     for client in Client.query.filter_eligible_for_share_requests().all():
-        try:
-            if client.request_share():
-                num_sent += 1
-        except Exception as e:
-            logger.exception("Failed to request share from %s: %s", client, e)
+        with force_locale(client.locale):
+            try:
+                if client.request_share():
+                    num_sent += 1
+            except Exception as e:
+                logger.exception("Failed to request share from %s: %s", client, e)
 
     logger.info("Requests %s shares", num_sent)
 
