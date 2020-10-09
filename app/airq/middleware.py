@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 class LoggingMiddleware:
     KEYS = {
         "HTTP_USER_AGENT",
+        "PATH_INFO",
         "REQUEST_METHOD",
-        "REQUEST_URI",
     }
 
     def __init__(self, app):

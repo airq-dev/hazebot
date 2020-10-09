@@ -2,11 +2,19 @@ version: '3.7'
 
 services:
   app:
-    command: flask run --host=0.0.0.0
+    command: gunicorn --bind 0.0.0.0:5000 airq:app --reload
     env_file:
       - ./.env.dev
+    expose:
+      - "5000"
+  nginx:
+    build: 
+      context: ./nginx
+      args: [ "CONF_FILE=nginx.localhost.conf" ]
     ports:
-      - 5000:5000
+      - 80:80
+    depends_on:
+      - app
   scheduler:
     env_file:
       - ./.env.dev

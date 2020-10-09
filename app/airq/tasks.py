@@ -1,6 +1,7 @@
 from flask_babel import force_locale
 from flask_babel import gettext
 
+from airq import config
 from airq.celery import celery
 from airq.lib.logging import get_airq_logger
 
@@ -41,6 +42,7 @@ def send_intro_message(client_id: int):
 
     with force_locale(client.locale):
         message = gettext(
-            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n\nSave this contact (most call me Hazebot) and text your zipcode anytime for an AQI update.'
+            'Thanks for texting Hazebot! You\'ll receive timely texts when AQI in your area changes based on PurpleAir data. Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n\nSave this contact and text your zipcode anytime for an AQI update.'
         )
-        client.send_message(message)
+        media = f"{config.SERVER_URL}/vcard/{client.locale}.vcf"
+        client.send_message(message, media=media)

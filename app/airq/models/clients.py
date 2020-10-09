@@ -295,10 +295,10 @@ class Client(db.Model):  # type: ignore
         send_start, send_end = self.SEND_WINDOW_HOURS
         return send_start <= dt.hour < send_end
 
-    def send_message(self, message: str) -> bool:
+    def send_message(self, message: str, media: typing.Optional[str] = None) -> bool:
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
             try:
-                send_sms(message, self.identifier, self.locale)
+                send_sms(message, self.identifier, self.locale, media=media)
             except TwilioRestException as e:
                 code = TwilioErrorCode.from_exc(e)
                 if code:
