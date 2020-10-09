@@ -36,10 +36,11 @@ class SMSTestCase(BaseTestCase):
                 "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
                 'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
                 "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                "Save this contact and text your zipcode anytime for an AQI update."
             ),
             to="+12222222222",
             from_=config.TWILIO_NUMBERS["en"],
+            media_url="localhost:8080/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -100,10 +101,11 @@ class SMSTestCase(BaseTestCase):
                 "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
                 'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
                 "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                "Save this contact and text your zipcode anytime for an AQI update."
             ),
             to="+13333333333",
             from_=config.TWILIO_NUMBERS["en"],
+            media_url="localhost:8080/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -275,10 +277,11 @@ class SMSTestCase(BaseTestCase):
                 "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
                 'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
                 "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                "Save this contact and text your zipcode anytime for an AQI update."
             ),
             to="+12222222222",
             from_=config.TWILIO_NUMBERS["en"],
+            media_url="localhost:8080/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -607,10 +610,11 @@ class SMSTestCase(BaseTestCase):
                 "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
                 'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
                 "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
+                "Save this contact and text your zipcode anytime for an AQI update."
             ),
             to="+13333333333",
             from_=config.TWILIO_NUMBERS["es"],
+            media_url="localhost:8080/vcard/es.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
