@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block header %}
+    <h1>{% block title %}{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <body>        
+        <div>
+            <div class="row">
+                <div class = "col-sm section">
+                    <div class = "section-text">
+                        <ul class="intro-list">
+                            <li class="intro-text">Actionable and</li>
+                            <li class="intro-text">Accessible</li>
+                            <li class="intro-text">Local Air</li>
+                            <li class="intro-text">Quality</li>
+                            <li class="intro-text">Alerts</li>
+                        </ul>
+                        <a class = "btn btn-primary sms-button" href="sms://+12627472332" role="button">Sign up for some fresh air</a>
+                        <div class="section-text">
+                            Text your zipcode to recieve actionable updates about the air quality near you
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class = "col-sm section">
+                    <h3><a class="section-title" name="how-it-works">How it works</a></h3>
+                    <div class="row justify-content-center content">
+                        <div id='map'></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm section">
+                    <h3><a class="section-title" name="mission">Mission</a></h3>
+                    <div class="section-text">
+                            We believe there should be a 211 for environmental events.
+                            This is Hazebot's purpose. To be your text-based companion 
+                            for air quality and other environmental disasters. <br><br>
+
+                            Our goal is to make this service available to all
+                            regardless of phone type, internet access, or ability.
+                            Just text a zip code to (262) 747-2332 to receive: Local AQI Details; Safe places nearby; Alerting when conditions change<br>
+                        <!-- <ul>
+                            <li class="section-list">Local AQI Details</li>
+                            <li class="section-list">Safe places nearby</li>
+                            <li class="section-list">Alerting when conditions change</li>
+                        </ul> -->
+                    </div>
+                </div>
+                <div class="col-sm section">
+                    <h3><a class="section-title" name="who-we-are">Who we are</a></h3>
+                    <div class="section-text">
+                        Ian Hoffman and Will Danforth launched hazebot during the country's worst wildfire season on record. They both live in Oakland and believe that everyone, especially those most vulnerable and under-resourced, should have access to information about their health and how to protect themselves.<br><br>
+                        Please email us at info@hazebot.org or check out our github repo if you'd like to get involved.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- formatting -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script> 
+        
+        <!-- mapbox js -->
+        <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+        <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css" type="text/css"/>
+        <script src="{{url_for('static', filename='map.js')}}"></script>
+        
+        <!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
+        <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+    </body>
+ {% endblock %}
