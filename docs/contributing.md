@@ -55,7 +55,7 @@ The process should hang. Now open your editor and add a breakpoint using [pdb](h
 You can directly query Postgres via Docker while the app is running. Run:
 
 ```
-docker-compose db /bin/sh  # gets you a command line in the container
+docker-compose exec db /bin/sh  # gets you a command line in the container
 psql --user postgres  # logs you into the database
 ```
 
