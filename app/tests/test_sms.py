@@ -40,7 +40,7 @@ class SMSTestCase(BaseTestCase):
             ),
             to="+12222222222",
             from_=config.TWILIO_NUMBERS["en"],
-            media_url="localhost:8080/vcard/en.vcf",
+            media_url="localhost:8080/public/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -105,7 +105,7 @@ class SMSTestCase(BaseTestCase):
             ),
             to="+13333333333",
             from_=config.TWILIO_NUMBERS["en"],
-            media_url="localhost:8080/vcard/en.vcf",
+            media_url="localhost:8080/public/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -281,7 +281,7 @@ class SMSTestCase(BaseTestCase):
             ),
             to="+12222222222",
             from_=config.TWILIO_NUMBERS["en"],
-            media_url="localhost:8080/vcard/en.vcf",
+            media_url="localhost:8080/public/vcard/en.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 
@@ -614,7 +614,7 @@ class SMSTestCase(BaseTestCase):
             ),
             to="+13333333333",
             from_=config.TWILIO_NUMBERS["es"],
-            media_url="localhost:8080/vcard/es.vcf",
+            media_url="localhost:8080/public/vcard/es.vcf",
         )
         self._mocks["send_sms"].reset_mock()
 

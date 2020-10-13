@@ -8,7 +8,9 @@ import os
 import vobject
 
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = (
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/nginx/html/public/"
+)
 
 
 def gen_vcard(locale: str, number: str):
@@ -17,8 +19,13 @@ def gen_vcard(locale: str, number: str):
     v_card.add("TEL")
     v_card.tel.value = number
     v_card.tel.type_param = "text"
+    v_card.add("PHOTO")
+    v_card.photo.type_param = "JPEG"
+    v_card.photo.encoding_param = "b"
+    with open(ROOT + "icon.jpg", "rb") as f:
+        v_card.photo.value = f.read()
 
-    outfile = ROOT + "/nginx/html/vcard/" + locale + ".vcf"
+    outfile = ROOT + "vcard/" + locale + ".vcf"
     with open(outfile, "w") as writer:
         writer.write(v_card.serialize())
 
