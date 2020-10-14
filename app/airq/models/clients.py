@@ -21,7 +21,6 @@ from airq.lib.twilio import send_sms
 from airq.lib.twilio import TwilioErrorCode
 from airq.models.events import Event
 from airq.models.events import EventType
-from airq.models.requests import Request
 from airq.models.zipcodes import Zipcode
 
 
@@ -175,7 +174,6 @@ class Client(db.Model):  # type: ignore
     num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
     locale = db.Column(db.String(), nullable=False, server_default="en")
 
-    requests = db.relationship("Request")
     zipcode = db.relationship("Zipcode")
     events = db.relationship("Event")
 
@@ -219,26 +217,6 @@ class Client(db.Model):  # type: ignore
     #
     # Presence
     #
-
-    def log_request(self, zipcode: Zipcode):
-        request = Request.query.filter_by(
-            client_id=self.id,
-            zipcode_id=zipcode.id,
-        ).first()
-        now = timestamp()
-        if request is None:
-            request = Request(
-                client_id=self.id,
-                zipcode_id=zipcode.id,
-                count=1,
-                first_ts=now,
-                last_ts=now,
-            )
-            db.session.add(request)
-        else:
-            request.count += 1
-            request.last_ts = now
-        db.session.commit()
 
     def mark_seen(self, locale: str):
         self.last_activity_at = timestamp()
@@ -295,10 +273,10 @@ class Client(db.Model):  # type: ignore
         send_start, send_end = self.SEND_WINDOW_HOURS
         return send_start <= dt.hour < send_end
 
-    def send_message(self, message: str) -> bool:
+    def send_message(self, message: str, media: typing.Optional[str] = None) -> bool:
         if self.type_code == ClientIdentifierType.PHONE_NUMBER:
             try:
-                send_sms(message, self.identifier, self.locale)
+                send_sms(message, self.identifier, self.locale, media=media)
             except TwilioRestException as e:
                 code = TwilioErrorCode.from_exc(e)
                 if code:

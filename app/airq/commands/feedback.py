@@ -5,6 +5,7 @@ from flask_babel import gettext
 from werkzeug.utils import cached_property
 
 from airq import config
+from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.commands.base import SMSCommand
 from airq.lib.ses import send_email
@@ -15,22 +16,20 @@ from airq.models.events import EventType
 class ShowFeedback(RegexCommand):
     pattern = r"^(4[\.\)]?|feedback)$"
 
-    def handle(self) -> typing.List[str]:
-        message = [
-            gettext("Please enter your feedback below:")
-        ]  # consider adding cancel option
+    def handle(self) -> MessageResponse:
         self.client.log_event(EventType.FEEDBACK_BEGIN)
-        return message
+        # TODO: Consider adding cancel option
+        return MessageResponse(body=gettext("Please enter your feedback below:"))
 
 
 class ReceiveFeedback(SMSCommand):
     def should_handle(self) -> bool:
         return self.client.should_accept_feedback()
 
-    def handle(self) -> typing.List[str]:
+    def handle(self) -> MessageResponse:
         selected_choice = self._get_selected_choice()
         if selected_choice == "5":
-            return [gettext("Please enter your feedback below:")]
+            return MessageResponse(body=gettext("Please enter your feedback below:"))
 
         feedback = self.user_input
         if selected_choice:
@@ -44,15 +43,15 @@ class ReceiveFeedback(SMSCommand):
             f'User feedback: "{feedback}"',
         )
         self.client.log_event(EventType.FEEDBACK_RECEIVED, feedback=feedback)
-        return [gettext("Thank you for your feedback!")]
+        return MessageResponse(body=gettext("Thank you for your feedback!"))
 
     @cached_property
     def is_unsubscribe(self) -> bool:
         return self.client.get_last_client_event_type() == EventType.UNSUBSCRIBE
 
     def _get_selected_choice(self) -> typing.Optional[str]:
-        if self.is_unsubscribe:
-            return next(
+        return (
+            next(
                 (
                     k
                     for k in self.feedback_choices()
@@ -60,8 +59,9 @@ class ReceiveFeedback(SMSCommand):
                 ),
                 None,
             )
-
-        return None
+            if self.is_unsubscribe
+            else None
+        )
 
     @staticmethod
     def feedback_choices() -> typing.Dict[str, str]:
