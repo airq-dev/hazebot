@@ -1,6 +1,7 @@
 import html
 import typing
 
+from airq.commands.base import MessageResponse
 from airq.commands.base import SMSCommand
 from airq.commands.about import ShowAbout
 from airq.commands.invalid import InvalidInput
@@ -50,19 +51,10 @@ def _parse_command(client: Client, user_input: str) -> SMSCommand:
 
 def handle_command(
     user_input: str, identifier: str, identifier_type: ClientIdentifierType, locale: str
-) -> str:
+) -> MessageResponse:
     client, was_created = Client.query.get_or_create(
         identifier, identifier_type, locale
     )
     if not was_created:
         client.mark_seen(locale)
-
-    message = _parse_command(client, user_input).handle()
-
-    if identifier_type == ClientIdentifierType.IP:
-        message = [html.escape(s) for s in message]
-        separator = "<br>"
-    else:
-        separator = "\n"
-
-    return separator.join(message)
+    return _parse_command(client, user_input).handle()
