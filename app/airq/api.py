@@ -53,14 +53,12 @@ def _get_supported_locale(locale: str) -> str:
 def sms_reply(locale: str) -> str:
     supported_locale = _get_supported_locale(locale)
     g.locale = supported_locale
-    resp = MessagingResponse()
     zipcode = request.values.get("Body", "").strip()
     phone_number = request.values.get("From", "").strip()
-    message = commands.handle_command(
+    response = commands.handle_command(
         zipcode, phone_number, ClientIdentifierType.PHONE_NUMBER, supported_locale
     )
-    resp.message(message)
-    return str(resp)
+    return response.serialize()
 
 
 def test_command(locale: str) -> str:
@@ -71,9 +69,10 @@ def test_command(locale: str) -> str:
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    return commands.handle_command(
+    response = commands.handle_command(
         command, ip, ClientIdentifierType.IP, supported_locale
     )
+    return response.as_html()
 
 
 def login() -> typing.Union[Response, str]:
