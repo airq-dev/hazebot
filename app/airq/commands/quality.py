@@ -35,11 +35,7 @@ class BaseQualityCommand(RegexCommand):
                 )
             )
 
-        message = self._get_message(zipcode)
-
-        self.client.log_request(zipcode)
-
-        return message
+        return self._get_message(zipcode)
 
     @abc.abstractmethod
     def _get_message(self, zipcode: Zipcode) -> MessageResponse:

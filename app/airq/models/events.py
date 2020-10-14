@@ -44,13 +44,16 @@ class EventQuery(BaseQuery):
         return event
 
     def get_stats(self) -> typing.Dict[str, typing.Dict[str, int]]:
-        keys = sorted(m.name for m in EventType)
+        cutoff = clock.now() - datetime.timedelta(days=30)
+        metrics = [m.name for m in EventType]
+        metrics.append("NEW_USERS")
+        keys = sorted(metrics)
         stats: typing.Dict[str, typing.Dict[str, int]] = collections.defaultdict(
             lambda: {name: 0 for name in keys}
         )
         totals = {name: 0 for name in keys}
         for date, type_code, count in (
-            self.filter(Event.timestamp > clock.now() - datetime.timedelta(days=30))
+            self.filter(Event.timestamp > cutoff)
             .with_entities(
                 func.DATE(func.timezone("PST", Event.timestamp)).label("date"),
                 Event.type_code,
@@ -60,10 +63,28 @@ class EventQuery(BaseQuery):
             .order_by(desc("date"))
             .all()
         ):
-            send_date = date.strftime("%Y-%m-%d")
+            event_date = date.strftime("%Y-%m-%d")
             event_type = EventType(type_code)
-            stats[send_date][event_type.name] = count
+            stats[event_date][event_type.name] = count
             totals[event_type.name] += count
+
+        # Ew.
+        from airq.models.clients import Client
+
+        for date, count in (
+            Client.query.filter_phones()
+            .filter(Client.created_at > cutoff)
+            .with_entities(
+                func.DATE(func.timezone("PST", Client.created_at)).label("date"),
+                func.count(Client.id),
+            )
+            .group_by("date")
+            .order_by(desc("date"))
+            .all()
+        ):
+            join_date = date.strftime("%Y-%m-%d")
+            stats[join_date]["NEW_USERS"] = count
+
         stats["TOTAL"] = totals
         return dict(stats)
 
@@ -125,7 +146,8 @@ class Event(db.Model):  # type: ignore
 
     def validate(self) -> typing.Dict[str, typing.Any]:
         schema = self._get_schema()
-        return dataclasses.asdict(schema(**self.json_data))
+        json_data = typing.cast(typing.Dict[str, typing.Any], self.json_data)
+        return dataclasses.asdict(schema(**json_data))
 
 
 @dataclasses.dataclass
