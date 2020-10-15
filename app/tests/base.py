@@ -100,12 +100,16 @@ class BaseTestCase(unittest.TestCase):
     def timestamp(self) -> int:
         return timestamp()
 
-    def assert_twilio_response(self, expected: str, actual: bytes):
+    def assert_twilio_response(
+        self, expected: str, actual: bytes, media: typing.Optional[str] = None
+    ):
         self.assertEqual(
             '<?xml version="1.0" encoding="UTF-8"?>'
-            "<Response><Message>"
+            "<Response><Message><Body>"
             "{}"
-            "</Message></Response>".format(expected),
+            "</Body>{}</Message></Response>".format(
+                expected, "<Media>{}</Media>".format(media) if media else ""
+            ),
             actual.decode(),
         )
 

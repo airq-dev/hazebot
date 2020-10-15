@@ -49,7 +49,6 @@ class Zipcode(db.Model):  # type: ignore
     max_sensor_distance = db.Column(db.Float(), nullable=False, server_default="0")
 
     city = db.relationship("City")
-    requests = db.relationship("Request")
 
     def __repr__(self) -> str:
         return f"<Zipcode {self.zipcode}>"

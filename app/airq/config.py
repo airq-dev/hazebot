@@ -36,6 +36,8 @@ PG_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
 PG_PORT = os.getenv("POSTGRES_POST", "5432")
 PG_USER = os.getenv("POSTGRES_USER", "postgres")
 
+SERVER_URL = os.getenv("SERVER_URL", "localhost:80")
+
 
 # Init logging before doing anything else.
 #

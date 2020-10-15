@@ -27,6 +27,10 @@
                     "value": "production"
                 },
                 {
+                    "name": "SERVER_URL",
+                    "value": "https://app.hazebot.org"
+                },
+                {
                     "name": "TWILIO_NUMBER",
                     "value": "+12627472332"
                 },

@@ -2,7 +2,6 @@ from airq import config
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
-from airq.models.requests import Request
 from tests.base import BaseTestCase
 
 
@@ -14,7 +13,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(0, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Hmm. Are you sure 00000 is a valid US zipcode?", response.data
         )
@@ -25,23 +23,13 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 33).",
+            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 33).\n"
+            "\n"
+            'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
+            media="localhost:8080/public/vcard/en.vcf",
         )
-        self._mocks["send_sms"].assert_called_once_with(
-            body=(
-                "Thanks for texting Hazebot! "
-                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-                "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
-            ),
-            to="+12222222222",
-            from_=config.TWILIO_NUMBERS["en"],
-        )
-        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+12222222222").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=7.945)
@@ -52,7 +40,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
@@ -67,7 +54,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
-        self.assertEqual(3, Request.query.get_total_count())
         self.assert_twilio_response(
             "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk.\n"
             "\n"
@@ -89,23 +75,13 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(4, Event.query.count())
-        self.assertEqual(4, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Molalla 97038 is MODERATE (AQI 98).",
+            "Welcome to Hazebot! We'll send you alerts when air quality in Molalla 97038 changes category. Air quality is now MODERATE (AQI 98).\n"
+            "\n"
+            'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
+            media="localhost:8080/public/vcard/en.vcf",
         )
-        self._mocks["send_sms"].assert_called_once_with(
-            body=(
-                "Thanks for texting Hazebot! "
-                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-                "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
-            ),
-            to="+13333333333",
-            from_=config.TWILIO_NUMBERS["en"],
-        )
-        self._mocks["send_sms"].reset_mock()
 
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=34.655)
@@ -116,7 +92,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(5, Event.query.count())
-        self.assertEqual(5, Request.query.get_total_count())
         self.assert_twilio_response(
             "Molalla 97038 is MODERATE (AQI 98).\n"
             "\n"
@@ -131,7 +106,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(6, Event.query.count())
-        self.assertEqual(6, Request.query.get_total_count())
         self.assert_twilio_response(
             "MODERATE (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
             "\n\n"
@@ -160,7 +134,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(7, Event.query.count())
-        self.assertEqual(7, Request.query.get_total_count())
         self.assert_twilio_response(
             "Molalla 97038 is MODERATE (AQI 98).\n"
             "\n"
@@ -176,7 +149,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, Client.query.count())
         self.assertEqual(8, Event.query.count())
-        self.assertEqual(8, Request.query.get_total_count())
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
@@ -192,7 +164,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Reply\n"
             "1. Details and recommendations\n"
@@ -213,7 +184,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Reply\n"
             "1. Details and recommendations\n"
@@ -235,7 +205,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. "
             "Visit hazebot.org or email info@hazebot.org for feedback.",
@@ -250,7 +219,6 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Looks like you haven't use hazebot before! "
             "Please text us a zipcode and we'll send you the air quality.",
@@ -264,23 +232,13 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 33).",
+            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 33).\n"
+            "\n"
+            'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
+            media="localhost:8080/public/vcard/en.vcf",
         )
-        self._mocks["send_sms"].assert_called_once_with(
-            body=(
-                "Thanks for texting Hazebot! "
-                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-                "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
-            ),
-            to="+12222222222",
-            from_=config.TWILIO_NUMBERS["en"],
-        )
-        self._mocks["send_sms"].reset_mock()
 
         client = Client.query.first()
         self.assertEqual("97204", client.zipcode.zipcode)
@@ -294,7 +252,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
@@ -319,7 +276,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
-        self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
             "Thank you for your feedback!",
             response.data,
@@ -338,7 +294,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Portland 97204 is GOOD (AQI 33).\n"
             "\n"
@@ -358,7 +313,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! We'll send you timely alerts when air quality in 97204 changes category.",
             response.data,
@@ -376,7 +330,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(5, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Looks like you're already watching 97204.",
             response.data,
@@ -403,7 +356,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(7, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
@@ -427,7 +379,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(7, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Please enter your feedback below:",
             response.data,
@@ -444,7 +395,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(8, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Thank you for your feedback!",
             response.data,
@@ -461,7 +411,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(9, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! We'll send you timely alerts when air quality in 97204 changes category.",
             response.data,
@@ -479,7 +428,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(10, Event.query.count())
-        self.assertEqual(2, Request.query.get_total_count())
         self.assert_twilio_response(
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
@@ -507,7 +455,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(0, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
             response.data,
@@ -521,7 +468,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Please enter your feedback below:",
             response.data,
@@ -535,7 +481,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response("Thank you for your feedback!", response.data)
         self.assert_event(
             client_id, EventType.FEEDBACK_RECEIVED, feedback="Blah Blah Blah"
@@ -549,7 +494,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             'Unrecognized option "Blah Blah Blah". Reply with M for the menu.',
             response.data,
@@ -563,7 +507,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(3, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response(
             "Please enter your feedback below:",
             response.data,
@@ -579,7 +522,6 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
-        self.assertEqual(0, Request.query.get_total_count())
         self.assert_twilio_response("Thank you for your feedback!", response.data)
         self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="1")
 
@@ -596,23 +538,13 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assertEqual(1, Request.query.get_total_count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 33).",
+            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 33).\n"
+            "\n"
+            'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
+            media="localhost:8080/public/vcard/es.vcf",
         )
-        self._mocks["send_sms"].assert_called_once_with(
-            body=(
-                "Thanks for texting Hazebot! "
-                "You'll receive timely texts when AQI in your area changes based on PurpleAir data. "
-                'Text Menu ("M") for more features including recommendations, or end alerts by texting ("E").\n'
-                "\n"
-                "Save this contact (most call me Hazebot) and text your zipcode anytime for an AQI update."
-            ),
-            to="+13333333333",
-            from_=config.TWILIO_NUMBERS["es"],
-        )
-        self._mocks["send_sms"].reset_mock()
 
         client = Client.query.filter_by(identifier="+13333333333").first()
         self.assertEqual("es", client.locale)
