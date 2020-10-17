@@ -3,6 +3,7 @@ from airq.celery import celery  # This is necesary to start celery
 
 from airq.controllers import admin
 from airq.controllers import api
+from airq.controllers import home
 from airq import management
 
 
@@ -16,6 +17,7 @@ app.cli.command("sync")(management.sync)
 # TODO: Change '/' to be the admin page,
 # and repoint healthcheck /healthcheck
 app.route("/", methods=["GET"])(api.healthcheck)
+app.route("/home", methods=["GET"])(home.home)
 app.route("/healthcheck", methods=["GET"])(api.healthcheck)
 app.route("/test/<string:locale>", methods=["GET"])(api.test_command)
 app.route("/sms/<string:locale>", methods=["POST"])(api.sms_reply)
