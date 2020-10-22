@@ -41,8 +41,6 @@ map.on('load', function() {
     });
 
 });
-// const sensors = {{points|tojson}};
-// console.log(sensors);
 
 // static lat/long for the markers in development
 var geojson = {
@@ -51,17 +49,28 @@ var geojson = {
         type: 'Feature',
         geometry: {
             type: 'Point',
-            coordinates: [-77.032, 38.913]
-        },
-    },
-    {
-        type: 'Feature',
-        geometry: {
-            type: 'Point',
-            coordinates: [-122.414, 37.776]
-        },
+            coordinates: ['','']
+        }
     }]
 };
+
+
+const sensors = JSON.parse({{points|tojson}});
+
+for (var key in sensors) {
+    if (sensors.hasOwnProperty(key)) {
+        feature = {}
+        const lnglat = [sensors[key]["longitude"], sensors[key]["latitude"]]
+        feature['type'] = 'Feature'
+        feature['geometry'] = 
+            {
+                'type': 'Point', 
+                'coordinates': lnglat
+            }
+        geojson.features.push(feature)
+    }
+}        
+console.log(geojson)
 
 // add markers to map
 geojson.features.forEach(function(marker) {

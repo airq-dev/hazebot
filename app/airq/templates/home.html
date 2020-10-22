@@ -67,99 +67,99 @@
         <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
         <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css" type="text/css"/>
         <!-- <script src="{{url_for('static', filename='map.js')}}"></script> -->
-        <!-- <script>
-            const sensors = {{points|tojson}};
-            console.log(sensors);
-        </script> -->
-        
+
         <!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
         <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
-
+        
         <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZTNrbHVuZCIsImEiOiJja2c1bDJ5ZW8wYnp4MnNuenRwc3diZ2w4In0.7pXGkCpKkhFHDm3TMwjgAg';
-        var map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: [-122.25948, 37.87221],
-            zoom: 10
-        });
+            mapboxgl.accessToken = 'pk.eyJ1IjoiZTNrbHVuZCIsImEiOiJja2c1bDJ5ZW8wYnp4MnNuenRwc3diZ2w4In0.7pXGkCpKkhFHDm3TMwjgAg';
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [-122.25948, 37.87221],
+                zoom: 10
+            });
 
-        map.addControl(
-            new MapboxGeocoder({
-                accessToken: mapboxgl.accessToken,
-                render: function (item) {
-                    return (
-                        "<div class='geocoder-dropdown-item'>" + "<span class='geocoder-dropdown-text'>" + item.place_name + '</span></div>'
-                    );
-                },
-                mapboxgl: mapboxgl,
-                placeholder: 'Enter a zipcode'
-            })
-        );
+            map.addControl(
+                new MapboxGeocoder({
+                    accessToken: mapboxgl.accessToken,
+                    render: function (item) {
+                        return (
+                            "<div class='geocoder-dropdown-item'>" + "<span class='geocoder-dropdown-text'>" + item.place_name + '</span></div>'
+                        );
+                    },
+                    mapboxgl: mapboxgl,
+                    placeholder: 'Enter a zipcode'
+                })
+            );
 
-        // After the map style has loaded on the page,
-        // add a source layer and default styling for a single point
-        map.on('load', function() {
-            map.addSource('single-point', {
-                type: 'geojson',
-                data: {
+            // After the map style has loaded on the page,
+            // add a source layer and default styling for a single point
+            map.on('load', function() {
+                map.addSource('single-point', {
+                    type: 'geojson',
+                    data: {
+                    type: 'FeatureCollection',
+                    features: []
+                    }
+                });
+
+                map.addLayer({
+                    id: 'point',
+                    source: 'single-point',
+                    type: 'circle',
+                    paint: {
+                    'circle-radius': 9,
+                    'circle-color': '#448ee4'
+                    }
+                });
+
+            });
+
+            // static lat/long for the markers in development
+            var geojson = {
                 type: 'FeatureCollection',
-                features: []
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: ['','']
+                    }
+                }]
+            };
+
+
+            const sensors = JSON.parse({{points|tojson}});
+
+            for (var key in sensors) {
+                if (sensors.hasOwnProperty(key)) {
+                    feature = {}
+                    const lnglat = [sensors[key]["longitude"], sensors[key]["latitude"]]
+                    feature['type'] = 'Feature'
+                    feature['geometry'] = 
+                        {
+                            'type': 'Point', 
+                            'coordinates': lnglat
+                        }
+                    geojson.features.push(feature)
                 }
+            }        
+            console.log(geojson)
+
+            // add markers to map
+            geojson.features.forEach(function(marker) {
+
+                // create a HTML element for each feature
+                var el = document.createElement('div');
+                el.className = 'marker';
+
+                // make a marker for each feature and add to the map
+                new mapboxgl.Marker(el)
+                .setLngLat(marker.geometry.coordinates)
+                .addTo(map);
             });
-
-            map.addLayer({
-                id: 'point',
-                source: 'single-point',
-                type: 'circle',
-                paint: {
-                'circle-radius': 9,
-                'circle-color': '#448ee4'
-                }
-            });
-
-        });
-
-        const sensors = {{points|tojson}};
-        console.log(sensors)
-        // const test = sensors.sensor_id.latitude
-        // console.log(test)
-        // console.log(sensors)
-        
-        
-
-        // static lat/long for the markers in development
-        var geojson = {
-            type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [-77.032, 38.913]
-                },
-            },
-            {
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [-122.414, 37.776]
-                },
-            }]
-        };
-
-        // add markers to map
-        geojson.features.forEach(function(marker) {
-
-            // create a HTML element for each feature
-            var el = document.createElement('div');
-            el.className = 'marker';
-
-            // make a marker for each feature and add to the map
-            new mapboxgl.Marker(el)
-            .setLngLat(marker.geometry.coordinates)
-            .addTo(map);
-        });
         </script>
+
     </body>
  {% endblock %}

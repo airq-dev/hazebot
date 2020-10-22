@@ -12,3 +12,4 @@ def home() -> str:
         in Sensor.query.with_entities(Sensor.id, Sensor.latitude, Sensor.longitude).all()
     }
     return render_template("home.html", points=json.dumps(points))
+
