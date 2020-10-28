@@ -322,11 +322,8 @@ class Client(db.Model):  # type: ignore
         ):
             return False
 
-        message = (
-            gettext(
-                'Air quality in {city} {zipcode} has changed to {curr_aqi_level} (AQI {curr_aqi}).\n\n Reply "M" for Menu or "E" to end alerts.'
-            )
-        ).format(
+        message = gettext(
+            'Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n\n Reply "M" for Menu or "E" to end alerts.',
             city=self.zipcode.city.name,
             zipcode=self.zipcode.zipcode,
             curr_aqi_level=curr_aqi_level.display,
