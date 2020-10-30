@@ -1,0 +1,235 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: POEditor.com\n"
+"Project-Id-Version: Hazebot\n"
+"Language: es-mx\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. should switch "recibir comentarios" (receive feedback) to "dar comentarios" (give feedback)
+#: airq/commands/about.py:14
+msgid "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. Visit hazebot.org or email info@hazebot.org for feedback."
+msgstr "hazebot se ejecuta en los datos del sensor PurpleAir y es un servicio gratuito que proporciona información accesible sobre la calidad del aire local. Visitar hazebot.org o enviar un correo electrónico a info@hazebot.org para dar comentarios."
+
+#: airq/commands/base.py:66
+msgid "Looks like you haven't use hazebot before! Please text us a zipcode and we'll send you the air quality."
+msgstr "¡Parece que no ha usado hazebot antes! Enviarnos un mensaje de texto con un código postal y le enviaremos la calidad del aire."
+
+#. switch to "por favor introduzca sus comentarios a continuación"
+#: airq/commands/feedback.py:22 airq/commands/feedback.py:32
+msgid "Please enter your feedback below:"
+msgstr "Por favor introducir sus comentarios a continuación:"
+
+#. we should probably decide a default pronoun to use and stay consistent throughout messaging - currently switching b/t tu & usted (tu / tus = informal you, vs. usted / su / sus = more formal)
+#: airq/commands/feedback.py:46
+msgid "Thank you for your feedback!"
+msgstr "¡Gracias por sus comentarios!"
+
+#: airq/commands/feedback.py:72
+msgid "Air quality is not a concern in my area"
+msgstr "La calidad del aire no es una preocupación en mi área"
+
+#: airq/commands/feedback.py:73
+msgid "SMS texts are not my preferred information source"
+msgstr "Los mensajes de texto SMS no son mi fuente de información preferida"
+
+#: airq/commands/feedback.py:74
+msgid "Alerts are too frequent"
+msgstr "Los avisos son demasiado frecuentes"
+
+#. could stick w/ this, or substitute w/ "la información es errónea" if we want to convey that the info isn't just inexact but totally wrong
+#: airq/commands/feedback.py:75
+msgid "Information is inaccurate"
+msgstr "La información es inexacta"
+
+#: airq/commands/feedback.py:76
+msgid "Other"
+msgstr "Otro"
+
+#: airq/commands/invalid.py:12
+msgid "Unrecognized option \"%(user_input)s\". "
+msgstr "Opción no reconocida \"%(user_input)s\". "
+
+#. switch to "Responda con M para el menú o U para parar esta alerta."
+#: airq/commands/invalid.py:16
+msgid "Reply with M for the menu or U to stop this alert."
+msgstr "Contestar con M para el menú o U para parar este aviso."
+
+#: airq/commands/invalid.py:18
+msgid "Reply with M for the menu."
+msgstr "Contestar con M para el menú."
+
+#. is Reply here meant to be a noun or a verb? if a verb, sub for "Responder." if noun, keep as is
+#: airq/commands/menu.py:15
+msgid "Reply"
+msgstr "Contestar"
+
+#: airq/commands/menu.py:16
+msgid "1. Details and recommendations"
+msgstr "1. Detalles y recomendaciones"
+
+#: airq/commands/menu.py:17
+msgid "2. Current AQI"
+msgstr "2. AQI actual"
+
+#: airq/commands/menu.py:18
+msgid "3. Hazebot info"
+msgstr "3. Información de Hazebot"
+
+#: airq/commands/menu.py:19
+msgid "4. Give feedback"
+msgstr "4. Dar comentarios"
+
+#. switch to "Parar alertas"
+#: airq/commands/menu.py:20
+msgid "5. Stop alerts"
+msgstr "5. Parar avisos"
+
+#. switch to "O introduzca un nuevo código postal."
+#: airq/commands/menu.py:22
+msgid "Or, enter a new zipcode."
+msgstr "O introducir un nuevo código postal."
+
+#: airq/commands/quality.py:20
+msgid "Hmm. Are you sure %(zipcode)s is a valid US zipcode?"
+msgstr "Hmm. ¿Está seguro de que %(zipcode)s es un código postal válido de los Estados Unidos?"
+
+#. Add "Por favor" to start of second sentence? "Por favor pruebe..."
+#: airq/commands/quality.py:32
+msgid "Oops! We couldn't determine the air quality for \"%(zipcode)s\". Please try a different zip code."
+msgstr "¡Ups! No pudimos determinar la calidad del aire para \"%(zipcode)s\". Probar con un código postal diferente."
+
+#: airq/commands/quality.py:51
+msgid " (AQI %(aqi)s)"
+msgstr " (AQI %(aqi)s)"
+
+#: airq/commands/quality.py:75
+msgid "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s."
+msgstr "%(city)s %(zipcode)s es %(pm25_level)s %(aqi_display)s."
+
+#: airq/commands/quality.py:86
+msgid "Alerting is disabled. Text \"Y\" to re-enable alerts when air quality changes."
+msgstr "El aviso está desactivado. Enviar un mensaje de texto con \"Y\" para volver a habilitar los avisos cuando cambie la calidad del aire."
+
+#. ensure conjugation is consistent
+#: airq/commands/quality.py:92
+msgid "You are now receiving alerts for %(zipcode)s."
+msgstr "Ahora está recibiendo avisos para %(zipcode)s."
+
+#. consider substituting "parar" for "finalizar"
+#: airq/commands/quality.py:98
+msgid "Text \"M\" for Menu, \"E\" to end alerts."
+msgstr "Enviar \"M\" para el menú, \"E\" para parar los avisos."
+
+#: airq/commands/quality.py:124
+msgid "Here are the closest places with better air quality:"
+msgstr "Estos son los lugares más cercanos con mejor calidad de aire:"
+
+#: airq/commands/quality.py:134
+msgid " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)"
+msgstr " - %(city)s %(zipcode)s: %(pm25_level)s ( %(distance)s mi)"
+
+#: airq/commands/quality.py:142
+msgid "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3."
+msgid_plural "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3."
+msgstr[0] "El promedio de PM2.5 del sensor cerca de %(zipcode)s es %(pm25)s ug/m^3."
+msgstr[1] "El promedio de PM2.5 de los sensores cerca de %(zipcode)s es %(pm25)s ug/m^3."
+
+#. Maybe switch "viendo" for "seguiendo"?
+#: airq/commands/resubscribe.py:17
+msgid "Looks like you're already watching %(zipcode)s."
+msgstr "Parece que ya está siguiendo %(zipcode)s."
+
+#: airq/commands/resubscribe.py:26
+msgid "Got it! We'll send you timely alerts when air quality in %(zipcode)s changes category."
+msgstr "¡Entendido! Le enviaremos avisos oportunos cuando la calidad del aire en %(zipcode)s cambie de categoría."
+
+#: airq/commands/unsubscribe.py:18
+msgid "Looks like you already stopped watching %(zipcode)s."
+msgstr "Parece que ya dejó de ver %(zipcode)s."
+
+#: airq/commands/unsubscribe.py:27
+msgid "Got it! You will not receive air quality updates until you text a new zipcode."
+msgstr "¡Entendido! No recibirá actualizaciones de la calidad del aire hasta que envíe un mensaje de texto con un nuevo código postal."
+
+#. switch to "Cuéntanos por qué se va para que podamos mejorar nuestro servicio"
+#: airq/commands/unsubscribe.py:31
+msgid "Tell us why you're leaving so we can improve our service:"
+msgstr "Decirnos por qué se va para que podamos mejorar nuestro servicio:"
+
+#: airq/lib/readings.py:35
+msgid "GOOD"
+msgstr "BUENO"
+
+#. switch to "MODERADO"
+#: airq/lib/readings.py:37
+msgid "MODERATE"
+msgstr "MODERADO"
+
+#: airq/lib/readings.py:39
+msgid "UNHEALTHY FOR SENSITIVE GROUPS"
+msgstr "INSALUBRE PARA GRUPOS SENSIBLES"
+
+#: airq/lib/readings.py:41
+msgid "UNHEALTHY"
+msgstr "INSALUBRE"
+
+#. switch to "muy insalubre"
+#: airq/lib/readings.py:43
+msgid "VERY UNHEALTHY"
+msgstr "MUY INSALUBRE"
+
+#: airq/lib/readings.py:45
+msgid "HAZARDOUS"
+msgstr "PELIGROSO"
+
+#: airq/lib/readings.py:50
+msgid "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk."
+msgstr "BUENO (AQI: 0 - 50) significa que la calidad del aire se considera satisfactoria y que la contaminación del aire presenta poco o ningún riesgo."
+
+#. substitute "riesgo" for "problema"
+#: airq/lib/readings.py:54
+msgid "MODERATE (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
+msgstr "MODERADO (AQI: 51 - 100) significa que la calidad del aire es aceptable; sin embargo, para algunos contaminantes puede haber un problema de salud moderado para un número pequeño de personas que son inusualmente sensibles a la contaminación del aire."
+
+#. switch "efectos sobre la salud" to "efectos negativos para la salud"
+#: airq/lib/readings.py:58
+msgid "UNHEALTHY FOR SENSITIVE GROUPS (AQI: 101 - 150) means members of sensitive groups may experience health effects. The general public is not likely to be affected."
+msgstr "INSALUBRE PARA GRUPOS SENSIBLES (AQI: 101 - 150) significa que los miembros de grupos sensibles pueden experimentar efectos sobre la salud. No es probable que el público en general se vea afectado."
+
+#. add "negativos" after first "efectos"
+#: airq/lib/readings.py:62
+msgid "UNHEALTHY (AQI: 151 - 200) means everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects."
+msgstr "INSALUBRE (AQI: 151 - 200) significa que todos pueden comenzar a experimentar efectos sobre la salud; los miembros de grupos sensibles pueden experimentar efectos de salud más graves."
+
+#. switch "MUY MAL SALUD" to "MUY INSALUBRE" ?
+#: airq/lib/readings.py:66
+msgid "VERY UNHEALTHY (AQI: 201 - 300): Health alert. Everyone may experience more serious health effects."
+msgstr "MUY INSALUBRE (AQI: 201 - 300): Aviso de salud. Todos pueden experimentar efectos de salud más graves."
+
+#: airq/lib/readings.py:70
+msgid "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
+msgstr "PELIGROSO (AQI: 301 - 500): Advertencias sanitarias de situaciones de emergencia. Es más probable que toda la población se vea afectada."
+
+#. switch "comparta" to "comparte"
+#: airq/models/clients.py:367
+msgid "Has Hazebot been helpful? We’re looking for ways to grow and improve, and we’d love your help. Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
+msgstr "Hazebot ha sido de ayuda? Buscamos formas de crecer y mejorar, y nos encantaría su ayuda. Guardar nuestro contacto y compartir Hazebot con un amigo, o enviar un mensaje de texto con \"comentarios\" para dar comentarios."
+
+#: airq/commands/quality.py:58
+msgid "Welcome to Hazebot! We'll send you alerts when air quality in %(city)s %(zipcode)s changes category. Air quality is now %(pm25_level)s%(aqi_display)s."
+msgstr "¡Bienvenido a Hazebot! Le enviaremos avisos cuando la calidad del aire en %(city)s %(zipcode)s cambie de categoría. La calidad del aire ahora es %(pm25_level)s%(aqi_display)s."
+
+#: airq/commands/quality.py:66
+msgid "Save this contact and text us your zipcode whenever you'd like an instant update. And you can always text \"M\" to see the whole menu."
+msgstr "Guardar este contacto y enviarnos un mensaje de texto con su código postal cuando desee una actualización instantánea. Y siempre puede enviar un mensaje de texto con \"M\" para ver el menú completo."
+
+#: airq/models/clients.py:326
+msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+"\n"
+" Reply \"M\" for Menu or \"E\" to end alerts."
+msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+"\n"
+"Responder \"M\" para el menú o \"E\" para parar los avisos."
