@@ -17,7 +17,7 @@ class AdminEmailHandler(logging.Handler):
         if not record.exc_info:
             return
         _, exc, _ = record.exc_info
-        subject = "[{}]: {}".format(type(exc).__name__, str(exc)[:100])
+        subject = "[{}] {}".format(type(exc).__name__, str(exc)[:100])
         body = "{}\n\n{}".format(str(exc), traceback.format_exc())
         if request:
             body += "\n"

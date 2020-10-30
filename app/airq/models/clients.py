@@ -1,6 +1,7 @@
 import datetime
 import enum
 import logging
+import math
 import typing
 
 from flask_babel import gettext
@@ -303,6 +304,11 @@ class Client(db.Model):  # type: ignore
             return False
 
         curr_pm25 = self.zipcode.pm25
+        if math.isnan(curr_pm25):
+            # Try to debug a strange issue where pm25 is very rarely NaN
+            logger.exception("pm25 for %s is unexpectedly NaN", self)
+            return False
+
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
         curr_aqi = pm25_to_aqi(curr_pm25)
 

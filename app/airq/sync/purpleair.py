@@ -1,11 +1,12 @@
 import collections
 import geohash
-import logging
+import math
 import requests
 import typing
 
 from flask_babel import force_locale
 
+from airq.celery import get_celery_logger
 from airq.config import db
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
@@ -15,9 +16,6 @@ from airq.models.clients import Client
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
-
-
-logger = logging.getLogger(__name__)
 
 
 PURPLEAIR_URL = "https://www.purpleair.com/json"
@@ -30,6 +28,7 @@ DESIRED_READING_DISTANCE_KM = 2.5
 
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
+    logger = get_celery_logger()
     try:
         resp = requests.get(PURPLEAIR_URL)
         resp.raise_for_status()
@@ -70,6 +69,8 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 def _sensors_sync(
     purpleair_data: typing.List[typing.Dict[str, typing.Any]]
 ) -> typing.List[int]:
+    logger = get_celery_logger()
+
     existing_sensor_map = {s.id: s for s in Sensor.query.all()}
 
     updates = []
@@ -119,6 +120,8 @@ def _sensors_sync(
 
 
 def _relations_sync(moved_sensor_ids: typing.List[int]):
+    logger = get_celery_logger()
+
     trie: Trie[Zipcode] = Trie()
     for zipcode in Zipcode.query.all():
         trie.insert(zipcode.geohash, zipcode)
@@ -179,6 +182,7 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
 
 
 def _metrics_sync():
+    logger = get_celery_logger()
     updates = []
     ts = timestamp()
 
@@ -215,16 +219,21 @@ def _metrics_sync():
             num_sensors = len(readings)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
-            updates.append(
-                {
-                    "id": zipcode_id,
-                    "pm25": pm25,
-                    "pm25_updated_at": ts,
-                    "num_sensors": num_sensors,
-                    "min_sensor_distance": min_sensor_distance,
-                    "max_sensor_distance": max_sensor_distance,
-                }
-            )
+            update = {
+                "id": zipcode_id,
+                "pm25": pm25,
+                "pm25_updated_at": ts,
+                "num_sensors": num_sensors,
+                "min_sensor_distance": min_sensor_distance,
+                "max_sensor_distance": max_sensor_distance,
+            }
+            if math.isnan(pm25):
+                # Try to debug a strange issue where pm25 is very rarely NaN
+                logger.exception(
+                    "pm25 for zipcode %s is unexpectedly NaN: %s", zipcode_id, update
+                )
+            else:
+                updates.append(update)
 
     logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
@@ -233,6 +242,7 @@ def _metrics_sync():
 
 
 def _send_alerts():
+    logger = get_celery_logger()
     num_sent = 0
     for client in Client.query.filter_eligible_for_sending().all():
         with force_locale(client.locale):
@@ -246,6 +256,7 @@ def _send_alerts():
 
 
 def _send_share_requests():
+    logger = get_celery_logger()
     num_sent = 0
     for client in Client.query.filter_eligible_for_share_requests().all():
         with force_locale(client.locale):
@@ -259,6 +270,8 @@ def _send_share_requests():
 
 
 def purpleair_sync():
+    logger = get_celery_logger()
+
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_data()
 
