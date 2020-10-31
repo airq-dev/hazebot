@@ -14,13 +14,30 @@ class AdminEmailHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
         from airq.lib import ses
 
-        if not record.exc_info:
-            return
-        _, exc, _ = record.exc_info
-        subject = "[{}] {}".format(type(exc).__name__, str(exc)[:100])
-        body = "{}\n\n{}".format(str(exc), traceback.format_exc())
+        if record.exc_info:
+            _, exc, _ = record.exc_info
+        else:
+            exc = None
+
+        if exc:
+            exc_title = type(exc).__name__
+        else:
+            exc_title = "Error"
+
+        subject = f"{exc_title} at {record.pathname}:{record.lineno}"
+
+        body = record.getMessage()
+        if exc:
+            if body:
+                body += "\n"
+            body += "ERROR:\n"
+            body += str(exc) + "\n"
+            body += "TRACEBACK:\n"
+            body += traceback.format_exc()
+
         if request:
             body += "\n"
             for key, value in request.environ.items():
                 body += "{}={}\n".format(key, value)
+
         ses.send_email(config.ADMIN_EMAILS, subject, body)

@@ -215,8 +215,8 @@ def _metrics_sync():
                 break
 
         if readings:
-            pm25 = round(sum(readings) / len(readings), ndigits=3)
             num_sensors = len(readings)
+            pm25 = round(sum(readings) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             update = {
@@ -229,8 +229,11 @@ def _metrics_sync():
             }
             if math.isnan(pm25):
                 # Try to debug a strange issue where pm25 is very rarely NaN
-                logger.exception(
-                    "pm25 for zipcode %s is unexpectedly NaN: %s", zipcode_id, update
+                debug_info = dict(update, readings=readings)
+                logger.error(
+                    "pm25 for zipcode %s is unexpectedly NaN: %s",
+                    zipcode_id,
+                    debug_info,
                 )
             else:
                 updates.append(update)

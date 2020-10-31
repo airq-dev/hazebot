@@ -306,7 +306,7 @@ class Client(db.Model):  # type: ignore
         curr_pm25 = self.zipcode.pm25
         if math.isnan(curr_pm25):
             # Try to debug a strange issue where pm25 is very rarely NaN
-            logger.exception("pm25 for %s is unexpectedly NaN", self)
+            logger.error("pm25 for %s is unexpectedly NaN", self)
             return False
 
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
