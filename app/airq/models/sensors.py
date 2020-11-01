@@ -1,8 +1,24 @@
+from flask_sqlalchemy import BaseQuery
+
 from airq.config import db
+
+
+class SensorQuery(BaseQuery):
+    def get_last_updated_at(self) -> int:
+        result = (
+            self.order_by(Sensor.updated_at.desc())
+            .with_entities(Sensor.updated_at)
+            .first()
+        )
+        if result:
+            return result[0]
+        return 0
 
 
 class Sensor(db.Model):  # type: ignore
     __tablename__ = "sensors"
+
+    query_class = SensorQuery
 
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
     latest_reading = db.Column(db.Float(), nullable=False)

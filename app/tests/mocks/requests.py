@@ -1,11 +1,28 @@
+import abc
 import json
 import os
 import requests
 import typing
+
+from requests.exceptions import RequestException
 from unittest import mock
 
 
-class MockResponse:
+class MockResponse(abc.ABC):
+    @abc.abstractmethod
+    def raise_for_status(self):
+        pass
+
+    @abc.abstractmethod
+    def iter_content(self, chunk_size: typing.Optional[int] = None):
+        pass
+
+    @abc.abstractmethod
+    def json(self) -> dict:
+        pass
+
+
+class SuccessResponse(MockResponse):
     def __init__(self, file_path: str):
         self._file_path = file_path
 
@@ -29,10 +46,33 @@ class MockResponse:
             return json.load(f)
 
 
+class ErrorResponse(MockResponse):
+    def __init__(self, exc: RequestException):
+        self._exc = exc
+
+    def __repr__(self) -> str:
+        return f"MockResponse({self._exc})"
+
+    def raise_for_status(self):
+        raise self._exc
+
+    def iter_content(self, chunk_size: typing.Optional[int] = None):
+        raise NotImplementedError()
+
+    def json(self) -> dict:
+        raise NotImplementedError()
+
+
 class MockRequests:
-    def __init__(self, fixtures: typing.Dict[str, str]):
+    def __init__(self, fixtures: typing.Dict[str, MockResponse]):
         self._fixtures = fixtures
         self._patch = None
+
+    @classmethod
+    def for_urls(cls, fixtures: typing.Dict[str, str]):
+        return cls(
+            {url: SuccessResponse(filepath) for url, filepath in fixtures.items()}
+        )
 
     def __enter__(self):
         self._patch = mock.patch.object(requests, "get", self.get)
@@ -44,8 +84,8 @@ class MockRequests:
 
     def get(self, url, *args, **kwargs) -> MockResponse:
         if url in self._fixtures:
-            print(f"Using mock {self._fixtures[url]} for {url}")
-            return MockResponse(self._fixtures[url])
+            print(f"Using {self._fixtures[url]} for {url}")
+            return self._fixtures[url]
         raise Exception(
             f"Cannot find a fixture for {url}.\nAvailable fixtures: {self._fixtures}"
         )

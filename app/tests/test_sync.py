@@ -1,4 +1,9 @@
 import os
+import logging
+import requests
+
+from requests.exceptions import HTTPError
+from unittest import mock
 
 from airq.models.cities import City
 from airq.models.relations import SensorZipcodeRelation
@@ -9,6 +14,7 @@ from airq.sync.geonames import GEONAMES_URL
 from airq.sync.geonames import ZIP_2_TIMEZONES_URL
 from airq.sync.purpleair import PURPLEAIR_URL
 from tests.base import BaseTestCase
+from tests.mocks.requests import ErrorResponse
 from tests.mocks.requests import MockRequests
 
 
@@ -23,7 +29,7 @@ class SyncTestCase(BaseTestCase):
             self.assertEqual(Sensor.query.count(), 0)
             self.assertEqual(SensorZipcodeRelation.query.count(), 0)
 
-        with MockRequests(
+        with MockRequests.for_urls(
             {
                 GEONAMES_URL: "geonames/US.zip",
                 ZIP_2_TIMEZONES_URL: "geonames/zipcodes_to_timezones.gz",
@@ -36,3 +42,29 @@ class SyncTestCase(BaseTestCase):
         self.assertGreater(Zipcode.query.count(), 0)
         self.assertGreater(Sensor.query.count(), 0)
         self.assertGreater(SensorZipcodeRelation.query.count(), 0)
+
+    @mock.patch.object(logging.Logger, "log")
+    def test_sync_error(self, mock_log):
+        error = HTTPError("foo")
+        mock_requests = MockRequests({PURPLEAIR_URL: ErrorResponse(error)})
+        with mock_requests:
+            models_sync(only_if_empty=False, force_rebuild_geography=False)
+        mock_log.assert_any_call(
+            logging.WARNING,
+            "%s updating purpleair data: %s",
+            "HTTPError",
+            error,
+            exc_info=True,
+        )
+        mock_log.reset_mock()
+
+        self.clock.advance(60 * 60)
+        with mock_requests:
+            models_sync(only_if_empty=False, force_rebuild_geography=False)
+        mock_log.assert_any_call(
+            logging.ERROR,
+            "%s updating purpleair data: %s",
+            "HTTPError",
+            error,
+            exc_info=True,
+        )

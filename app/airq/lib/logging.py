@@ -27,11 +27,8 @@ class AdminEmailHandler(logging.Handler):
         subject = f"{exc_title} at {record.pathname}:{record.lineno}"
 
         body = record.getMessage()
+
         if exc:
-            if body:
-                body += "\n"
-            body += "ERROR:\n"
-            body += str(exc) + "\n"
             body += "TRACEBACK:\n"
             body += traceback.format_exc()
 
