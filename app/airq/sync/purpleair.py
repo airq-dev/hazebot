@@ -44,18 +44,16 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
         last_updated_at = Sensor.query.get_last_updated_at()
         seconds_since_last_update = timestamp() - last_updated_at
         if seconds_since_last_update > 30 * 60:
-            logger.exception(
-                "%s seconds have passed since the last successful sensor sync: %s",
-                seconds_since_last_update,
-                e,
-            )
+            level = logging.ERROR
         else:
-            logger.warning(
-                "%s updating purpleair data: %s",
-                type(e).__name__,
-                e,
-                exc_info=True,
-            )
+            level = logging.WARNING
+        logger.log(
+            level,
+            "%s updating purpleair data: %s",
+            type(e).__name__,
+            e,
+            exc_info=True,
+        )
         return []
 
 

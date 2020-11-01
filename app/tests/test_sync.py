@@ -43,25 +43,28 @@ class SyncTestCase(BaseTestCase):
         self.assertGreater(Sensor.query.count(), 0)
         self.assertGreater(SensorZipcodeRelation.query.count(), 0)
 
-    @mock.patch.object(logging.Logger, "exception")
-    @mock.patch.object(logging.Logger, "warning")
-    def test_sync_error(self, mock_log_warning, mock_log_exception):
+    @mock.patch.object(logging.Logger, "log")
+    def test_sync_error(self, mock_log):
         error = HTTPError("foo")
         mock_requests = MockRequests({PURPLEAIR_URL: ErrorResponse(error)})
         with mock_requests:
             models_sync(only_if_empty=False, force_rebuild_geography=False)
-        mock_log_warning.assert_called_once_with(
+        mock_log.assert_any_call(
+            logging.WARNING,
             "%s updating purpleair data: %s",
             "HTTPError",
             error,
             exc_info=True,
         )
+        mock_log.reset_mock()
 
         self.clock.advance(60 * 60)
         with mock_requests:
             models_sync(only_if_empty=False, force_rebuild_geography=False)
-        mock_log_exception.assert_called_once_with(
-            "%s seconds have passed since the last successful sensor sync: %s",
-            3600,
+        mock_log.assert_any_call(
+            logging.ERROR,
+            "%s updating purpleair data: %s",
+            "HTTPError",
             error,
+            exc_info=True,
         )
