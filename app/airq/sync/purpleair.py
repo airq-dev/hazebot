@@ -55,6 +55,10 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
         pm25 = float(sensor_data.get("PM2_5Value", 0))
     except (TypeError, ValueError):
         return False
+    if math.isnan(pm25):
+        # Purpleair can occasionally return NaN.
+        # I wonder if this is a bug on their end.
+        return False
     if pm25 <= 0 or pm25 > 1000:
         # Something is very wrong
         return False
@@ -227,16 +231,7 @@ def _metrics_sync():
                 "min_sensor_distance": min_sensor_distance,
                 "max_sensor_distance": max_sensor_distance,
             }
-            if math.isnan(pm25):
-                # Try to debug a strange issue where pm25 is very rarely NaN
-                debug_info = dict(update, readings=readings)
-                logger.error(
-                    "pm25 for zipcode %s is unexpectedly NaN: %s",
-                    zipcode_id,
-                    debug_info,
-                )
-            else:
-                updates.append(update)
+            updates.append(update)
 
     logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
