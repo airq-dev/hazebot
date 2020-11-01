@@ -347,7 +347,9 @@ class Client(db.Model):  # type: ignore
         self.num_alerts_sent += 1
         db.session.commit()
 
-        self.log_event(EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25_atm)
+        self.log_event(
+            EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25_atm
+        )
 
         return True
 

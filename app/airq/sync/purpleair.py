@@ -100,7 +100,7 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
     if not _is_valid_float(sensor_data.get("humidity")):
         return False
 
-    stats = json.loads(sensor_data.get('Stats', "{}"))
+    stats = json.loads(sensor_data.get("Stats", "{}"))
     if not _is_valid_float(stats.get("v1")):
         return False
 
@@ -128,8 +128,8 @@ def _sensors_sync(
             latitude = result["Lat"]
             longitude = result["Lon"]
             pm25 = float(result["PM2_5Value"])
-            stats = json.loads(result['Stats'])
-            pm25_10 = stats['v1']
+            stats = json.loads(result["Stats"])
+            pm25_10 = stats["v1"]
             humidity = float(result["humidity"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["ID"],
@@ -250,7 +250,9 @@ def _metrics_sync():
         )
         .all()
     ):
-        zipcodes_to_sensors[zipcode_id].append((Reading(pm25_atm=pm25_atm, pm25_10=pm25_10, humidity=humidity), distance))
+        zipcodes_to_sensors[zipcode_id].append(
+            (Reading(pm25_atm=pm25_atm, pm25_10=pm25_10, humidity=humidity), distance)
+        )
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[Reading] = []
@@ -269,9 +271,13 @@ def _metrics_sync():
 
         if readings:
             num_sensors = len(readings)
-            pm25_atm = round(sum([r.pm25_atm for r in readings]) / num_sensors, ndigits=3)
+            pm25_atm = round(
+                sum([r.pm25_atm for r in readings]) / num_sensors, ndigits=3
+            )
             pm25_10 = round(sum([r.pm25_10 for r in readings]) / num_sensors, ndigits=3)
-            humidity = round(sum([r.humidity for r in readings]) / num_sensors, ndigits=3)
+            humidity = round(
+                sum([r.humidity for r in readings]) / num_sensors, ndigits=3
+            )
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             update = {
