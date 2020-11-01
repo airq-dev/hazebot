@@ -1,7 +1,6 @@
 import datetime
 import enum
 import logging
-import math
 import typing
 
 from flask_babel import gettext
