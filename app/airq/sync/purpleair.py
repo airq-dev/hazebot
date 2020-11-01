@@ -1,4 +1,5 @@
 import collections
+import dataclasses
 import geohash
 import json
 import logging
@@ -29,6 +30,13 @@ DESIRED_NUM_READINGS = 8
 DESIRED_READING_DISTANCE_KM = 2.5
 
 
+@dataclasses.dataclass
+class Reading:
+    pm25_atm: float
+    pm25_10: float
+    humidity: float
+
+
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
     logger = get_celery_logger()
     resp = requests.get(PURPLEAIR_URL)
@@ -57,28 +65,45 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
         return []
 
 
-def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
-    if sensor_data.get("DEVICE_LOCATIONTYPE") != "outside":
-        return False
-    if sensor_data.get("ParentID"):
-        return False
-    if sensor_data.get("LastSeen", 0) < timestamp() - (60 * 60):
-        # Out of date / maybe dead
-        return False
-    if sensor_data.get("Flag"):
-        # Flagged for an unusually high reading
-        return False
+def _is_valid_float(value: typing.Any, min_val: int = 0, max_val: int = 1000) -> bool:
     try:
-        pm25 = float(sensor_data.get("PM2_5Value", 0))
+        val = float(value)
     except (TypeError, ValueError):
         return False
-    if math.isnan(pm25):
+    if math.isnan(val):
         # Purpleair can occasionally return NaN.
         # I wonder if this is a bug on their end.
         return False
-    if pm25 <= 0 or pm25 > 1000:
-        # Something is very wrong
+    if val <= min_val or val > max_val:
         return False
+    return True
+
+
+def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
+    if sensor_data.get("DEVICE_LOCATIONTYPE") != "outside":
+        return False
+
+    if sensor_data.get("ParentID"):
+        return False
+
+    if sensor_data.get("LastSeen", 0) < timestamp() - (60 * 60):
+        # Out of date / maybe dead
+        return False
+
+    if sensor_data.get("Flag"):
+        # Flagged for an unusually high reading
+        return False
+
+    if not _is_valid_float(sensor_data.get("PM2_5Value")):
+        return False
+
+    if not _is_valid_float(sensor_data.get("humidity")):
+        return False
+
+    stats = json.loads(sensor_data.get('Stats', "{}"))
+    if not _is_valid_float(stats.get("v1")):
+        return False
+
     latitude = sensor_data.get("Lat")
     longitude = sensor_data.get("Lon")
     if latitude is None or longitude is None:
@@ -103,9 +128,14 @@ def _sensors_sync(
             latitude = result["Lat"]
             longitude = result["Lon"]
             pm25 = float(result["PM2_5Value"])
+            stats = json.loads(result['Stats'])
+            pm25_10 = stats['v1']
+            humidity = float(result["humidity"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["ID"],
                 "latest_reading": pm25,
+                "pm25_10": pm25_10,
+                "humidity": humidity,
                 "updated_at": result["LastSeen"],
             }
 
@@ -208,20 +238,22 @@ def _metrics_sync():
     ts = timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
-    for zipcode_id, latest_reading, distance in (
+    for zipcode_id, pm25_atm, pm25_10, humidity, distance in (
         Sensor.query.join(SensorZipcodeRelation)
         .filter(Sensor.updated_at > ts - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
+            Sensor.pm25_10,
+            Sensor.humidity,
             SensorZipcodeRelation.distance,
         )
         .all()
     ):
-        zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
+        zipcodes_to_sensors[zipcode_id].append((Reading(pm25_atm=pm25_atm, pm25_10=pm25_10, humidity=humidity), distance))
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
-        readings: typing.List[float] = []
+        readings: typing.List[Reading] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
         for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
@@ -237,12 +269,16 @@ def _metrics_sync():
 
         if readings:
             num_sensors = len(readings)
-            pm25 = round(sum(readings) / num_sensors, ndigits=3)
+            pm25_atm = round(sum([r.pm25_atm for r in readings]) / num_sensors, ndigits=3)
+            pm25_10 = round(sum([r.pm25_10 for r in readings]) / num_sensors, ndigits=3)
+            humidity = round(sum([r.humidity for r in readings]) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             update = {
                 "id": zipcode_id,
-                "pm25": pm25,
+                "pm25": pm25_atm,
+                "pm25_10": pm25_10,
+                "humidity": humidity,
                 "pm25_updated_at": ts,
                 "num_sensors": num_sensors,
                 "min_sensor_distance": min_sensor_distance,

@@ -41,6 +41,9 @@ class Zipcode(db.Model):  # type: ignore
     geohash_bit_12 = db.Column(db.String(), nullable=False)
 
     pm25 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
+    pm25_10 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
+    humidity = db.Column(db.Float(), nullable=False, server_default="0")
+
     pm25_updated_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )

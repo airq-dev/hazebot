@@ -164,7 +164,11 @@ class Client(db.Model):  # type: ignore
         db.ForeignKey("zipcodes.id", name="clients_zipcode_id_fkey"),
         nullable=True,
     )
+
     last_pm25 = db.Column(db.Float(), nullable=True)
+    last_pm25_10 = db.Column(db.Float(), nullable=True)
+    last_humidity = db.Column(db.Float(), nullable=True)
+
     last_alert_sent_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )
@@ -173,6 +177,7 @@ class Client(db.Model):  # type: ignore
     )
     num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
     locale = db.Column(db.String(), nullable=False, server_default="en")
+    pref_json = db.Column(db.JSON(), nullable=True)
 
     zipcode = db.relationship("Zipcode")
     events = db.relationship("Event")
@@ -302,9 +307,12 @@ class Client(db.Model):  # type: ignore
         if self.last_alert_sent_at >= timestamp() - self.FREQUENCY:
             return False
 
-        curr_pm25 = self.zipcode.pm25
-        curr_aqi_level = Pm25.from_measurement(curr_pm25)
-        curr_aqi = pm25_to_aqi(curr_pm25)
+        curr_pm25_atm = self.zipcode.pm25
+        curr_pm25_10 = self.zipcode.pm25_10
+        curr_humidity = self.zipcode.humidity
+
+        curr_aqi_level = Pm25.from_measurement(curr_pm25_atm)
+        curr_aqi = pm25_to_aqi(curr_pm25_atm)
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
@@ -333,11 +341,13 @@ class Client(db.Model):  # type: ignore
             return False
 
         self.last_alert_sent_at = timestamp()
-        self.last_pm25 = curr_pm25
+        self.last_pm25 = curr_pm25_atm
+        self.last_pm25_10 = curr_pm25_10
+        self.last_humidity = curr_humidity
         self.num_alerts_sent += 1
         db.session.commit()
 
-        self.log_event(EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25)
+        self.log_event(EventType.ALERT, zipcode=self.zipcode.zipcode, pm25=curr_pm25_atm)
 
         return True
 
