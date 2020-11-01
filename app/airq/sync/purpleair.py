@@ -1,5 +1,7 @@
 import collections
 import geohash
+import json
+import logging
 import math
 import requests
 import typing
@@ -29,15 +31,32 @@ DESIRED_READING_DISTANCE_KM = 2.5
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
     logger = get_celery_logger()
+    resp = requests.get(PURPLEAIR_URL)
     try:
-        resp = requests.get(PURPLEAIR_URL)
         resp.raise_for_status()
-    except requests.RequestException:
-        logger.exception("Error updating purpleair data")
-        results = []
-    else:
-        results = resp.json().get("results", [])
-    return results
+        return resp.json().get("results", [])
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        # Send an email to an admin if data lags by more than 30 minutes.
+        # Otherwise, just log a warning as most of these errors are
+        # transient. In the future we might choose to retry on transient
+        # failures, but it's not urgent since we will rerun the sync
+        # every ten minutes anyway.
+        last_updated_at = Sensor.query.get_last_updated_at()
+        seconds_since_last_update = timestamp() - last_updated_at
+        if seconds_since_last_update > 30 * 60:
+            logger.exception(
+                "%s seconds have passed since the last successful sensor sync: %s",
+                seconds_since_last_update,
+                e,
+            )
+        else:
+            logger.warning(
+                "%s updating purpleair data: %s",
+                type(e).__name__,
+                e,
+                exc_info=True,
+            )
+        return []
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
