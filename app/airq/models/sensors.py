@@ -21,7 +21,9 @@ class Sensor(db.Model):  # type: ignore
     query_class = SensorQuery
 
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
+    # The pm25 at the instant this reading was reported
     latest_reading = db.Column(db.Float(), nullable=False)
+    # The pm25 over the past 10 minutes
     pm25_10 = db.Column(db.Float(), nullable=True)
     humidity = db.Column(db.Float(), nullable=True)
     updated_at = db.Column(db.Integer(), nullable=False)

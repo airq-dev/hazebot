@@ -40,8 +40,11 @@ class Zipcode(db.Model):  # type: ignore
     geohash_bit_11 = db.Column(db.String(), nullable=False)
     geohash_bit_12 = db.Column(db.String(), nullable=False)
 
+    # Average of instantaneous pm25 readings from nearby sensors
     pm25 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
+    # Average of 10-min pm25 averages from nearby sensors
     pm25_10 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
+    # Average of humidty readings from nearby sensors
     humidity = db.Column(db.Float(), nullable=False, server_default="0")
 
     pm25_updated_at = db.Column(
