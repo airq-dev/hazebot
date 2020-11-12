@@ -49,7 +49,7 @@ class SyncTestCase(BaseTestCase):
         for zipcode in zipcodes:
             self.assertIsNotNone(zipcode.metrics_data)
             self.assertTrue(len(zipcode.metrics_data["sensor_ids"]) > 0)
-    
+
     @mock.patch.object(logging.Logger, "log")
     def test_sync_error(self, mock_log):
         error = HTTPError("foo")
