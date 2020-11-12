@@ -2,6 +2,7 @@ import datetime
 import pytz
 import typing
 import unittest
+from unittest import mock
 
 from twilio.rest.api.v2010.account.message import MessageList
 
@@ -82,7 +83,7 @@ class BaseTestCase(unittest.TestCase):
                 tzinfo=pytz.timezone("America/Los_Angeles"),
             )
         )
-        self._patchings["send_sms"] = unittest.mock.patch.object(MessageList, "create")
+        self._patchings["send_sms"] = mock.patch.object(MessageList, "create")
         for name, patching in self._patchings.items():
             self._mocks[name] = patching.start()
 

@@ -1,11 +1,14 @@
 import collections
 import geohash
+import json
 import logging
+import math
 import requests
 import typing
 
 from flask_babel import force_locale
 
+from airq.celery import get_celery_logger
 from airq.config import db
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
@@ -15,9 +18,6 @@ from airq.models.clients import Client
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
-
-
-logger = logging.getLogger(__name__)
 
 
 PURPLEAIR_URL = "https://www.purpleair.com/json"
@@ -30,15 +30,31 @@ DESIRED_READING_DISTANCE_KM = 2.5
 
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
+    logger = get_celery_logger()
+    resp = requests.get(PURPLEAIR_URL)
     try:
-        resp = requests.get(PURPLEAIR_URL)
         resp.raise_for_status()
-    except requests.RequestException:
-        logger.exception("Error updating purpleair data")
-        results = []
-    else:
-        results = resp.json().get("results", [])
-    return results
+        return resp.json().get("results", [])
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        # Send an email to an admin if data lags by more than 30 minutes.
+        # Otherwise, just log a warning as most of these errors are
+        # transient. In the future we might choose to retry on transient
+        # failures, but it's not urgent since we will rerun the sync
+        # every ten minutes anyway.
+        last_updated_at = Sensor.query.get_last_updated_at()
+        seconds_since_last_update = timestamp() - last_updated_at
+        if seconds_since_last_update > 30 * 60:
+            level = logging.ERROR
+        else:
+            level = logging.WARNING
+        logger.log(
+            level,
+            "%s updating purpleair data: %s",
+            type(e).__name__,
+            e,
+            exc_info=True,
+        )
+        return []
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
@@ -56,6 +72,10 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
         pm25 = float(sensor_data.get("PM2_5Value", 0))
     except (TypeError, ValueError):
         return False
+    if math.isnan(pm25):
+        # Purpleair can occasionally return NaN.
+        # I wonder if this is a bug on their end.
+        return False
     if pm25 <= 0 or pm25 > 1000:
         # Something is very wrong
         return False
@@ -70,6 +90,8 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 def _sensors_sync(
     purpleair_data: typing.List[typing.Dict[str, typing.Any]]
 ) -> typing.List[int]:
+    logger = get_celery_logger()
+
     existing_sensor_map = {s.id: s for s in Sensor.query.all()}
 
     updates = []
@@ -119,6 +141,8 @@ def _sensors_sync(
 
 
 def _relations_sync(moved_sensor_ids: typing.List[int]):
+    logger = get_celery_logger()
+
     trie: Trie[Zipcode] = Trie()
     for zipcode in Zipcode.query.all():
         trie.insert(zipcode.geohash, zipcode)
@@ -179,6 +203,7 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
 
 
 def _metrics_sync():
+    logger = get_celery_logger()
     updates = []
     ts = timestamp()
 
@@ -214,8 +239,8 @@ def _metrics_sync():
                 break
 
         if readings:
-            pm25 = round(sum(readings) / len(readings), ndigits=3)
             num_sensors = len(readings)
+            pm25 = round(sum(readings) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             updates.append(
@@ -242,6 +267,7 @@ def _metrics_sync():
 
 
 def _send_alerts():
+    logger = get_celery_logger()
     num_sent = 0
     for client in Client.query.filter_eligible_for_sending().all():
         with force_locale(client.locale):
@@ -255,6 +281,7 @@ def _send_alerts():
 
 
 def _send_share_requests():
+    logger = get_celery_logger()
     num_sent = 0
     for client in Client.query.filter_eligible_for_share_requests().all():
         with force_locale(client.locale):
@@ -268,6 +295,8 @@ def _send_share_requests():
 
 
 def purpleair_sync():
+    logger = get_celery_logger()
+
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_data()
 
