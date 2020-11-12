@@ -183,28 +183,31 @@ def _metrics_sync():
     ts = timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
-    for zipcode_id, latest_reading, distance in (
+    for zipcode_id, latest_reading, sensor_id, distance in (
         Sensor.query.join(SensorZipcodeRelation)
         .filter(Sensor.updated_at > ts - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
+            Sensor.id,
             SensorZipcodeRelation.distance,
         )
         .all()
     ):
-        zipcodes_to_sensors[zipcode_id].append((latest_reading, distance))
+        zipcodes_to_sensors[zipcode_id].append((latest_reading, sensor_id, distance))
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
-        for reading, distance in sorted(sensor_tuples, key=lambda s: s[1]):
+        sensor_ids: typing.List[int] = []
+        for reading, sensor_id, distance in sorted(sensor_tuples, key=lambda s: s[-1]):
             if (
                 len(readings) < DESIRED_NUM_READINGS
                 or distance < DESIRED_READING_DISTANCE_KM
             ):
                 readings.append(reading)
+                sensor_ids.append(sensor_id)
                 closest_reading = min(distance, closest_reading)
                 farthest_reading = max(distance, farthest_reading)
             else:
@@ -223,6 +226,12 @@ def _metrics_sync():
                     "num_sensors": num_sensors,
                     "min_sensor_distance": min_sensor_distance,
                     "max_sensor_distance": max_sensor_distance,
+                    "metrics_data": {
+                        "num_sensors": num_sensors,
+                        "min_sensor_distance": min_sensor_distance,
+                        "max_sensor_distance": max_sensor_distance,
+                        "sensor_ids": sensor_ids,
+                    },
                 }
             )
 
