@@ -44,6 +44,8 @@ class Zipcode(db.Model):  # type: ignore
     pm25_updated_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )
+
+    metrics_data = db.Column(db.JSON(), nullable=True)
     num_sensors = db.Column(db.Integer(), nullable=False, server_default="0")
     min_sensor_distance = db.Column(db.Float(), nullable=False, server_default="0")
     max_sensor_distance = db.Column(db.Float(), nullable=False, server_default="0")

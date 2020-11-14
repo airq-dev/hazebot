@@ -43,6 +43,13 @@ class SyncTestCase(BaseTestCase):
         self.assertGreater(Sensor.query.count(), 0)
         self.assertGreater(SensorZipcodeRelation.query.count(), 0)
 
+        # Assert that zipcodes with a valid pm25 have a metrics_data blob
+        zipcodes = Zipcode.query.filter(Zipcode.pm25_updated_at > 0).all()
+        self.assertGreater(len(zipcodes), 0)
+        for zipcode in zipcodes:
+            self.assertIsNotNone(zipcode.metrics_data)
+            self.assertTrue(len(zipcode.metrics_data["sensor_ids"]) > 0)
+
     @mock.patch.object(logging.Logger, "log")
     def test_sync_error(self, mock_log):
         error = HTTPError("foo")
