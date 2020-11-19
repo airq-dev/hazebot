@@ -20,7 +20,7 @@ from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
 
 
-PURPLEAIR_URL = "https://www.purpleair.com/json"
+PURPLEAIR_URL = "https://www.purpleair.com/json?tempAccess3=true"
 
 # Try to get at least 8 readings per zipcode.
 DESIRED_NUM_READINGS = 8
