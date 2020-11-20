@@ -77,7 +77,7 @@ if ! $running; then
 
         echo "Rebuilding images and volumes from scratch"
 
-        docker volume rm hazebot_test_pgdata &> /dev/null
+        docker volume rm hazebot_test_pgdata &> /dev/null || true
     fi
 
     eval $cmd
