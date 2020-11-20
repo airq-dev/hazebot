@@ -19,7 +19,7 @@ class ClientTestCase(BaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.zipcode = Zipcode.query.filter_by(zipcode="97204").get()
+        self.zipcode = Zipcode.query.filter_by(zipcode="97204").first()
         assert self.zipcode is not None, "Mypy is unhappy"
         self._zipcode_pm25 = self.zipcode.pm25
 

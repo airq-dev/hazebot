@@ -1,4 +1,4 @@
-# set -euo pipefail
+set -euo pipefail
 
 export COMPOSE_PROJECT_NAME=hazebot_test
 
@@ -51,8 +51,8 @@ if $build && $down; then
     exit
 fi
 
-docker ps | grep hazebot_test &> /dev/null
-if [ $? == 0 ]; then
+containers=`docker ps`
+if echo $containers | grep hazebot_test &> /dev/null; then
   running=true
 else
   running=false
