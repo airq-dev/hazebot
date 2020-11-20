@@ -1,4 +1,4 @@
-set -euo pipefail
+# set -euo pipefail
 
 export COMPOSE_PROJECT_NAME=hazebot_test
 
@@ -51,17 +51,20 @@ if $build && $down; then
     exit
 fi
 
-containers=`docker ps`
-running=false
-if echo $containers | grep hazebot_test; then
+docker ps | grep hazebot_test &> /dev/null
+if [ $? == 0 ]; then
   running=true
+else
+  running=false
 fi
 
 if $down; then
     if $running; then
+        echo "Stopping containers"
         docker-compose down
+        echo "All done"
     else
-        echo "Containers are not running."
+        echo "Containers are not running"
     fi
 
     exit
@@ -71,6 +74,10 @@ if ! $running; then
     cmd="docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d"
     if $build; then
         cmd+=" --build"
+
+        echo "Rebuilding images and volumes from scratch"
+
+        docker volume rm hazebot_test_pgdata &> /dev/null
     fi
 
     eval $cmd

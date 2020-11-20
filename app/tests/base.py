@@ -71,18 +71,20 @@ class BaseTestCase(unittest.TestCase):
         self._teardown_mocks()
         self._truncate_tables(self._get_ephemeral_models())
 
-    def _setup_mocks(self):
-        self._patchings["clock"] = MockDateTime(
-            datetime.datetime(
-                year=2020,
-                month=9,
-                day=18,
-                hour=16,
-                minute=29,
-                second=28,
-                tzinfo=pytz.timezone("America/Los_Angeles"),
-            )
+    @staticmethod
+    def get_mock_datetime() -> datetime.datetime:
+        return datetime.datetime(
+            year=2020,
+            month=9,
+            day=18,
+            hour=16,
+            minute=29,
+            second=28,
+            tzinfo=pytz.timezone("America/Los_Angeles"),
         )
+
+    def _setup_mocks(self):
+        self._patchings["clock"] = MockDateTime(self.get_mock_datetime())
         self._patchings["send_sms"] = mock.patch.object(MessageList, "create")
         for name, patching in self._patchings.items():
             self._mocks[name] = patching.start()

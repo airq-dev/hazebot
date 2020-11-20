@@ -12,6 +12,7 @@ from airq.celery import get_celery_logger
 from airq.config import db
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
+from airq.lib.purpleair import call_purpleair_api
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
 from airq.models.clients import Client
@@ -19,8 +20,6 @@ from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
 
-
-PURPLEAIR_URL = "https://www.purpleair.com/json?tempAccess3=true"
 
 # Try to get at least 8 readings per zipcode.
 DESIRED_NUM_READINGS = 8
@@ -31,10 +30,8 @@ DESIRED_READING_DISTANCE_KM = 2.5
 
 def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
     logger = get_celery_logger()
-    resp = requests.get(PURPLEAIR_URL)
     try:
-        resp.raise_for_status()
-        return resp.json().get("results", [])
+        resp = call_purpleair_api()
     except (requests.RequestException, json.JSONDecodeError) as e:
         # Send an email to an admin if data lags by more than 30 minutes.
         # Otherwise, just log a warning as most of these errors are
@@ -55,21 +52,32 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
             exc_info=True,
         )
         return []
+    else:
+        response_dict = resp.json()
+        fields = response_dict["fields"]
+        channel_flags = response_dict["channel_flags"]
+        data = []
+        for sensor_data in response_dict["data"]:
+            sensor_data = dict(zip(fields, sensor_data))
+            try:
+                sensor_data["channel_flags"] = channel_flags[
+                    sensor_data["channel_flags"]
+                ]
+            except KeyError:
+                pass
+            data.append(sensor_data)
+        return data
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
-    if sensor_data.get("DEVICE_LOCATIONTYPE") != "outside":
-        return False
-    if sensor_data.get("ParentID"):
-        return False
-    if sensor_data.get("LastSeen", 0) < timestamp() - (60 * 60):
+    if sensor_data["last_seen"] < timestamp() - (60 * 60):
         # Out of date / maybe dead
         return False
-    if sensor_data.get("Flag"):
+    if sensor_data["channel_flags"] != "Normal":
         # Flagged for an unusually high reading
         return False
     try:
-        pm25 = float(sensor_data.get("PM2_5Value", 0))
+        pm25 = float(sensor_data["pm2.5"])
     except (TypeError, ValueError):
         return False
     if math.isnan(pm25):
@@ -79,8 +87,8 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
     if pm25 <= 0 or pm25 > 1000:
         # Something is very wrong
         return False
-    latitude = sensor_data.get("Lat")
-    longitude = sensor_data.get("Lon")
+    latitude = sensor_data["latitude"]
+    longitude = sensor_data["longitude"]
     if latitude is None or longitude is None:
         return False
 
@@ -99,14 +107,14 @@ def _sensors_sync(
     moved_sensor_ids = []
     for result in purpleair_data:
         if _is_valid_reading(result):
-            sensor = existing_sensor_map.get(result["ID"])
-            latitude = result["Lat"]
-            longitude = result["Lon"]
-            pm25 = float(result["PM2_5Value"])
+            sensor = existing_sensor_map.get(result["sensor_index"])
+            latitude = result["latitude"]
+            longitude = result["longitude"]
+            pm25 = float(result["pm2.5"])
             data: typing.Dict[str, typing.Any] = {
-                "id": result["ID"],
+                "id": result["sensor_index"],
                 "latest_reading": pm25,
-                "updated_at": result["LastSeen"],
+                "updated_at": result["last_seen"],
             }
 
             if (
@@ -120,7 +128,7 @@ def _sensors_sync(
                     longitude=longitude,
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
-                moved_sensor_ids.append(result["ID"])
+                moved_sensor_ids.append(result["sensor_index"])
 
             if sensor:
                 updates.append(data)
