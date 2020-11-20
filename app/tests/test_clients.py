@@ -17,10 +17,17 @@ from tests.base import BaseTestCase
 class ClientTestCase(BaseTestCase):
     zipcode: typing.Optional[Zipcode] = None
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.zipcode = Zipcode.query.filter_by(zipcode="97204").first()
+    def setUp(self) -> None:
+        super().setUp()
+        self.zipcode = Zipcode.query.filter_by(zipcode="97204").first()
+        assert self.zipcode is not None, "Mypy is unhappy"
+        self._zipcode_pm25 = self.zipcode.pm25
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        assert self.zipcode is not None, "Mypy is unahppy"
+        self.zipcode.pm25 = self._zipcode_pm25
+        self.db.session.commit()
 
     def _make_client(
         self,
@@ -48,8 +55,12 @@ class ClientTestCase(BaseTestCase):
         return client
 
     def test_maybe_notify(self):
-        # Don't notify if pm25 hasn't changed
-        last_pm25 = self.zipcode.pm25
+        zipcode = self.zipcode
+        assert zipcode is not None, "Mypy is unhappy"
+        zipcode.pm25 = 11
+        self.db.session.commit()
+
+        last_pm25 = zipcode.pm25
         client = self._make_client(last_pm25=last_pm25)
         self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
@@ -80,62 +91,47 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(0, client.last_alert_sent_at)
         self.assertEqual(0, Event.query.count())
 
-        last_pm25 += 4.1  # tips us over into moderate
-        client.last_pm25 = last_pm25
+        zipcode.pm25 += 2  # tips us over into moderate
+        self.db.session.commit()
         self.assertTrue(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
         self.assert_event(
             client.id,
             EventType.ALERT,
-            zipcode=self.zipcode.zipcode,
+            zipcode=zipcode.zipcode,
             pm25=self.zipcode.pm25,
         )
 
         # Do not resend if 2 hours haven't passed
-        last_alert_sent_at = self.clock.now().timestamp()
+        self.clock.now().timestamp()
         self.clock.advance()
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
-        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
 
         # Do not resend if 2 hours have passed but AQI levels haven't changed
         self.clock.advance(Client.FREQUENCY).timestamp()
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
-        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
 
         # Do not resend if 2 hours have passed but AQI levels have changed by under 20 points
+        zipcode.pm25 -= 2
+        self.db.session.commit()
+        self.assertGreater(20, abs(client.last_aqi - zipcode.aqi))
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
-        self.assertEqual(last_alert_sent_at, client.last_alert_sent_at)
 
-        last_pm25 += 0.9
-        client.last_pm25 = last_pm25
-        self.assertEqual(20, client.last_aqi - self.zipcode.aqi)
-        self.assertTrue(client.maybe_notify())
+        # Resend if 6 hours have passed, even if AQI hasn't changed much
+        self.clock.advance(60 * 60 * 6 + 1)
+        with mock.patch.object(Client, "is_in_send_window", return_value=True):
+            self.assertTrue(client.maybe_notify())
         self.assertEqual(2, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
         self.assert_event(
             client.id,
             EventType.ALERT,
-            zipcode=self.zipcode.zipcode,
-            pm25=self.zipcode.pm25,
-        )
-
-        # Resend if 6 hours have passed, even if AQI hasn't changed much
-        last_pm25 -= 0.9
-        client.last_pm25 = last_pm25
-        self.clock.advance(60 * 60 * 6 + 1)
-        with mock.patch.object(Client, "is_in_send_window", return_value=True):
-            self.assertTrue(client.maybe_notify())
-        self.assertEqual(3, client.num_alerts_sent)
-        self.assertEqual(self.timestamp, client.last_alert_sent_at)
-        self.assert_event(
-            client.id,
-            EventType.ALERT,
-            zipcode=self.zipcode.zipcode,
-            pm25=self.zipcode.pm25,
+            zipcode=zipcode.zipcode,
+            pm25=zipcode.pm25,
         )
 
     def test_filter_eligible_for_sending(self):
@@ -174,7 +170,7 @@ class ClientTestCase(BaseTestCase):
         client = self._make_client(last_pm25=self.zipcode.pm25)
         client.disable_alerts()
         self.assertEqual(self.timestamp, client.alerts_disabled_at)
-        self.assertEqual(7.945, client.last_pm25)
+        self.assertEqual(9.875, client.last_pm25)
         self.assert_event(
             client.id, EventType.UNSUBSCRIBE, zipcode=client.zipcode.zipcode
         )

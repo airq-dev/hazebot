@@ -1,10 +1,10 @@
 import os
 import logging
-import requests
 
 from requests.exceptions import HTTPError
 from unittest import mock
 
+from airq.lib.purpleair import PURPLEAIR_URL
 from airq.models.cities import City
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
@@ -12,7 +12,6 @@ from airq.models.zipcodes import Zipcode
 from airq.sync import models_sync
 from airq.sync.geonames import GEONAMES_URL
 from airq.sync.geonames import ZIP_2_TIMEZONES_URL
-from airq.sync.purpleair import PURPLEAIR_URL
 from tests.base import BaseTestCase
 from tests.mocks.requests import ErrorResponse
 from tests.mocks.requests import MockRequests

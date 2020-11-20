@@ -81,6 +81,10 @@
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:POSTGRES_USER-1EVSsZ"
                 },
                 {
+                    "name": "PURPLEAIR_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:PURPLEAIR_API_KEY-Iq4ZlZ"
+                },
+                {
                     "name": "SECRET_KEY",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:146486422038:secret:SECRET_KEY-ZzCXkF"
                 },

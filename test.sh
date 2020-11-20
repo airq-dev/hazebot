@@ -52,16 +52,19 @@ if $build && $down; then
 fi
 
 containers=`docker ps`
-running=false
-if echo $containers | grep hazebot_test; then
+if echo $containers | grep hazebot_test &> /dev/null; then
   running=true
+else
+  running=false
 fi
 
 if $down; then
     if $running; then
+        echo "Stopping containers"
         docker-compose down
+        echo "All done"
     else
-        echo "Containers are not running."
+        echo "Containers are not running"
     fi
 
     exit
@@ -71,6 +74,10 @@ if ! $running; then
     cmd="docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d"
     if $build; then
         cmd+=" --build"
+
+        echo "Rebuilding images and volumes from scratch"
+
+        docker volume rm hazebot_test_pgdata &> /dev/null || true
     fi
 
     eval $cmd

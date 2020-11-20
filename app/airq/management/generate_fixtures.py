@@ -1,5 +1,3 @@
-import codecs
-import csv
 import json
 import os
 import pathlib
@@ -7,12 +5,11 @@ import requests
 import shutil
 import zipfile
 
-from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.http import chunked_download
+from airq.lib.purpleair import call_purpleair_api
 from airq.sync.geonames import COUNTRY_CODE
 from airq.sync.geonames import GEONAMES_URL
-from airq.sync.purpleair import PURPLEAIR_URL
 from tests.base import BaseTestCase
 
 
@@ -35,26 +32,31 @@ def generate_fixtures():
 
     """
     path = pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures"
-    timestamp = BaseTestCase.timestamp
+    timestamp = BaseTestCase().get_mock_datetime().timestamp()
 
-    resp = requests.get(PURPLEAIR_URL)
-    resp.raise_for_status()
+    resp = call_purpleair_api()
     response_json = resp.json()
     results = []
     num_skipped = 0
-    for res in response_json.get("results", []):
-        latitude = res.get("Lat")
-        longitude = res.get("Lon")
+
+    fields = response_json["fields"]
+    latitude_idx = fields.index("latitude")
+    longitude_idx = fields.index("longitude")
+    last_seen_idx = fields.index("last_seen")
+
+    for data in response_json["data"]:
+        latitude = data[latitude_idx]
+        longitude = data[longitude_idx]
         if (
             latitude is not None
             and longitude is not None
             and _is_in_range(latitude, longitude)
         ):
-            res["LastSeen"] = timestamp
-            results.append(res)
+            data[last_seen_idx] = timestamp
+            results.append(data)
         else:
             num_skipped += 1
-    response_json["results"] = results
+    response_json["data"] = results
     file_path = path / "purpleair/purpleair.json"
     with file_path.open("w") as f:
         json.dump(response_json, f)

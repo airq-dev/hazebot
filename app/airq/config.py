@@ -30,6 +30,8 @@ TWILIO_NUMBERS = {
 }
 TWILIO_SID = os.getenv("TWILIO_SID", "")
 
+PURPLEAIR_API_KEY = os.getenv("PURPLEAIR_API_KEY", "")
+
 PG_DB = os.getenv("POSTGRES_DB", "postgres")
 PG_HOST = os.getenv("POSTGRES_HOST", "db")
 PG_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")

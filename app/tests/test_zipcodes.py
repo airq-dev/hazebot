@@ -11,8 +11,8 @@ class ZipcodeTestCase(BaseTestCase):
         self.assertListEqual(
             [
                 Zipcode.query.filter_by(zipcode="97023").first(),
-                Zipcode.query.filter_by(zipcode="97068").first(),
                 Zipcode.query.filter_by(zipcode="97027").first(),
+                Zipcode.query.filter_by(zipcode="97022").first(),
             ],
             zipcode.get_recommendations(3),
         )
