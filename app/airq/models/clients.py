@@ -1,3 +1,4 @@
+from airq.lib.client_preferences import ClientPreferencesConfig
 import datetime
 import enum
 import logging
@@ -8,7 +9,7 @@ from flask_sqlalchemy import BaseQuery
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import Query
+from sqlalchemy.orm.attributes import flag_modified
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
@@ -174,6 +175,8 @@ class Client(db.Model):  # type: ignore
     num_alerts_sent = db.Column(db.Integer(), nullable=False, server_default="0")
     locale = db.Column(db.String(), nullable=False, server_default="en")
 
+    preferences = db.Column(db.JSON(), nullable=True)
+
     zipcode = db.relationship("Zipcode")
     events = db.relationship("Event")
 
@@ -223,6 +226,36 @@ class Client(db.Model):  # type: ignore
         if self.locale != locale:
             self.locale = locale
         db.session.commit()
+
+    #
+    # Prefs
+    #
+
+    def get_pref(self, pref_name: str) -> typing.Any:
+        default = ClientPreferencesConfig.get_by_name(pref_name).default
+        preferences = self.preferences or {}
+        return preferences.get(pref_name, default)  # type: ignore
+
+    def set_pref(self, pref_name: str, pref_value: str) -> None:
+        if self.preferences is None:
+            self.preferences = {}
+        self.preferences[pref_name] = pref_value  # type: ignore
+        # SQLAlchemy doesn't pick up changes to JSON fields,
+        # so we have to tell it what's going on. See
+        # https://stackoverflow.com/questions/42559434/updates-to-json-field-dont-persist-to-db
+        # for details.
+        flag_modified(self, "preferences")
+        db.session.add(self)
+        db.session.commit()
+
+    @property
+    def alerting_threshold(self) -> Pm25:
+        pref: str = self.get_pref("alerting_threshold")
+        threshold = Pm25.from_display(pref)
+        if threshold is None:
+            # TODO: Log error
+            return Pm25.GOOD
+        return threshold
 
     #
     # AQI
@@ -309,6 +342,21 @@ class Client(db.Model):  # type: ignore
         # Only send if the pm25 changed a level since the last time we sent this alert.
         last_aqi_level = Pm25.from_measurement(self.last_pm25)
         if curr_aqi_level == last_aqi_level:
+            return False
+
+        alerting_threshold = self.alerting_threshold
+        # If the current AQI is below the alerting threshold, and the last AQI was
+        # at the alerting threshold or below, we won't send the alert.
+        # For example, if the user sets their threshold at UNHEALTHY, they won't
+        # be notified when the AQI transitions from UNHEALTHY to UNHEALHY FOR SENSITIVE GROUPS
+        # or from UNHEALTHY to MODERATE, but will be notified if the AQI transitions from
+        # VERY UNHEALTHY to UNHEALTHY.
+        if curr_aqi_level < alerting_threshold and last_aqi_level <= alerting_threshold:
+            return False
+
+        # If the current AQI is at the alerting threshold but the last AQI was under it,
+        # don't send the alert because we haven't crossed the threshold yet.
+        if curr_aqi_level == alerting_threshold and last_aqi_level < alerting_threshold:
             return False
 
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
@@ -409,10 +457,15 @@ class Client(db.Model):  # type: ignore
         return None
 
     def should_accept_feedback(self) -> bool:
+        return self.has_recent_last_event_of_type(
+            EventType.FEEDBACK_BEGIN
+        ) or self.has_recent_last_event_of_type(EventType.UNSUBSCRIBE)
+
+    def has_recent_last_event_of_type(self, event_type: EventType) -> bool:
         last_event = self.get_last_client_event()
         return bool(
             last_event
-            and last_event.type_code
-            in (EventType.FEEDBACK_BEGIN, EventType.UNSUBSCRIBE)
+            and last_event.type_code == event_type
+            # FIXME: Call `FEEDBACK_RESPONSE_TIME` something else.
             and now() - last_event.timestamp < Client.FEEDBACK_RESPONSE_TIME
         )

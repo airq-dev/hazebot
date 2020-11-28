@@ -14,7 +14,15 @@ You should also read our [architecture docs](architecture.md#Architecture) for a
 
 ## Setting up local development
 
-Clone this repo and run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker-compose exec app flask sync --geography`. This runs the synchronization process described [here](architecture.md#Synchronizing-Data) to populate your database.
+To run Hazebot locally you'll need to obtain a read key for the Purpleair API. Please request one from contact@purpleair.com. (Note: a good project could be to provide fake data for local development. Then this step wouldn't be necessary.)
+
+Once you have your read key, clone this repo. Then create a new `.env.dev.secrets` file (this will be gitignored) and add the following line:
+
+```
+PURPLEAIR_API_KEY=<your read key>
+```
+
+Then run `docker-compose up --build`. Once the app is running, if this is the first time you've built Hazebot locally, run `docker-compose exec app flask sync --geography`. This runs the synchronization process described [here](architecture.md#Synchronizing-Data) to populate your database.
 
 You can then test the API by navigating to `http://localhost:5000/test?command=<YOUR ZIPCODE>`. The `/test` endpoint returns the same message you'd get if you sent a text to a callback registered with Twilio to point at the `/sms_reply` endpoint exposed by this app.
 

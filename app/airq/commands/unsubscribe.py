@@ -3,11 +3,10 @@ from flask_babel import gettext
 from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.commands.feedback import ReceiveFeedback
-from airq.models.zipcodes import Zipcode
 
 
 class Unsubscribe(RegexCommand):
-    pattern = r"^(5[\.\)]?|u|e|end|unsubscribe)$"
+    pattern = r"^(6[\.\)]?|u|e|end|unsubscribe)$"
 
     def handle(self) -> MessageResponse:
         if self.client.zipcode is None:

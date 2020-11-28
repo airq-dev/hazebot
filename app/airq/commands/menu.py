@@ -15,9 +15,10 @@ class ShowMenu(RegexCommand):
                 gettext("Reply"),
                 gettext("1. Details and recommendations"),
                 gettext("2. Current AQI"),
-                gettext("3. Hazebot info"),
-                gettext("4. Give feedback"),
-                gettext("5. Stop alerts"),
+                gettext("3. Set preferences"),
+                gettext("4. Hazebot info"),
+                gettext("5. Give feedback"),
+                gettext("6. Stop alerts"),
                 "",
                 gettext("Or, enter a new zipcode."),
             ]

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-14 09:56-0700\n"
+"POT-Creation-Date: 2020-11-28 15:34-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,31 +30,31 @@ msgid ""
 "we'll send you the air quality."
 msgstr ""
 
-#: airq/commands/feedback.py:22 airq/commands/feedback.py:32
+#: airq/commands/feedback.py:20 airq/commands/feedback.py:30
 msgid "Please enter your feedback below:"
 msgstr ""
 
-#: airq/commands/feedback.py:46
+#: airq/commands/feedback.py:44
 msgid "Thank you for your feedback!"
 msgstr ""
 
-#: airq/commands/feedback.py:72
+#: airq/commands/feedback.py:70
 msgid "Air quality is not a concern in my area"
 msgstr ""
 
-#: airq/commands/feedback.py:73
+#: airq/commands/feedback.py:71
 msgid "SMS texts are not my preferred information source"
 msgstr ""
 
-#: airq/commands/feedback.py:74
+#: airq/commands/feedback.py:72
 msgid "Alerts are too frequent"
 msgstr ""
 
-#: airq/commands/feedback.py:75
+#: airq/commands/feedback.py:73
 msgid "Information is inaccurate"
 msgstr ""
 
-#: airq/commands/feedback.py:76
+#: airq/commands/feedback.py:74
 msgid "Other"
 msgstr ""
 
@@ -84,19 +84,47 @@ msgid "2. Current AQI"
 msgstr ""
 
 #: airq/commands/menu.py:18
-msgid "3. Hazebot info"
+msgid "3. Set preferences"
 msgstr ""
 
 #: airq/commands/menu.py:19
-msgid "4. Give feedback"
+msgid "4. Hazebot info"
 msgstr ""
 
 #: airq/commands/menu.py:20
-msgid "5. Stop alerts"
+msgid "5. Give feedback"
 msgstr ""
 
-#: airq/commands/menu.py:22
+#: airq/commands/menu.py:21
+msgid "6. Stop alerts"
+msgstr ""
+
+#: airq/commands/menu.py:23
 msgid "Or, enter a new zipcode."
+msgstr ""
+
+#: airq/commands/prefs.py:15
+msgid "Which preference do you want to set?"
+msgstr ""
+
+#: airq/commands/prefs.py:37
+msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice. Please try again."
+msgstr ""
+
+#: airq/commands/prefs.py:48
+msgid "Current: %(value)s"
+msgstr ""
+
+#: airq/commands/prefs.py:61
+msgid "Hmm, looks like something went wrong. Try again?"
+msgstr ""
+
+#: airq/commands/prefs.py:71
+msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
+msgstr ""
+
+#: airq/commands/prefs.py:85
+msgid "Your %(pref)s is now %(value)s"
 msgstr ""
 
 #: airq/commands/quality.py:20
@@ -178,19 +206,34 @@ msgid ""
 "changes category."
 msgstr ""
 
-#: airq/commands/unsubscribe.py:18
+#: airq/commands/unsubscribe.py:17
 #, python-format
 msgid "Looks like you already stopped watching %(zipcode)s."
 msgstr ""
 
-#: airq/commands/unsubscribe.py:27
+#: airq/commands/unsubscribe.py:26
 msgid ""
 "Got it! You will not receive air quality updates until you text a new "
 "zipcode."
 msgstr ""
 
-#: airq/commands/unsubscribe.py:31
+#: airq/commands/unsubscribe.py:30
 msgid "Tell us why you're leaving so we can improve our service:"
+msgstr ""
+
+#: airq/lib/client_preferences.py:54
+msgid "Select one of"
+msgstr ""
+
+#: airq/lib/client_preferences.py:88
+msgid "Alerting Threshold"
+msgstr ""
+
+#: airq/lib/client_preferences.py:89
+msgid ""
+"AQI category below which Hazebot won't send alerts.\n"
+"For example, if you set this to MODERATE, Hazebot won't send alerts when "
+"AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr ""
 
 #: airq/lib/readings.py:35
@@ -256,7 +299,7 @@ msgid ""
 "entire population is more likely to be affected."
 msgstr ""
 
-#: airq/models/clients.py:326
+#: airq/models/clients.py:366
 #, python-format
 msgid ""
 "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s "
@@ -265,7 +308,7 @@ msgid ""
 " Reply \"M\" for Menu or \"E\" to end alerts."
 msgstr ""
 
-#: airq/models/clients.py:367
+#: airq/models/clients.py:406
 msgid ""
 "Has Hazebot been helpful? We’re looking for ways to grow and improve, and"
 " we’d love your help. Save our contact and share Hazebot with a friend, "

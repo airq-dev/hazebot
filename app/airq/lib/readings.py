@@ -4,9 +4,11 @@ import typing
 
 from flask_babel import gettext
 
+from airq.lib.choices import ChoicesEnum
+
 
 @enum.unique
-class Pm25(enum.IntEnum):
+class Pm25(int, ChoicesEnum):
     GOOD = 0
     MODERATE = 12
     UNHEALTHY_FOR_SENSITIVE_GROUPS = 35
@@ -70,6 +72,13 @@ class Pm25(enum.IntEnum):
             return gettext(
                 "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
             )
+
+    @classmethod
+    def from_display(cls, display: str) -> typing.Optional["Pm25"]:
+        for m in cls:
+            if m.display == display:
+                return m
+        return None
 
 
 def pm25_to_aqi(concentration: float) -> typing.Optional[int]:

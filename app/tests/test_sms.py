@@ -1,6 +1,3 @@
-import html
-
-from airq import config
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
@@ -160,23 +157,25 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(client_id, EventType.QUALITY, zipcode="97204", pm25=9.875)
 
     def test_get_menu(self):
+        expected_response = (
+            "Reply\n"
+            "1. Details and recommendations\n"
+            "2. Current AQI\n"
+            "3. Set preferences\n"
+            "4. Hazebot info\n"
+            "5. Give feedback\n"
+            "6. Stop alerts\n"
+            "\n"
+            "Or, enter a new zipcode."
+        )
+
         response = self.client.post(
             "/sms/en", data={"Body": "M", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
-        self.assert_twilio_response(
-            "Reply\n"
-            "1. Details and recommendations\n"
-            "2. Current AQI\n"
-            "3. Hazebot info\n"
-            "4. Give feedback\n"
-            "5. Stop alerts\n"
-            "\n"
-            "Or, enter a new zipcode.",
-            response.data,
-        )
+        self.assert_twilio_response(expected_response, response.data)
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.MENU)
 
@@ -186,23 +185,13 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
-        self.assert_twilio_response(
-            "Reply\n"
-            "1. Details and recommendations\n"
-            "2. Current AQI\n"
-            "3. Hazebot info\n"
-            "4. Give feedback\n"
-            "5. Stop alerts\n"
-            "\n"
-            "Or, enter a new zipcode.",
-            response.data,
-        )
+        self.assert_twilio_response(expected_response, response.data)
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.MENU)
 
     def test_get_info(self):
         response = self.client.post(
-            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+            "/sms/en", data={"Body": "4", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -425,7 +414,7 @@ class SMSTestCase(BaseTestCase):
 
         alerts_disabled_at = self.clock.advance().timestamp()
         response = self.client.post(
-            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+            "/sms/en", data={"Body": "6", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -465,7 +454,7 @@ class SMSTestCase(BaseTestCase):
         # Go through feedback flow
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+            "/sms/en", data={"Body": "5", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -504,7 +493,7 @@ class SMSTestCase(BaseTestCase):
         # Now give feedback again
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "4", "From": "+13333333333"}
+            "/sms/en", data={"Body": "5", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -550,3 +539,79 @@ class SMSTestCase(BaseTestCase):
 
         client = Client.query.filter_by(identifier="+13333333333").first()
         self.assertEqual("es", client.locale)
+
+    def test_prefs(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        client_id = Client.query.filter_by(identifier="+13333333333").first().id
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Which preference do you want to set?\n"
+            "1 - Alerting Threshold: AQI category below which Hazebot won't send alerts.\n"
+            "For example, if you set this to MODERATE, "
+            "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.",
+            response.data,
+        )
+        self.assertEqual(1, Event.query.count())
+        self.assert_event(client_id, EventType.LIST_PREFS)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Select one of\n"
+            "1 - GOOD\n"
+            "2 - MODERATE\n"
+            "3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            "4 - UNHEALTHY\n"
+            "5 - VERY UNHEALTHY\n"
+            "6 - HAZARDOUS\n"
+            "Current: GOOD",
+            response.data,
+        )
+        self.assertEqual(2, Event.query.count())
+        self.assert_event(
+            client_id, EventType.SET_PREF_REQUEST, pref_name="alerting_threshold"
+        )
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Your Alerting Threshold is now MODERATE", response.data
+        )
+        self.assertEqual(3, Event.query.count())
+        self.assert_event(
+            client_id,
+            EventType.SET_PREF,
+            pref_name="alerting_threshold",
+            pref_value="MODERATE",
+        )
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Select one of\n"
+            "1 - GOOD\n"
+            "2 - MODERATE\n"
+            "3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            "4 - UNHEALTHY\n"
+            "5 - VERY UNHEALTHY\n"
+            "6 - HAZARDOUS\n"
+            "Current: MODERATE",
+            response.data,
+        )
