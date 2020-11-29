@@ -63,7 +63,10 @@ class SetPref(SMSCommand):
 
         pref_name = event.validate()["pref_name"]
         pref = ClientPreferencesRegistry.get_by_name(pref_name)
-        value = pref.set_from_user_input(self.client, self.user_input)
+        try:
+            value = pref.set_from_user_input(self.client, self.user_input)
+        except InvalidPrefValue as e:
+            return MessageResponse(body=str(e))
         self.client.log_event(EventType.SET_PREF, pref_name=pref.name, pref_value=value)
         return MessageResponse(
             body=gettext(
