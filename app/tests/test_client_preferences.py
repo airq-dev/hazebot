@@ -3,7 +3,7 @@ from airq.lib.readings import Pm25
 from tests.base import BaseTestCase
 
 
-class ChoicesPreferenceTestCase(BaseTestCase):
+class IntegerChoicesPreferenceTestCase(BaseTestCase):
     @staticmethod
     def _get_pref() -> IntegerChoicesPreference:
         return IntegerChoicesPreference(

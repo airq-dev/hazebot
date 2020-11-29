@@ -339,3 +339,19 @@ class ClientTestCase(BaseTestCase):
         client.log_event(EventType.SHARE_REQUEST)
         last_event = client.get_last_client_event()
         self.assertEqual(EventType.MENU, last_event.type_code)
+
+    def test_alert_frequency(self):
+        client = self._make_client()
+        self.assertEqual(2, client.alert_frequency)
+
+        client.set_pref("alert_frequency", 6)
+        client = Client.query.get(client.id)
+        self.assertEqual(6, client.alert_frequency)
+
+    def test_alert_threshold(self):
+        client = self._make_client()
+        self.assertEqual(0, client.alert_threshold)
+
+        client.set_pref("alert_threshold", 12)
+        client = Client.query.get(client.id)
+        self.assertEqual(12, client.alert_threshold)
