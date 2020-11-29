@@ -61,7 +61,10 @@ fi
 if $down; then
     if $running; then
         echo "Stopping containers"
-        docker-compose down
+        docker-compose \
+          -f docker-compose.yml \
+          -f docker-compose.test.yml \
+          down
         echo "All done"
     else
         echo "Containers are not running"
@@ -102,15 +105,31 @@ if ! $running; then
 
     echo ""
 
-    docker-compose exec -T -e SKIP_FORCE_REBUILD=1 app python3 -m unittest tests.test_sync.SyncTestCase.test_sync
+    docker-compose \
+      -f docker-compose.yml \
+      -f docker-compose.test.yml \
+      exec \
+      -T \
+      -e SKIP_FORCE_REBUILD=1 \
+      app python3 -m unittest tests.test_sync.SyncTestCase.test_sync
 fi
 
 if [ "$module" ]; then
   echo "Running tests for ${module}"
-  docker-compose exec -T app python3 -m unittest ${module}
+  docker-compose \
+    -f docker-compose.yml \
+    -f docker-compose.test.yml \
+    exec \
+    -T \
+    app python3 -m unittest ${module}
 else
   echo "Running all tests"
-  docker-compose exec -T app python3 -m unittest discover
+  docker-compose \
+    -f docker-compose.yml \
+    -f docker-compose.test.yml \
+    exec \
+    -T \
+    app python3 -m unittest discover
 fi
 
 exit $?
