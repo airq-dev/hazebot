@@ -6,7 +6,7 @@ from airq.models.events import EventType
 
 
 class ShowAbout(RegexCommand):
-    pattern = r"^3[\.\)]?$"
+    pattern = r"^4[\.\)]?$"
 
     def handle(self) -> MessageResponse:
         self.client.log_event(EventType.ABOUT)

@@ -5,6 +5,7 @@ import typing
 from unittest import mock
 from twilio.base.exceptions import TwilioRestException
 
+from airq.lib.readings import Pm25
 from airq.lib.twilio import TwilioErrorCode
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
@@ -133,6 +134,38 @@ class ClientTestCase(BaseTestCase):
             zipcode=zipcode.zipcode,
             pm25=zipcode.pm25,
         )
+
+    def test_maybe_notify_with_alerting_threshold_set(self):
+        client = self._make_client()
+        client.set_pref("alerting_threshold", Pm25.MODERATE.display)
+        zipcode = client.zipcode
+
+        test_cases = (
+            (Pm25.MODERATE - 1, Pm25.MODERATE, False),
+            (Pm25.MODERATE, Pm25.MODERATE + 1, False),
+            (
+                Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS - 1,
+                Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS,
+                True,
+            ),
+            (
+                Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS,
+                Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS - 1,
+                True,
+            ),
+            (Pm25.UNHEALTHY - 1, Pm25.UNHEALTHY, True),
+            (Pm25.UNHEALTHY, Pm25.UNHEALTHY - 1, True),
+        )
+
+        for last_pm25, curr_pm25, expected_result in test_cases:
+            with self.subTest(
+                "{} => {}: {}".format(last_pm25, curr_pm25, expected_result)
+            ):
+                client.last_alert_sent_at = 0
+                client.last_pm25 = last_pm25
+                zipcode.pm25 = curr_pm25
+                self.db.session.commit()
+                self.assertEqual(expected_result, client.maybe_notify())
 
     def test_filter_eligible_for_sending(self):
         # Don't send if client was messaged less than or equal to two hours ago

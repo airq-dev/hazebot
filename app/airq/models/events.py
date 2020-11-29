@@ -2,7 +2,6 @@ import collections
 import datetime
 import dataclasses
 import enum
-import pytz
 import typing
 
 from flask_sqlalchemy import BaseQuery
@@ -18,6 +17,7 @@ class EventSchema(typing.Protocol):
         ...
 
 
+@enum.unique
 class EventType(enum.IntEnum):
     QUALITY = 1
     DETAILS = 2
@@ -31,6 +31,9 @@ class EventType(enum.IntEnum):
     FEEDBACK_RECEIVED = 10
     UNSUBSCRIBE_AUTO = 11
     SHARE_REQUEST = 12
+    LIST_PREFS = 13
+    SET_PREF_REQUEST = 14
+    SET_PREF = 15
 
 
 class EventQuery(BaseQuery):
@@ -141,6 +144,12 @@ class Event(db.Model):  # type: ignore
             return SubscribeEventSchema
         elif self.type_code == EventType.SHARE_REQUEST:
             return EmptySchema
+        elif self.type_code == EventType.LIST_PREFS:
+            return EmptySchema
+        elif self.type_code == EventType.SET_PREF_REQUEST:
+            return SetPrefRequestEventSchema
+        elif self.type_code == EventType.SET_PREF:
+            return SetPrefEventSchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")
 
@@ -183,3 +192,14 @@ class AlertEventSchema:
 @dataclasses.dataclass
 class FeedbackReceivedEventSchema:
     feedback: str
+
+
+@dataclasses.dataclass
+class SetPrefRequestEventSchema:
+    pref_name: str
+
+
+@dataclasses.dataclass
+class SetPrefEventSchema:
+    pref_name: str
+    pref_value: typing.Any

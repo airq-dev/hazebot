@@ -5,6 +5,7 @@ services:
     command: gunicorn --bind 0.0.0.0:5000 airq:app --reload
     env_file:
       - ./.env.dev
+      - ./.env.dev.secrets
     expose:
       - "5000"
   nginx:

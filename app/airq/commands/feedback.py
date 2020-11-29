@@ -4,17 +4,15 @@ import typing
 from flask_babel import gettext
 from werkzeug.utils import cached_property
 
-from airq import config
 from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.commands.base import SMSCommand
 from airq.lib.ses import send_email
-from airq.models.clients import Client
 from airq.models.events import EventType
 
 
 class ShowFeedback(RegexCommand):
-    pattern = r"^(4[\.\)]?|feedback)$"
+    pattern = r"^(5[\.\)]?|feedback)$"
 
     def handle(self) -> MessageResponse:
         self.client.log_event(EventType.FEEDBACK_BEGIN)

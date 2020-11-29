@@ -11,6 +11,9 @@ from airq.commands.menu import ShowMenu
 from airq.commands.quality import GetDetails
 from airq.commands.quality import GetLast
 from airq.commands.quality import GetQuality
+from airq.commands.prefs import ListPrefs
+from airq.commands.prefs import RequestSetPref
+from airq.commands.prefs import SetPref
 from airq.commands.resubscribe import Resubscribe
 from airq.commands.unsubscribe import Unsubscribe
 from airq.models.clients import Client
@@ -28,11 +31,14 @@ COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     # certain input (e.g., "1") as selecting an option instead of choosing a command.
     #
     ReceiveFeedback,
+    RequestSetPref,
+    SetPref,
     #
     # The "regular" (number-based) commands come next. Order does not matter for these.
     #
     GetDetails,
     GetLast,
+    ListPrefs,
     Resubscribe,
     ShowAbout,
     ShowFeedback,
