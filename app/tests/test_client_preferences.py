@@ -1,25 +1,25 @@
-from airq.lib.client_preferences import ChoicesPreference
+from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.readings import Pm25
 from tests.base import BaseTestCase
 
 
 class ChoicesPreferenceTestCase(BaseTestCase):
     @staticmethod
-    def _get_pref() -> ChoicesPreference:
-        return ChoicesPreference(
-            name="foo_bar",
+    def _get_pref() -> IntegerChoicesPreference:
+        return IntegerChoicesPreference(
             display_name="Foo Bar",
             description="Testing 123",
-            default=Pm25.UNHEALTHY.name,
-            choices=Pm25,
+            default=Pm25.UNHEALTHY.value,
+            choices=sorted(c.value for c in Pm25),
+            choice_names={c.value: c.display for c in Pm25},
         )
 
     def test_validate(self):
         pref = self._get_pref()
         self.assertIsNone(pref.validate("0"))
         self.assertIsNone(pref.validate("20"))
-        self.assertEqual("GOOD", pref.validate("1"))
-        self.assertEqual("MODERATE", pref.validate("2"))
+        self.assertEqual(0, pref.validate("1"))
+        self.assertEqual(12, pref.validate("2"))
 
     def test_get_prompt(self):
         pref = self._get_pref()

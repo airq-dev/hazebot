@@ -3,7 +3,7 @@ from flask_babel import gettext
 from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.commands.base import SMSCommand
-from airq.lib.client_preferences import ClientPreferencesConfig
+from airq.lib.client_preferences import ClientPreferencesRegistry
 from airq.models.events import EventType
 
 
@@ -13,7 +13,7 @@ class ListPrefs(RegexCommand):
     def handle(self) -> MessageResponse:
         response = MessageResponse()
         response.write(gettext("Which preference do you want to set?"))
-        for i, pref in ClientPreferencesConfig.iter_with_index():
+        for i, pref in ClientPreferencesRegistry.iter_with_index():
             response.write(f"{i} - {pref.display_name}: {pref.description}")
         self.client.log_event(EventType.LIST_PREFS)
         return response
@@ -29,7 +29,7 @@ class RequestSetPref(SMSCommand):
         except (TypeError, ValueError):
             pref = None
         else:
-            pref = ClientPreferencesConfig.get_by_index(idx)
+            pref = ClientPreferencesRegistry.get_by_index(idx)
 
         if pref is None:
             return MessageResponse(
@@ -61,7 +61,7 @@ class SetPref(SMSCommand):
             )
 
         pref_name = event.validate()["pref_name"]
-        pref = ClientPreferencesConfig.get_by_name(pref_name)
+        pref = ClientPreferencesRegistry.get_by_name(pref_name)
         value = pref.validate(self.user_input.strip())
         if value is None:
             response = MessageResponse()

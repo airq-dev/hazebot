@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-28 15:34-0800\n"
+"POT-Creation-Date: 2020-11-28 20:26-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,23 +107,27 @@ msgstr ""
 msgid "Which preference do you want to set?"
 msgstr ""
 
-#: airq/commands/prefs.py:37
-msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice. Please try again."
+#: airq/commands/prefs.py:36
+#, python-format
+msgid "Hmm, %(input)s doesn't seem to be a valid choice. Please try again."
 msgstr ""
 
-#: airq/commands/prefs.py:48
+#: airq/commands/prefs.py:47
+#, python-format
 msgid "Current: %(value)s"
 msgstr ""
 
-#: airq/commands/prefs.py:61
+#: airq/commands/prefs.py:60
 msgid "Hmm, looks like something went wrong. Try again?"
 msgstr ""
 
-#: airq/commands/prefs.py:71
+#: airq/commands/prefs.py:69
+#, python-format
 msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
 msgstr ""
 
-#: airq/commands/prefs.py:85
+#: airq/commands/prefs.py:86
+#, python-format
 msgid "Your %(pref)s is now %(value)s"
 msgstr ""
 
@@ -221,19 +225,27 @@ msgstr ""
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr ""
 
-#: airq/lib/client_preferences.py:54
+#: airq/lib/client_preferences.py:96
 msgid "Select one of"
 msgstr ""
 
-#: airq/lib/client_preferences.py:88
-msgid "Alerting Threshold"
+#: airq/lib/client_preferences.py:145
+#, python-format
+msgid "Enter an integer between %(min_value)s and %(max_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:89
-msgid ""
-"AQI category below which Hazebot won't send alerts.\n"
-"For example, if you set this to MODERATE, Hazebot won't send alerts when "
-"AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
+#: airq/lib/client_preferences.py:147
+#, python-format
+msgid "Enter an integer greater than or equal to %(min_value)s."
+msgstr ""
+
+#: airq/lib/client_preferences.py:149
+#, python-format
+msgid "Enter an integer less than or equal to %(max_value)s."
+msgstr ""
+
+#: airq/lib/client_preferences.py:150
+msgid "Enter an integer."
 msgstr ""
 
 #: airq/lib/readings.py:35
@@ -299,7 +311,26 @@ msgid ""
 "entire population is more likely to be affected."
 msgstr ""
 
-#: airq/models/clients.py:366
+#: airq/models/clients.py:230
+msgid "Alert Frequency"
+msgstr ""
+
+#: airq/models/clients.py:231
+msgid "By default, Hazebot sends alerts at most every 2 hours."
+msgstr ""
+
+#: airq/models/clients.py:240
+msgid "Alert Threshold"
+msgstr ""
+
+#: airq/models/clients.py:241
+msgid ""
+"AQI category below which Hazebot won't send alerts.\n"
+"For example, if you set this to MODERATE, Hazebot won't send alerts when "
+"AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
+msgstr ""
+
+#: airq/models/clients.py:383
 #, python-format
 msgid ""
 "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s "
@@ -308,7 +339,7 @@ msgid ""
 " Reply \"M\" for Menu or \"E\" to end alerts."
 msgstr ""
 
-#: airq/models/clients.py:406
+#: airq/models/clients.py:423
 msgid ""
 "Has Hazebot been helpful? We’re looking for ways to grow and improve, and"
 " we’d love your help. Save our contact and share Hazebot with a friend, "
