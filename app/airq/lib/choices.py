@@ -15,3 +15,10 @@ class ChoicesEnum(enum.Enum):
             if m.name == name:
                 return m
         return None
+
+    @classmethod
+    def from_display(cls, display: str) -> typing.Optional["ChoicesEnum"]:
+        for m in cls:
+            if m.display == display:
+                return m
+        return None

@@ -1,4 +1,3 @@
-from airq.lib.client_preferences import ClientPreferencesConfig
 import datetime
 import enum
 import logging
@@ -13,6 +12,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
+from airq.lib.client_preferences import ClientPreferencesConfig
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
@@ -203,8 +203,9 @@ class Client(db.Model):  # type: ignore
     # Send alerts between 8 AM and 9 PM.
     SEND_WINDOW_HOURS = (8, 21)
 
-    # Time alotted between feedback command and feedback response.
-    FEEDBACK_RESPONSE_TIME = datetime.timedelta(hours=1)
+    # Time after which the client shouldn't treat an event as "recent"
+    # and therefore shouldn't include it in its state
+    EVENT_RESPONSE_TIME = datetime.timedelta(hours=1)
 
     @classmethod
     def get_share_window(self) -> typing.Tuple[int, int]:
@@ -250,10 +251,10 @@ class Client(db.Model):  # type: ignore
 
     @property
     def alerting_threshold(self) -> Pm25:
-        pref: str = self.get_pref("alerting_threshold")
-        threshold = Pm25.from_display(pref)
+        pref = self.get_pref("alerting_threshold")
+        threshold = Pm25.from_name(pref)
         if threshold is None:
-            # TODO: Log error
+            logger.error("Invalid pref value %s for alerting_threshold for %s", pref, self)
             return Pm25.GOOD
         return threshold
 
@@ -466,6 +467,5 @@ class Client(db.Model):  # type: ignore
         return bool(
             last_event
             and last_event.type_code == event_type
-            # FIXME: Call `FEEDBACK_RESPONSE_TIME` something else.
-            and now() - last_event.timestamp < Client.FEEDBACK_RESPONSE_TIME
+            and now() - last_event.timestamp < Client.EVENT_RESPONSE_TIME
         )

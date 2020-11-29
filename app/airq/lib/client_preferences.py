@@ -23,6 +23,9 @@ class ClientPreference(abc.ABC):
         self.description = description
         self.default = default
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.name}, {self.display_name}, {self.description}, {self.default})"
+
     @abc.abstractmethod
     def validate(self, value: str) -> typing.Optional[str]:
         """Ensure that the raw value is valid for this pref."""

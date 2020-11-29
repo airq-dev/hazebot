@@ -73,13 +73,6 @@ class Pm25(int, ChoicesEnum):
                 "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
             )
 
-    @classmethod
-    def from_display(cls, display: str) -> typing.Optional["Pm25"]:
-        for m in cls:
-            if m.display == display:
-                return m
-        return None
-
 
 def pm25_to_aqi(concentration: float) -> typing.Optional[int]:
     c = math.floor(10 * concentration) / 10
