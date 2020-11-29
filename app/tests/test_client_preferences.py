@@ -1,4 +1,4 @@
-from airq.lib.client_preferences import IntegerChoicesPreference, InvalidPrefValue
+from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.readings import Pm25
 from tests.base import BaseTestCase
 

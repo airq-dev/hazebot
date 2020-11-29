@@ -1,6 +1,5 @@
 import abc
 import collections
-from enum import IntEnum
 import typing
 
 from flask_babel import gettext

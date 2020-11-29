@@ -12,11 +12,8 @@ from sqlalchemy.orm import joinedload
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
-from airq.lib.client_preferences import ClientPreferencesRegistry
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
-from airq.lib.client_preferences import InvalidPrefValue
-from airq.lib.client_preferences import TPreferenceValue
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
