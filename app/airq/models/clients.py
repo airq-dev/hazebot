@@ -258,6 +258,12 @@ class Client(db.Model):  # type: ignore
                 "Invalid pref value %s for alerting_threshold for %s", pref, self
             )
             return Pm25.GOOD
+        # This ugly assert tells Mypy that the ChoicesEnum above
+        # is actually an instance of Pm25; this is a limitation of
+        # MyPy currently.
+        assert isinstance(
+            threshold, Pm25
+        ), "Threshold unexpectedly not an instance of Pm25"
         return threshold
 
     #
