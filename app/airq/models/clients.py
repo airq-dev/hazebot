@@ -254,7 +254,9 @@ class Client(db.Model):  # type: ignore
         pref = self.get_pref("alerting_threshold")
         threshold = Pm25.from_name(pref)
         if threshold is None:
-            logger.error("Invalid pref value %s for alerting_threshold for %s", pref, self)
+            logger.error(
+                "Invalid pref value %s for alerting_threshold for %s", pref, self
+            )
             return Pm25.GOOD
         return threshold
 
