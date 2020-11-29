@@ -9,6 +9,7 @@ from airq.lib.choices import ChoicesEnum
 from airq.lib.readings import Pm25
 
 
+# TODO: We could probably make this more type safe.
 class ClientPreference(abc.ABC):
     def __init__(
         self,
@@ -48,13 +49,19 @@ class ChoicesPreference(ClientPreference):
         self._enum = choices
 
     def _get_choices(self) -> typing.List[str]:
-        return [c.display for c in sorted(self._enum)]
+        choices = []
+        for c in self._enum:
+            c_: ChoicesEnum = c
+            choices.append(c_.display)
+        return choices
 
     def format_value(self, value: str) -> str:
-        return self._enum.from_name(value).display
+        member = self._enum.from_name(value)
+        assert member is not None, "ChoicesEnum member unexpectedly absent."
+        return member.display
 
     def validate(self, value: str) -> typing.Optional[str]:
-        choices = list(self._enum)
+        choices: typing.List[ChoicesEnum] = list(self._enum)
         try:
             idx = int(value)
             if idx <= 0:
