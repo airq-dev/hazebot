@@ -63,25 +63,8 @@ class SetPref(SMSCommand):
 
         pref_name = event.validate()["pref_name"]
         pref = ClientPreferencesRegistry.get_by_name(pref_name)
-
-        try:
-            value = pref.clean(self.user_input.strip())
-        except InvalidPrefValue:
-            response = MessageResponse()
-            response.write(
-                gettext(
-                    'Hmm, "%(input)s" doesn\'t seem to be a valid choice.',
-                    input=self.user_input[:20],
-                )
-            )
-            response.write("")
-            response.write(pref.get_prompt())
-            return response
-
-        pref.persist(self.client, value)
-
+        value = pref.set_from_user_input(self.client, self.user_input)
         self.client.log_event(EventType.SET_PREF, pref_name=pref.name, pref_value=value)
-
         return MessageResponse(
             body=gettext(
                 "Your %(pref)s is now %(value)s",

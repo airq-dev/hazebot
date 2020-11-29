@@ -15,10 +15,8 @@ class IntegerChoicesPreferenceTestCase(BaseTestCase):
 
     def test_clean(self):
         pref = self._get_pref()
-        with self.assertRaises(InvalidPrefValue):
-            pref.clean("0")
-        with self.assertRaises(InvalidPrefValue):
-            pref.clean("20")
+        self.assertIsNone(pref.clean("0"))
+        self.assertIsNone(pref.clean("20"))
         self.assertEqual(0, pref.clean("1"))
         self.assertEqual(12, pref.clean("2"))
 

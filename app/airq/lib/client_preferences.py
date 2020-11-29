@@ -45,12 +45,25 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         return self
 
     def __set__(self, client: "Client", value: TPreferenceValue):
-        self._set(client, value, persist=False)
+        self._set(client, value)
 
-    def persist(self, client: "Client", value: TPreferenceValue):
-        self._set(client, value, persist=True)
+    def set_from_user_input(
+        self, client: "Client", user_input: str
+    ) -> TPreferenceValue:
+        value = self.clean(user_input.strip())
+        if value is None:
+            msg = gettext(
+                'Hmm, "%(input)s" doesn\'t seem to be a valid choice.',
+                input=user_input[:20],
+            )
+            msg += "\n\n"
+            msg += self.get_prompt()
+            raise InvalidPrefValue(msg)
+        self._set(client, value)
+        db.session.commit()
+        return value
 
-    def _set(self, client: "Client", value: TPreferenceValue, *, persist: bool):
+    def _set(self, client: "Client", value: TPreferenceValue):
         self._validate(value)
         if client.preferences is None:
             client.preferences = {}
@@ -61,8 +74,6 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         # for details.
         flag_modified(client, "preferences")
         db.session.add(client)
-        if persist:
-            db.session.commit()
 
     def __set_name__(self, owner: typing.Type["Client"], name: str) -> None:
         ClientPreferencesRegistry.register_pref(name, self)
@@ -72,7 +83,7 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         return ClientPreferencesRegistry.get_name(self)
 
     @abc.abstractmethod
-    def clean(self, value: str) -> TPreferenceValue:
+    def clean(self, value: str) -> typing.Optional[TPreferenceValue]:
         """Coerce user input to a valid value for this pref, or throw an error."""
 
     @abc.abstractmethod
@@ -94,7 +105,7 @@ class IntegerChoicesPreference(ClientPreference[int]):
         display_name: str,
         description: str,
         default: int,
-        choices: typing.Type[IntChoicesEnum]
+        choices: typing.Type[IntChoicesEnum],
     ):
         super().__init__(display_name, description, default)
         self._choices = choices
@@ -105,15 +116,15 @@ class IntegerChoicesPreference(ClientPreference[int]):
     def format_value(self, value: int) -> str:
         return self._choices.from_value(value).display
 
-    def clean(self, user_input: str) -> int:
+    def clean(self, user_input: str) -> typing.Optional[int]:
         choices = self._get_choices()
         try:
             idx = int(user_input)
             if idx <= 0:
-                raise InvalidPrefValue()
+                return None
             return choices[idx - 1].value
         except (IndexError, TypeError, ValueError):
-            raise InvalidPrefValue()
+            return None
 
     def _validate(self, value: int):
         if value not in self._get_choices():
@@ -147,12 +158,12 @@ class IntegerPreference(ClientPreference[int]):
     def format_value(self, value: int) -> str:
         return str(value)
 
-    def clean(self, user_input: str) -> int:
+    def clean(self, user_input: str) -> typing.Optional[int]:
         try:
             value = int(user_input)
-        except (TypeError, ValueError):
-            raise InvalidPrefValue()
-        self._validate(value)
+            self._validate(value)
+        except (TypeError, ValueError, InvalidPrefValue):
+            return None
         return value
 
     def _validate(self, value: int):
@@ -181,7 +192,6 @@ class IntegerPreference(ClientPreference[int]):
         return gettext("Enter an integer.")
 
 
-# TODO: Consider using singleton pattern
 class ClientPreferencesRegistry:
     _prefs: typing.MutableMapping[str, ClientPreference] = collections.OrderedDict()
 
