@@ -4,6 +4,7 @@ import logging
 import typing
 
 from flask_babel import gettext
+from flask_babel import lazy_gettext
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import and_
 from sqlalchemy import func
@@ -12,7 +13,10 @@ from sqlalchemy.orm.attributes import flag_modified
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
-from airq.lib.client_preferences import ClientPreferencesConfig
+from airq.lib.client_preferences import IntegerChoicesPreference
+from airq.lib.client_preferences import IntegerPreference
+from airq.lib.client_preferences import ClientPreferencesRegistry
+from airq.lib.client_preferences import TPreferenceValue
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
@@ -76,12 +80,10 @@ class ClientQuery(BaseQuery):
         )
 
     def filter_eligible_for_sending(self) -> "ClientQuery":
-        cutoff = timestamp() - Client.FREQUENCY
         return (
             self.filter_phones()
             .options(joinedload(Client.zipcode))
             .filter(Client.alerts_disabled_at == 0)
-            .filter(Client.last_alert_sent_at < cutoff)
             .filter(Client.zipcode_id.isnot(None))
         )
 
@@ -192,14 +194,6 @@ class Client(db.Model):  # type: ignore
     def __repr__(self) -> str:
         return f"<Client {self.identifier}>"
 
-    # Send alerts at most every TWO hours to avoid spamming people.
-    # One hour seems like a reasonable frequency because AQI
-    # doesn't fluctuate very frequently. We should look at implementing
-    # logic to smooth out this alerting so that if AQI oscillates
-    # between two levels we don't spam the user every TWO hour.
-    # TODO: update logic with hysteresis to avoid spamming + save money
-    FREQUENCY = 2 * 60 * 60
-
     # Send alerts between 8 AM and 9 PM.
     SEND_WINDOW_HOURS = (8, 21)
 
@@ -232,12 +226,34 @@ class Client(db.Model):  # type: ignore
     # Prefs
     #
 
-    def get_pref(self, pref_name: str) -> typing.Any:
-        default = ClientPreferencesConfig.get_by_name(pref_name).default
+    alert_frequency = IntegerPreference(
+        display_name=lazy_gettext("Alert Frequency"),
+        description=lazy_gettext(
+            "By default, Hazebot sends alerts at most every 2 hours."
+        ),
+        default=2,
+        min_value=0,
+        max_value=24,
+    )
+
+    alert_threshold = IntegerChoicesPreference(
+        display_name=lazy_gettext("Alert Threshold"),
+        description=lazy_gettext(
+            "AQI category below which Hazebot won't send alerts.\n"
+            "For example, if you set this to MODERATE, "
+            "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
+        ),
+        default=Pm25.GOOD.value,
+        choices=sorted(c.value for c in Pm25),
+        choice_names={c.value: c.display for c in Pm25},
+    )
+
+    def get_pref(self, pref_name: str) -> typing.Union[str, int]:
+        default = ClientPreferencesRegistry.get_default(pref_name)
         preferences = self.preferences or {}
         return preferences.get(pref_name, default)  # type: ignore
 
-    def set_pref(self, pref_name: str, pref_value: str) -> None:
+    def set_pref(self, pref_name: str, pref_value: TPreferenceValue) -> None:
         if self.preferences is None:
             self.preferences = {}
         self.preferences[pref_name] = pref_value  # type: ignore
@@ -248,23 +264,6 @@ class Client(db.Model):  # type: ignore
         flag_modified(self, "preferences")
         db.session.add(self)
         db.session.commit()
-
-    @property
-    def alerting_threshold(self) -> Pm25:
-        pref = self.get_pref("alerting_threshold")
-        threshold = Pm25.from_name(pref)
-        if threshold is None:
-            logger.error(
-                "Invalid pref value %s for alerting_threshold for %s", pref, self
-            )
-            return Pm25.GOOD
-        # This ugly assert tells Mypy that the ChoicesEnum above
-        # is actually an instance of Pm25; this is a limitation of
-        # MyPy currently.
-        assert isinstance(
-            threshold, Pm25
-        ), "Threshold unexpectedly not an instance of Pm25"
-        return threshold
 
     #
     # AQI
@@ -341,7 +340,8 @@ class Client(db.Model):  # type: ignore
         if not self.is_in_send_window:
             return False
 
-        if self.last_alert_sent_at >= timestamp() - self.FREQUENCY:
+        alert_frequency = self.alert_frequency * 60 * 60
+        if self.last_alert_sent_at >= timestamp() - alert_frequency:
             return False
 
         curr_pm25 = self.zipcode.pm25
@@ -353,19 +353,20 @@ class Client(db.Model):  # type: ignore
         if curr_aqi_level == last_aqi_level:
             return False
 
-        alerting_threshold = self.alerting_threshold
-        # If the current AQI is below the alerting threshold, and the last AQI was
+        alert_threshold = self.alert_threshold
+
+        # If the current AQI is below the alert threshold, and the last AQI was
         # at the alerting threshold or below, we won't send the alert.
         # For example, if the user sets their threshold at UNHEALTHY, they won't
         # be notified when the AQI transitions from UNHEALTHY to UNHEALHY FOR SENSITIVE GROUPS
         # or from UNHEALTHY to MODERATE, but will be notified if the AQI transitions from
         # VERY UNHEALTHY to UNHEALTHY.
-        if curr_aqi_level < alerting_threshold and last_aqi_level <= alerting_threshold:
+        if curr_aqi_level < alert_threshold and last_aqi_level <= alert_threshold:
             return False
 
-        # If the current AQI is at the alerting threshold but the last AQI was under it,
+        # If the current AQI is at the alert threshold but the last AQI was under it,
         # don't send the alert because we haven't crossed the threshold yet.
-        if curr_aqi_level == alerting_threshold and last_aqi_level < alerting_threshold:
+        if curr_aqi_level == alert_threshold and last_aqi_level < alert_threshold:
             return False
 
         # Do not alert clients who received an alert recently unless AQI has changed markedly.

@@ -111,7 +111,7 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(1, client.num_alerts_sent)
 
         # Do not resend if 2 hours have passed but AQI levels haven't changed
-        self.clock.advance(Client.FREQUENCY).timestamp()
+        self.clock.advance(2 * 60 * 60).timestamp()
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
 
@@ -137,7 +137,7 @@ class ClientTestCase(BaseTestCase):
 
     def test_maybe_notify_with_alerting_threshold_set(self):
         client = self._make_client()
-        client.set_pref("alerting_threshold", Pm25.MODERATE.display)
+        client.set_pref(Client.alert_threshold.name, Pm25.MODERATE.value)
         zipcode = client.zipcode
 
         test_cases = (
@@ -168,19 +168,8 @@ class ClientTestCase(BaseTestCase):
                 self.assertEqual(expected_result, client.maybe_notify())
 
     def test_filter_eligible_for_sending(self):
-        # Don't send if client was messaged less than or equal to two hours ago
-        client = self._make_client(
-            last_alert_sent_at=self.timestamp - (2 * 60 * 60),
-            last_pm25=self.zipcode.pm25 + 50,
-        )
-        self.assertEqual(0, Client.query.filter_eligible_for_sending().count())
-
-        client.last_alert_sent_at -= 1
-        self.db.session.commit()
-        self.assertEqual(1, Client.query.filter_eligible_for_sending().count())
-
         # Don't send if alerts are disabled
-        client.alerts_disabled_at = self.timestamp
+        client = self._make_client(alerts_disabled_at=self.timestamp)
         self.db.session.commit()
         self.assertEqual(0, Client.query.filter_eligible_for_sending().count())
 
@@ -350,3 +339,19 @@ class ClientTestCase(BaseTestCase):
         client.log_event(EventType.SHARE_REQUEST)
         last_event = client.get_last_client_event()
         self.assertEqual(EventType.MENU, last_event.type_code)
+
+    def test_alert_frequency(self):
+        client = self._make_client()
+        self.assertEqual(2, client.alert_frequency)
+
+        client.set_pref("alert_frequency", 6)
+        client = Client.query.get(client.id)
+        self.assertEqual(6, client.alert_frequency)
+
+    def test_alert_threshold(self):
+        client = self._make_client()
+        self.assertEqual(0, client.alert_threshold)
+
+        client.set_pref("alert_threshold", 12)
+        client = Client.query.get(client.id)
+        self.assertEqual(12, client.alert_threshold)

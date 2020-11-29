@@ -540,7 +540,7 @@ class SMSTestCase(BaseTestCase):
         client = Client.query.filter_by(identifier="+13333333333").first()
         self.assertEqual("es", client.locale)
 
-    def test_prefs(self):
+    def test_list_prefs(self):
         response = self.client.post(
             "/sms/en", data={"Body": "3", "From": "+13333333333"}
         )
@@ -548,7 +548,8 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
             "Which preference do you want to set?\n"
-            "1 - Alerting Threshold: AQI category below which Hazebot won't send alerts.\n"
+            "1 - Alert Frequency: By default, Hazebot sends alerts at most every 2 hours.\n"
+            "2 - Alert Threshold: AQI category below which Hazebot won't send alerts.\n"
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.",
             response.data,
@@ -556,9 +557,75 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Event.query.count())
         self.assert_event(client_id, EventType.LIST_PREFS)
 
+    def test_set_alerting_frequency(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        client_id = client.id
+        self.assertEqual(2, client.alert_frequency)
+
         self.clock.advance()
         response = self.client.post(
             "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Enter an integer between 0 and 24.\n" "Current: 2",
+            response.data,
+        )
+        self.assertEqual(2, Event.query.count())
+        self.assert_event(
+            client_id, EventType.SET_PREF_REQUEST, pref_name=Client.alert_frequency.name
+        )
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "6", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response("Your Alert Frequency is now 6", response.data)
+        self.assertEqual(3, Event.query.count())
+        self.assert_event(
+            client_id,
+            EventType.SET_PREF,
+            pref_name=Client.alert_frequency.name,
+            pref_value=6,
+        )
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        self.assertEqual(6, client.alert_frequency)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Enter an integer between 0 and 24.\n" "Current: 6",
+            response.data,
+        )
+
+    def test_set_alerting_threshold(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        client_id = client.id
+        self.assertEqual(0, client.alert_threshold)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
@@ -574,7 +641,7 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(2, Event.query.count())
         self.assert_event(
-            client_id, EventType.SET_PREF_REQUEST, pref_name="alerting_threshold"
+            client_id, EventType.SET_PREF_REQUEST, pref_name=Client.alert_threshold.name
         )
 
         self.clock.advance()
@@ -583,15 +650,17 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Your Alerting Threshold is now MODERATE", response.data
+            "Your Alert Threshold is now MODERATE", response.data
         )
         self.assertEqual(3, Event.query.count())
         self.assert_event(
             client_id,
             EventType.SET_PREF,
-            pref_name="alerting_threshold",
-            pref_value="MODERATE",
+            pref_name=Client.alert_threshold.name,
+            pref_value=12,
         )
+        client = Client.query.filter_by(identifier="+13333333333").first()
+        self.assertEqual(12, client.alert_threshold)
 
         self.clock.advance()
         response = self.client.post(
@@ -601,7 +670,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(

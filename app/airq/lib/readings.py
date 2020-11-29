@@ -4,11 +4,9 @@ import typing
 
 from flask_babel import gettext
 
-from airq.lib.choices import ChoicesEnum
-
 
 @enum.unique
-class Pm25(int, ChoicesEnum):
+class Pm25(int, enum.Enum):
     GOOD = 0
     MODERATE = 12
     UNHEALTHY_FOR_SENSITIVE_GROUPS = 35

@@ -92,25 +92,9 @@ msgstr "O introducir un nuevo código postal."
 msgid "Which preference do you want to set?"
 msgstr "¿Qué preferencia quieres establecer?"
 
-#: airq/commands/prefs.py:37
-msgid "Hmm, %(input)s doesn't seem to be a valid choice. Please try again."
-msgstr "Mmm, %(input)s no parece ser una opción válida. Inténtalo de nuevo."
-
-#: airq/commands/prefs.py:48
-msgid "Current: %(value)s"
-msgstr "Actual: %(value)s"
-
-#: airq/commands/prefs.py:61
+#: airq/commands/prefs.py:60
 msgid "Hmm, looks like something went wrong. Try again?"
 msgstr "Mmm, parece que algo salió mal. ¿Inténtalo de nuevo?"
-
-#: airq/commands/prefs.py:71
-msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
-msgstr "Mmm, \"%(input)s\" no parece ser una opción válida."
-
-#: airq/commands/prefs.py:85
-msgid "Your %(pref)s is now %(value)s"
-msgstr "Tu %(pref)s ahora es %(value)s"
 
 #: airq/commands/quality.py:20
 msgid "Hmm. Are you sure %(zipcode)s is a valid US zipcode?"
@@ -182,7 +166,7 @@ msgstr "¡Entendido! No recibirá actualizaciones de la calidad del aire hasta q
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr "Decirnos por qué se va para que podamos mejorar nuestro servicio:"
 
-#: airq/lib/client_preferences.py:54
+#: airq/lib/client_preferences.py:96
 msgid "Select one of"
 msgstr "Seleccione uno de"
 
@@ -234,7 +218,7 @@ msgstr "MUY INSALUBRE (AQI: 201 - 300): Aviso de salud. Todos pueden experimenta
 msgid "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
 msgstr "PELIGROSO (AQI: 301 - 500): Advertencias sanitarias de situaciones de emergencia. Es más probable que toda la población se vea afectada."
 
-#: airq/models/clients.py:366
+#: airq/models/clients.py:383
 msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
 "\n"
 " Reply \"M\" for Menu or \"E\" to end alerts."
@@ -242,17 +226,57 @@ msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_lev
 "\n"
 "Responder \"M\" para el menú o \"E\" para parar los avisos."
 
-#: airq/models/clients.py:406
+#: airq/models/clients.py:423
 msgid "Has Hazebot been helpful? We’re looking for ways to grow and improve, and we’d love your help. Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
 msgstr "Hazebot ha sido de ayuda? Buscamos formas de crecer y mejorar, y nos encantaría su ayuda. Guardar nuestro contacto y compartir Hazebot con un amigo, o enviar un mensaje de texto con \"comentarios\" para dar comentarios."
 
-#: airq/lib/client_preferences.py:88
-msgid "Alerting Threshold"
-msgstr "Límite de Alertas"
-
-#: airq/lib/client_preferences.py:89
+#: airq/models/clients.py:241
 msgid "AQI category below which Hazebot won't send alerts.\n"
 "For example, if you set this to MODERATE, Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr "Categoría de AQI por debajo de la cual Hazebot no enviará alertas.\n"
 "Por ejemplo, si configura esto en MODERADO, Hazebot no enviará alertas cuando AQI pase de BUENO a MODERADO o de MODERADO a BUENO."
+
+#: airq/commands/prefs.py:36
+msgid "Hmm, %(input)s doesn't seem to be a valid choice. Please try again."
+msgstr "Mmm, %(input)s no parece ser una opción válida. Inténtalo de nuevo."
+
+#: airq/commands/prefs.py:47
+msgid "Current: %(value)s"
+msgstr "Actual: %(value)s"
+
+#: airq/commands/prefs.py:69
+msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
+msgstr "Mmm, \"%(input)s\" no parece ser una opción válida."
+
+#: airq/commands/prefs.py:86
+msgid "Your %(pref)s is now %(value)s"
+msgstr "Tu %(pref)s ahora es %(value)s"
+
+#: airq/lib/client_preferences.py:145
+msgid "Enter an integer between %(min_value)s and %(max_value)s."
+msgstr "Ingrese un número entero entre %(min_value)s y %(max_value)s"
+
+#: airq/lib/client_preferences.py:147
+msgid "Enter an integer greater than or equal to %(min_value)s."
+msgstr "Ingrese un número entero mayor o igual que %(min_value)s."
+
+#: airq/lib/client_preferences.py:149
+msgid "Enter an integer less than or equal to %(max_value)s."
+msgstr "Ingrese un número entero menor o igual que %(max_value)s."
+
+#: airq/lib/client_preferences.py:150
+msgid "Enter an integer."
+msgstr "Ingrese un número entero."
+
+#: airq/models/clients.py:230
+msgid "Alert Frequency"
+msgstr "Frecuencia de alerta."
+
+#: airq/models/clients.py:231
+msgid "By default, Hazebot sends alerts at most every 2 hours."
+msgstr "De forma predeterminada, Hazebot envía alertas como máximo cada 2 horas."
+
+#: airq/models/clients.py:240
+msgid "Alert Threshold"
+msgstr "Límite de alerta"
 
