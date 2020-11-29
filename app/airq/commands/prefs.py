@@ -4,6 +4,7 @@ from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.commands.base import SMSCommand
 from airq.lib.client_preferences import ClientPreferencesRegistry
+from airq.lib.client_preferences import InvalidPrefValue
 from airq.models.events import EventType
 
 
@@ -43,7 +44,7 @@ class RequestSetPref(SMSCommand):
 
         response = MessageResponse()
         response.write(pref.get_prompt())
-        formatted_value = pref.format_value(self.client.get_pref(pref.name))
+        formatted_value = pref.format_value(getattr(self.client, pref.name))
         response.write(gettext("Current: %(value)s", value=formatted_value))
 
         return response
@@ -62,8 +63,10 @@ class SetPref(SMSCommand):
 
         pref_name = event.validate()["pref_name"]
         pref = ClientPreferencesRegistry.get_by_name(pref_name)
-        value = pref.validate(self.user_input.strip())
-        if value is None:
+
+        try:
+            value = pref.clean(self.user_input.strip())
+        except InvalidPrefValue:
             response = MessageResponse()
             response.write(
                 gettext(
@@ -75,7 +78,7 @@ class SetPref(SMSCommand):
             response.write(pref.get_prompt())
             return response
 
-        self.client.set_pref(pref.name, value)
+        pref.persist(self.client, value)
 
         self.client.log_event(EventType.SET_PREF, pref_name=pref.name, pref_value=value)
 
