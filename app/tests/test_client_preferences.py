@@ -10,16 +10,15 @@ class IntegerChoicesPreferenceTestCase(BaseTestCase):
             display_name="Foo Bar",
             description="Testing 123",
             default=Pm25.UNHEALTHY.value,
-            choices=sorted(c.value for c in Pm25),
-            choice_names={c.value: c.display for c in Pm25},
+            choices=Pm25,
         )
 
-    def test_validate(self):
+    def test_clean(self):
         pref = self._get_pref()
-        self.assertIsNone(pref.validate("0"))
-        self.assertIsNone(pref.validate("20"))
-        self.assertEqual(0, pref.validate("1"))
-        self.assertEqual(12, pref.validate("2"))
+        self.assertIsNone(pref.clean("0"))
+        self.assertIsNone(pref.clean("20"))
+        self.assertEqual(0, pref.clean("1"))
+        self.assertEqual(12, pref.clean("2"))
 
     def test_get_prompt(self):
         pref = self._get_pref()

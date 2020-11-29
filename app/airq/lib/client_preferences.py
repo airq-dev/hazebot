@@ -3,15 +3,18 @@ import collections
 import typing
 
 from flask_babel import gettext
+from sqlalchemy.orm.attributes import flag_modified
 
-from airq.lib.logging import get_airq_logger
+from airq.config import db
+from airq.lib.choices import IntChoicesEnum
 
 
 if typing.TYPE_CHECKING:
     from airq.models.clients import Client
 
 
-logger = get_airq_logger(__name__)
+class InvalidPrefValue(Exception):
+    """This pref value is invalid."""
 
 
 TPreferenceValue = typing.TypeVar("TPreferenceValue", int, str)
@@ -36,8 +39,40 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         self, instance: "Client", owner: typing.Type["Client"]
     ) -> TPreferenceValue:
         if instance is not None:
-            return self.from_client(instance)
+            preferences = instance.preferences or {}
+            return preferences.get(self.name, self.default)  # type: ignore
         return self
+
+    def __set__(self, client: "Client", value: TPreferenceValue):
+        self._set(client, value)
+
+    def set_from_user_input(
+        self, client: "Client", user_input: str
+    ) -> TPreferenceValue:
+        value = self.clean(user_input.strip())
+        if value is None:
+            msg = gettext(
+                'Hmm, "%(input)s" doesn\'t seem to be a valid choice.',
+                input=user_input[:20],
+            )
+            msg += "\n\n"
+            msg += self.get_prompt()
+            raise InvalidPrefValue(msg)
+        self._set(client, value)
+        db.session.commit()
+        return value
+
+    def _set(self, client: "Client", value: TPreferenceValue):
+        self._validate(value)
+        if client.preferences is None:
+            client.preferences = {}
+        client.preferences[self.name] = value  # type: ignore
+        # SQLAlchemy doesn't pick up changes to JSON fields,
+        # so we have to tell it what's going on. See
+        # https://stackoverflow.com/questions/42559434/updates-to-json-field-dont-persist-to-db
+        # for details.
+        flag_modified(client, "preferences")
+        db.session.add(client)
 
     def __set_name__(self, owner: typing.Type["Client"], name: str) -> None:
         ClientPreferencesRegistry.register_pref(name, self)
@@ -47,12 +82,12 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         return ClientPreferencesRegistry.get_name(self)
 
     @abc.abstractmethod
-    def validate(self, value: str) -> typing.Optional[TPreferenceValue]:
-        """Ensure that the raw value is valid for this pref."""
+    def clean(self, value: str) -> typing.Optional[TPreferenceValue]:
+        """Coerce user input to a valid value for this pref, or throw an error."""
 
     @abc.abstractmethod
-    def from_client(self, client: "Client") -> typing.Any:
-        """Get the value from the client."""
+    def _validate(self, value: TPreferenceValue):
+        """Ensure that the raw value is valid for this pref."""
 
     @abc.abstractmethod
     def format_value(self, value: TPreferenceValue) -> str:
@@ -69,35 +104,35 @@ class IntegerChoicesPreference(ClientPreference[int]):
         display_name: str,
         description: str,
         default: int,
-        choices: typing.Iterable[int],
-        choice_names: typing.Optional[typing.Dict[int, str]] = None,
+        choices: typing.Type[IntChoicesEnum],
     ):
         super().__init__(display_name, description, default)
-        self._choices: typing.List[int] = list(choices)
-        self._choice_names: typing.Dict[int, str] = choice_names or {}
+        self._choices = choices
 
-    def from_client(self, client: "Client") -> int:
-        value = client.get_pref(self.name)
-        if not isinstance(value, int):
-            raise RuntimeError(f"Unexpected pref {value} for {client}")
-        return value
+    def _get_choices(self) -> typing.List[IntChoicesEnum]:
+        return list(self._choices)
 
     def format_value(self, value: int) -> str:
-        return self._choice_names.get(value, str(value))
+        return self._choices.from_value(value).display
 
-    def validate(self, value: str) -> typing.Optional[int]:
+    def clean(self, user_input: str) -> typing.Optional[int]:
+        choices = self._get_choices()
         try:
-            idx = int(value)
+            idx = int(user_input)
             if idx <= 0:
                 return None
-            return self._choices[idx - 1]
+            return choices[idx - 1].value
         except (IndexError, TypeError, ValueError):
             return None
 
+    def _validate(self, value: int):
+        if value not in self._get_choices():
+            raise InvalidPrefValue()
+
     def get_prompt(self) -> str:
         prompt = [gettext("Select one of")]
-        for i, choice in enumerate(self._choices, start=1):
-            prompt.append(f"{i} - {self.format_value(choice)}")
+        for i, choice in enumerate(self._get_choices(), start=1):
+            prompt.append(f"{i} - {choice.display}")
         return "\n".join(prompt)
 
 
@@ -119,28 +154,22 @@ class IntegerPreference(ClientPreference[int]):
                     f"Invalid min and max values {self._min_value} and {self._max_value}"
                 )
 
-    def from_client(self, client: "Client") -> int:
-        v: typing.Union[str, int] = client.get_pref(self.name)
-        if not isinstance(v, int):
-            raise RuntimeError(f"Invalid pref value {v} for {self.name} for {client}")
-        return v
-
     def format_value(self, value: int) -> str:
         return str(value)
 
-    def validate(self, value: str) -> typing.Optional[int]:
+    def clean(self, user_input: str) -> typing.Optional[int]:
         try:
-            v = int(value)
-        except (TypeError, ValueError):
+            value = int(user_input)
+            self._validate(value)
+        except (TypeError, ValueError, InvalidPrefValue):
             return None
+        return value
 
-        if self._min_value is not None and v < self._min_value:
-            return None
-
-        if self._max_value is not None and v > self._max_value:
-            return None
-
-        return v
+    def _validate(self, value: int):
+        if self._min_value is not None and value < self._min_value:
+            raise InvalidPrefValue()
+        if self._max_value is not None and value > self._max_value:
+            raise InvalidPrefValue()
 
     def get_prompt(self) -> str:
         if self._min_value is not None and self._max_value is not None:
@@ -162,7 +191,6 @@ class IntegerPreference(ClientPreference[int]):
         return gettext("Enter an integer.")
 
 
-# TODO: Consider using singleton pattern
 class ClientPreferencesRegistry:
     _prefs: typing.MutableMapping[str, ClientPreference] = collections.OrderedDict()
 

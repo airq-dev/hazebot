@@ -39,13 +39,18 @@ class MessageResponse:
     def as_html(self) -> str:
         return html.escape(self._body).replace("\n", "<br>")
 
-    def write(self, content: str, sep: str = "\n"):
+    def write(self, content: str, sep: str = "\n") -> "MessageResponse":
         if self._body:
             self._body += sep
         self._body += content
+        return self
 
-    def media(self, media: str):
+    def newline(self) -> "MessageResponse":
+        return self.write("")
+
+    def media(self, media: str) -> "MessageResponse":
         self._media = media
+        return self
 
 
 class SMSCommand(abc.ABC):

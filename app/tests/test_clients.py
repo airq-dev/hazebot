@@ -137,7 +137,8 @@ class ClientTestCase(BaseTestCase):
 
     def test_maybe_notify_with_alerting_threshold_set(self):
         client = self._make_client()
-        client.set_pref(Client.alert_threshold.name, Pm25.MODERATE.value)
+        client.alert_threshold = Pm25.MODERATE.value
+        self.db.session.commit()
         zipcode = client.zipcode
 
         test_cases = (
@@ -344,7 +345,9 @@ class ClientTestCase(BaseTestCase):
         client = self._make_client()
         self.assertEqual(2, client.alert_frequency)
 
-        client.set_pref("alert_frequency", 6)
+        client.alert_frequency = 6
+        self.db.session.commit()
+
         client = Client.query.get(client.id)
         self.assertEqual(6, client.alert_frequency)
 
@@ -352,6 +355,8 @@ class ClientTestCase(BaseTestCase):
         client = self._make_client()
         self.assertEqual(0, client.alert_threshold)
 
-        client.set_pref("alert_threshold", 12)
+        client.alert_threshold = 12
+        self.db.session.commit()
+
         client = Client.query.get(client.id)
         self.assertEqual(12, client.alert_threshold)

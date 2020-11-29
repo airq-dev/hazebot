@@ -9,14 +9,11 @@ from flask_sqlalchemy import BaseQuery
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.attributes import flag_modified
 from twilio.base.exceptions import TwilioRestException
 
 from airq.config import db
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
-from airq.lib.client_preferences import ClientPreferencesRegistry
-from airq.lib.client_preferences import TPreferenceValue
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import Pm25
@@ -244,26 +241,8 @@ class Client(db.Model):  # type: ignore
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
         default=Pm25.GOOD.value,
-        choices=sorted(c.value for c in Pm25),
-        choice_names={c.value: c.display for c in Pm25},
+        choices=Pm25,
     )
-
-    def get_pref(self, pref_name: str) -> typing.Union[str, int]:
-        default = ClientPreferencesRegistry.get_default(pref_name)
-        preferences = self.preferences or {}
-        return preferences.get(pref_name, default)  # type: ignore
-
-    def set_pref(self, pref_name: str, pref_value: TPreferenceValue) -> None:
-        if self.preferences is None:
-            self.preferences = {}
-        self.preferences[pref_name] = pref_value  # type: ignore
-        # SQLAlchemy doesn't pick up changes to JSON fields,
-        # so we have to tell it what's going on. See
-        # https://stackoverflow.com/questions/42559434/updates-to-json-field-dont-persist-to-db
-        # for details.
-        flag_modified(self, "preferences")
-        db.session.add(self)
-        db.session.commit()
 
     #
     # AQI

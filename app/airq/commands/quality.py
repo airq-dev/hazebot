@@ -6,7 +6,6 @@ from airq import config
 from airq.commands.base import MessageResponse
 from airq.commands.base import RegexCommand
 from airq.lib.geo import kilometers_to_miles
-from airq.models.clients import Client
 from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
 
@@ -53,34 +52,41 @@ class GetQuality(BaseQualityCommand):
         is_first_message = self.client.zipcode_id is None
         was_updated = self.client.update_subscription(zipcode)
         if self.client.is_enabled_for_alerts and is_first_message and was_updated:
-            response = MessageResponse.from_strings(
-                [
+            response = (
+                MessageResponse()
+                .write(
                     gettext(
                         "Welcome to Hazebot! We'll send you alerts when air quality in %(city)s %(zipcode)s changes category. Air quality is now %(pm25_level)s%(aqi_display)s.",
                         city=zipcode.city.name,
                         zipcode=zipcode.zipcode,
                         pm25_level=zipcode.pm25_level.display,
                         aqi_display=aqi_display,
-                    ),
-                    "",
+                    )
+                )
+                .newline()
+                .write(
                     gettext(
                         'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.'
-                    ),
-                ],
-                media=f"{config.SERVER_URL}/public/vcard/{self.client.locale}.vcf",
-            )
-        else:
-            response = MessageResponse()
-            response.write(
-                gettext(
-                    "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s.",
-                    city=zipcode.city.name,
-                    zipcode=zipcode.zipcode,
-                    pm25_level=zipcode.pm25_level.display,
-                    aqi_display=aqi_display,
+                    )
+                )
+                .media(
+                    f"{config.SERVER_URL}/public/vcard/{self.client.locale}.vcf",
                 )
             )
-            response.write("")
+        else:
+            response = (
+                MessageResponse()
+                .write(
+                    gettext(
+                        "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s.",
+                        city=zipcode.city.name,
+                        zipcode=zipcode.zipcode,
+                        pm25_level=zipcode.pm25_level.display,
+                        aqi_display=aqi_display,
+                    )
+                )
+                .newline()
+            )
             if not self.client.is_enabled_for_alerts:
                 response.write(
                     gettext(
@@ -113,9 +119,7 @@ class GetDetails(BaseQualityCommand):
     pattern = r"^1[\.\)]?$"
 
     def _get_message(self, zipcode: Zipcode) -> MessageResponse:
-        response = MessageResponse()
-        response.write(zipcode.pm25_level.description)
-        response.write("")
+        response = MessageResponse().write(zipcode.pm25_level.description).write("")
 
         num_desired = 3
         recommended_zipcodes = zipcode.get_recommendations(num_desired)
@@ -136,7 +140,7 @@ class GetDetails(BaseQualityCommand):
                         ),  # TODO: Make this based on locale
                     )
                 )
-            response.write("")
+            response.newline()
 
         response.write(
             ngettext(
