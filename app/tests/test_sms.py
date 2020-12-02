@@ -1,3 +1,4 @@
+from airq.lib.readings import Pm25
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
@@ -563,9 +564,10 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
 
+        default_frequency = Client.alert_frequency.default
         client = Client.query.filter_by(identifier="+13333333333").first()
         client_id = client.id
-        self.assertEqual(2, client.alert_frequency)
+        self.assertEqual(default_frequency, client.alert_frequency)
 
         self.clock.advance()
         response = self.client.post(
@@ -573,7 +575,7 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Enter an integer between 0 and 24.\n" "Current: 2",
+            f"Enter an integer between 0 and 24.\n" f"Current: {default_frequency}",
             response.data,
         )
         self.assertEqual(2, Event.query.count())
@@ -581,21 +583,24 @@ class SMSTestCase(BaseTestCase):
             client_id, EventType.SET_PREF_REQUEST, pref_name=Client.alert_frequency.name
         )
 
+        new_frequency = 4
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "6", "From": "+13333333333"}
+            "/sms/en", data={"Body": str(new_frequency), "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
-        self.assert_twilio_response("Your Alert Frequency is now 6", response.data)
+        self.assert_twilio_response(
+            f"Your Alert Frequency is now {new_frequency}", response.data
+        )
         self.assertEqual(3, Event.query.count())
         self.assert_event(
             client_id,
             EventType.SET_PREF,
             pref_name=Client.alert_frequency.name,
-            pref_value=6,
+            pref_value=new_frequency,
         )
         client = Client.query.filter_by(identifier="+13333333333").first()
-        self.assertEqual(6, client.alert_frequency)
+        self.assertEqual(new_frequency, client.alert_frequency)
 
         self.clock.advance()
         response = self.client.post(
@@ -609,7 +614,7 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Enter an integer between 0 and 24.\n" "Current: 6",
+            f"Enter an integer between 0 and 24.\n" f"Current: {new_frequency}",
             response.data,
         )
 
@@ -619,9 +624,11 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
 
+        default_threshold = Client.alert_threshold.default
+        default_pm25 = Pm25(default_threshold)
         client = Client.query.filter_by(identifier="+13333333333").first()
         client_id = client.id
-        self.assertEqual(0, client.alert_threshold)
+        self.assertEqual(default_threshold, client.alert_threshold)
 
         self.clock.advance()
         response = self.client.post(
@@ -629,14 +636,14 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Select one of\n"
-            "1 - GOOD\n"
-            "2 - MODERATE\n"
-            "3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
-            "4 - UNHEALTHY\n"
-            "5 - VERY UNHEALTHY\n"
-            "6 - HAZARDOUS\n"
-            "Current: GOOD",
+            f"Select one of\n"
+            f"1 - GOOD\n"
+            f"2 - MODERATE\n"
+            f"3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            f"4 - UNHEALTHY\n"
+            f"5 - VERY UNHEALTHY\n"
+            f"6 - HAZARDOUS\n"
+            f"Current: {default_pm25.display}",
             response.data,
         )
         self.assertEqual(2, Event.query.count())
@@ -644,23 +651,25 @@ class SMSTestCase(BaseTestCase):
             client_id, EventType.SET_PREF_REQUEST, pref_name=Client.alert_threshold.name
         )
 
+        new_pm25 = Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+            "/sms/en",
+            data={"Body": list(Pm25).index(new_pm25) + 1, "From": "+13333333333"},
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Your Alert Threshold is now MODERATE", response.data
+            f"Your Alert Threshold is now {new_pm25.display}", response.data
         )
         self.assertEqual(3, Event.query.count())
         self.assert_event(
             client_id,
             EventType.SET_PREF,
             pref_name=Client.alert_threshold.name,
-            pref_value=12,
+            pref_value=new_pm25.value,
         )
         client = Client.query.filter_by(identifier="+13333333333").first()
-        self.assertEqual(12, client.alert_threshold)
+        self.assertEqual(new_pm25.value, client.alert_threshold)
 
         self.clock.advance()
         response = self.client.post(
@@ -674,13 +683,13 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Select one of\n"
-            "1 - GOOD\n"
-            "2 - MODERATE\n"
-            "3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
-            "4 - UNHEALTHY\n"
-            "5 - VERY UNHEALTHY\n"
-            "6 - HAZARDOUS\n"
-            "Current: MODERATE",
+            f"Select one of\n"
+            f"1 - GOOD\n"
+            f"2 - MODERATE\n"
+            f"3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            f"4 - UNHEALTHY\n"
+            f"5 - VERY UNHEALTHY\n"
+            f"6 - HAZARDOUS\n"
+            f"Current: {new_pm25.display}",
             response.data,
         )

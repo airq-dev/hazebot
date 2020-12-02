@@ -228,7 +228,8 @@ class Client(db.Model):  # type: ignore
         description=lazy_gettext(
             "By default, Hazebot sends alerts at most every 2 hours."
         ),
-        default=2,
+        # TODO: Change default back to "2" next fire season.
+        default=6,
         min_value=0,
         max_value=24,
     )
@@ -240,7 +241,8 @@ class Client(db.Model):  # type: ignore
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
-        default=Pm25.GOOD.value,
+        # TODO: Change default back to "GOOD" next fire season.
+        default=Pm25.MODERATE.value,
         choices=Pm25,
     )
 

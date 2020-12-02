@@ -63,6 +63,9 @@ class ClientTestCase(BaseTestCase):
 
         last_pm25 = zipcode.pm25
         client = self._make_client(last_pm25=last_pm25)
+        client.alert_threshold = Pm25.GOOD.value
+        self.db.session.commit()
+
         self.assertFalse(client.maybe_notify())
         self.assertEqual(0, client.num_alerts_sent)
         self.assertEqual(0, client.last_alert_sent_at)
@@ -104,18 +107,19 @@ class ClientTestCase(BaseTestCase):
             pm25=self.zipcode.pm25,
         )
 
-        # Do not resend if 2 hours haven't passed
+        # Do not resend if the default frequnecy hasn't elapsed
         self.clock.now().timestamp()
         self.clock.advance()
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
 
-        # Do not resend if 2 hours have passed but AQI levels haven't changed
-        self.clock.advance(2 * 60 * 60).timestamp()
+        # Do not resend if the default frequency has elapsed but AQI levels haven't changed
+        default_frequency = Client.alert_frequency.default
+        self.clock.advance(default_frequency * 60 * 60).timestamp()
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
 
-        # Do not resend if 2 hours have passed but AQI levels have changed by under 20 points
+        # Do not resend if the default frequency has passed but AQI levels have changed by under 20 points
         zipcode.pm25 -= 2
         self.db.session.commit()
         self.assertGreater(20, abs(client.last_aqi - zipcode.aqi))
@@ -343,20 +347,20 @@ class ClientTestCase(BaseTestCase):
 
     def test_alert_frequency(self):
         client = self._make_client()
-        self.assertEqual(2, client.alert_frequency)
+        self.assertEqual(6, client.alert_frequency)
 
-        client.alert_frequency = 6
+        client.alert_frequency = 4
         self.db.session.commit()
 
         client = Client.query.get(client.id)
-        self.assertEqual(6, client.alert_frequency)
+        self.assertEqual(4, client.alert_frequency)
 
     def test_alert_threshold(self):
         client = self._make_client()
-        self.assertEqual(0, client.alert_threshold)
+        self.assertEqual(12, client.alert_threshold)
 
-        client.alert_threshold = 12
+        client.alert_threshold = Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS.value
         self.db.session.commit()
 
         client = Client.query.get(client.id)
-        self.assertEqual(12, client.alert_threshold)
+        self.assertEqual(35, client.alert_threshold)
