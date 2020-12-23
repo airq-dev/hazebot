@@ -78,7 +78,7 @@ class Zipcode(db.Model):  # type: ignore
     @classmethod
     def pm25_stale_cutoff(cls) -> float:
         """Timestamp before which pm25 measurements are considered stale."""
-        return timestamp() - (60 * 30)
+        return timestamp() - (60 * 120)
 
     @property
     def is_pm25_stale(self) -> bool:
@@ -92,10 +92,7 @@ class Zipcode(db.Model):  # type: ignore
         if self.id in other._distance_cache:
             return other._distance_cache[self.id]
         self._distance_cache[other.id] = haversine_distance(
-            other.longitude,
-            other.latitude,
-            self.longitude,
-            self.latitude,
+            other.longitude, other.latitude, self.longitude, self.latitude,
         )
         return self._distance_cache[other.id]
 

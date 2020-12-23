@@ -23,10 +23,7 @@ TPreferenceValue = typing.TypeVar("TPreferenceValue", int, str)
 # TODO: We could probably make this more type safe.
 class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     def __init__(
-        self,
-        display_name: str,
-        description: str,
-        default: TPreferenceValue,
+        self, display_name: str, description: str, default: TPreferenceValue,
     ):
         self.display_name = display_name
         self.description = description

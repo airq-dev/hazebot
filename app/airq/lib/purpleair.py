@@ -14,9 +14,7 @@ def call_purpleair_api() -> requests.Response:
         "location_type": 0,  # 0 is for outdoors
     }
     resp = requests.get(
-        PURPLEAIR_URL,
-        params=params,
-        headers={"X-API-Key": PURPLEAIR_API_KEY},
+        PURPLEAIR_URL, params=params, headers={"X-API-Key": PURPLEAIR_API_KEY},
     )
     resp.raise_for_status()
     return resp

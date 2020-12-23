@@ -101,10 +101,7 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(1, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
         self.assert_event(
-            client.id,
-            EventType.ALERT,
-            zipcode=zipcode.zipcode,
-            pm25=self.zipcode.pm25,
+            client.id, EventType.ALERT, zipcode=zipcode.zipcode, pm25=self.zipcode.pm25,
         )
 
         # Do not resend if the default frequnecy hasn't elapsed
@@ -133,10 +130,7 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(2, client.num_alerts_sent)
         self.assertEqual(self.timestamp, client.last_alert_sent_at)
         self.assert_event(
-            client.id,
-            EventType.ALERT,
-            zipcode=zipcode.zipcode,
-            pm25=zipcode.pm25,
+            client.id, EventType.ALERT, zipcode=zipcode.zipcode, pm25=zipcode.pm25,
         )
 
     def test_maybe_notify_with_alerting_threshold_set(self):

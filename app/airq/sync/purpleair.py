@@ -45,11 +45,7 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
         else:
             level = logging.WARNING
         logger.log(
-            level,
-            "%s updating purpleair data: %s",
-            type(e).__name__,
-            e,
-            exc_info=True,
+            level, "%s updating purpleair data: %s", type(e).__name__, e, exc_info=True,
         )
         return []
     else:

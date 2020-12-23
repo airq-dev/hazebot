@@ -69,9 +69,7 @@ class GetQuality(BaseQualityCommand):
                         'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.'
                     )
                 )
-                .media(
-                    f"{config.SERVER_URL}/public/vcard/{self.client.locale}.vcf",
-                )
+                .media(f"{config.SERVER_URL}/public/vcard/{self.client.locale}.vcf",)
             )
         else:
             response = (
