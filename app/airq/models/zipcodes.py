@@ -78,7 +78,7 @@ class Zipcode(db.Model):  # type: ignore
     @classmethod
     def pm25_stale_cutoff(cls) -> float:
         """Timestamp before which pm25 measurements are considered stale."""
-        return timestamp() - (60 * 30)
+        return timestamp() - (60 * 120)
 
     @property
     def is_pm25_stale(self) -> bool:
