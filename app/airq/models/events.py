@@ -7,7 +7,6 @@ import typing
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import desc
 from sqlalchemy import func
-from typing import ClassVar
 
 from airq.config import db
 from airq.lib import clock
