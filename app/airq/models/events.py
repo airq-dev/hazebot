@@ -7,9 +7,11 @@ import typing
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import desc
 from sqlalchemy import func
+from typing import ClassVar
 
 from airq.config import db
 from airq.lib import clock
+from airq.lib.util import data_matches_schema
 
 
 class EventSchema(typing.Protocol):
@@ -156,6 +158,8 @@ class Event(db.Model):  # type: ignore
     def validate(self) -> typing.Dict[str, typing.Any]:
         schema = self._get_schema()
         json_data = typing.cast(typing.Dict[str, typing.Any], self.json_data)
+        if not data_matches_schema(json_data, schema):  # type: ignore
+            raise TypeError(f"Expected type {schema}, got {json_data}")
         return dataclasses.asdict(schema(**json_data))
 
 
