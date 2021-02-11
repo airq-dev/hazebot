@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+    <head>
+        {% block head %}
+        <title>{% block title %}{% endblock %}Hazebot</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+        <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+        {% endblock %}
+    </head>
+    <body>
+        <nav class="navbar sticky-top navbar-expand-sm navbar-light">
+            <a class="navbar-brand" href="#">Hazebot</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="sms://+12627472332">Sign up</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#how-it-works">How it works</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#mission">Mission</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#who-we-are">Who We Are</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/airq-dev/hazebot">We're Open Source!</a>
+                        </li>
+                    </ul>
+            </div>
+        </nav>
+        <div id="content">
+            {% block content %}{% endblock %}
+        </div>
+        <div id="footer">
+            {% block footer %}
+            &copy; Hazebot 2020
+            {% endblock %}
+        </div>
+    </body>
+
+</html>

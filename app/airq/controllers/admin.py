@@ -42,7 +42,7 @@ def login() -> typing.Union[Response, str]:
             return redirect(url_for("login"))
         login_user(user, remember=True)
         return redirect(url_for("admin_summary"))
-    return render_template("login.html", title="Sign In", form=form)
+    return render_template("admin/login.html", title="Sign In", form=form)
 
 
 @login_required
@@ -54,7 +54,7 @@ def logout() -> Response:
 @admin_required
 def admin_summary() -> str:
     return render_template(
-        "admin.html",
+        "admin/admin.html",
         title="Admin",
         summary={
             "Total Alerts Sent": Client.query.get_total_num_sends(),
@@ -86,7 +86,7 @@ def admin_bulk_sms():
         flash("Sent!")
         return redirect(url_for("admin_summary"))
     return render_template(
-        "bulk_sms.html",
+        "admin/bulk_sms.html",
         form=form,
         num_inactive=Client.query.filter_inactive_since(timestamp()).count(),
     )
@@ -102,7 +102,7 @@ def admin_sms():
         client.send_message(form.data["message"])
         flash("Sent!")
         return redirect(url_for("admin_summary"))
-    return render_template("sms.html", form=form)
+    return render_template("admin/sms.html", form=form)
 
 
 @admin_required
@@ -156,4 +156,4 @@ def upload_users():
 
         return redirect(url_for("upload_users"))
 
-    return render_template("bulk_upload.html", form=form)
+    return render_template("admin/bulk_upload.html", form=form)
