@@ -117,7 +117,7 @@ def _sensors_sync(
             latitude = result["latitude"]
             longitude = result["longitude"]
             pm25 = float(result["pm2.5"])
-            humidity = float(result['humidity'])
+            humidity = float(result["humidity"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["sensor_index"],
                 "latest_reading": pm25,
@@ -236,7 +236,9 @@ def _metrics_sync():
         )
         .all()
     ):
-        zipcodes_to_sensors[zipcode_id].append((latest_reading, humidity, sensor_id, distance))
+        zipcodes_to_sensors[zipcode_id].append(
+            (latest_reading, humidity, sensor_id, distance)
+        )
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[float] = []
@@ -244,7 +246,9 @@ def _metrics_sync():
         closest_reading = float("inf")
         farthest_reading = 0.0
         sensor_ids: typing.List[int] = []
-        for reading, humidity, sensor_id, distance in sorted(sensor_tuples, key=lambda s: s[-1]):
+        for reading, humidity, sensor_id, distance in sorted(
+            sensor_tuples, key=lambda s: s[-1]
+        ):
             if (
                 len(readings) < DESIRED_NUM_READINGS
                 or distance < DESIRED_READING_DISTANCE_KM
