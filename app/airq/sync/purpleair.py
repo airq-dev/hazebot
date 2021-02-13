@@ -87,6 +87,12 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
     if pm25 <= 0 or pm25 > 1000:
         # Something is very wrong
         return False
+    try:
+        humidity = float(sensor_data["humidity"])
+    except (TypeError, ValueError):
+        return False
+    if math.isnan(humidity):
+        return False
     latitude = sensor_data["latitude"]
     longitude = sensor_data["longitude"]
     if latitude is None or longitude is None:
@@ -111,9 +117,11 @@ def _sensors_sync(
             latitude = result["latitude"]
             longitude = result["longitude"]
             pm25 = float(result["pm2.5"])
+            humidity = float(result["humidity"])
             data: typing.Dict[str, typing.Any] = {
                 "id": result["sensor_index"],
                 "latest_reading": pm25,
+                "humidity": humidity,
                 "updated_at": result["last_seen"],
             }
 
@@ -216,30 +224,37 @@ def _metrics_sync():
     ts = timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
-    for zipcode_id, latest_reading, sensor_id, distance in (
+    for zipcode_id, latest_reading, humidity, sensor_id, distance in (
         Sensor.query.join(SensorZipcodeRelation)
         .filter(Sensor.updated_at > ts - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
+            Sensor.humidity,
             Sensor.id,
             SensorZipcodeRelation.distance,
         )
         .all()
     ):
-        zipcodes_to_sensors[zipcode_id].append((latest_reading, sensor_id, distance))
+        zipcodes_to_sensors[zipcode_id].append(
+            (latest_reading, humidity, sensor_id, distance)
+        )
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
         readings: typing.List[float] = []
+        humidities: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
         sensor_ids: typing.List[int] = []
-        for reading, sensor_id, distance in sorted(sensor_tuples, key=lambda s: s[-1]):
+        for reading, humidity, sensor_id, distance in sorted(
+            sensor_tuples, key=lambda s: s[-1]
+        ):
             if (
                 len(readings) < DESIRED_NUM_READINGS
                 or distance < DESIRED_READING_DISTANCE_KM
             ):
                 readings.append(reading)
+                humidities.append(humidity)
                 sensor_ids.append(sensor_id)
                 closest_reading = min(distance, closest_reading)
                 farthest_reading = max(distance, farthest_reading)
@@ -249,12 +264,14 @@ def _metrics_sync():
         if readings:
             num_sensors = len(readings)
             pm25 = round(sum(readings) / num_sensors, ndigits=3)
+            humidity = round(sum(humidities) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             updates.append(
                 {
                     "id": zipcode_id,
                     "pm25": pm25,
+                    "humidity": humidity,
                     "pm25_updated_at": ts,
                     "metrics_data": {
                         "num_sensors": num_sensors,

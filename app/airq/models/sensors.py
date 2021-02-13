@@ -22,6 +22,7 @@ class Sensor(db.Model):  # type: ignore
 
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
     latest_reading = db.Column(db.Float(), nullable=False)
+    humidity = db.Column(db.Float(), nullable=True)
     updated_at = db.Column(db.Integer(), nullable=False)
     latitude = db.Column(db.Float(), nullable=False)
     longitude = db.Column(db.Float(), nullable=False)
