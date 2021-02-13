@@ -256,9 +256,6 @@ def _metrics_sync():
                     "id": zipcode_id,
                     "pm25": pm25,
                     "pm25_updated_at": ts,
-                    "num_sensors": num_sensors,
-                    "min_sensor_distance": min_sensor_distance,
-                    "max_sensor_distance": max_sensor_distance,
                     "metrics_data": {
                         "num_sensors": num_sensors,
                         "min_sensor_distance": min_sensor_distance,

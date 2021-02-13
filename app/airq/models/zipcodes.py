@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 
 from flask_sqlalchemy import BaseQuery
@@ -6,8 +7,15 @@ from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
-from airq.models.cities import City
 from airq.config import db
+
+
+@dataclasses.dataclass
+class ZipcodeMetrics:
+    num_sensors: int
+    min_sensor_distance: int
+    max_sensor_distance: int
+    sensor_ids: typing.List[int]
 
 
 class ZipcodeQuery(BaseQuery):
@@ -46,9 +54,6 @@ class Zipcode(db.Model):  # type: ignore
     )
 
     metrics_data = db.Column(db.JSON(), nullable=True)
-    num_sensors = db.Column(db.Integer(), nullable=False, server_default="0")
-    min_sensor_distance = db.Column(db.Float(), nullable=False, server_default="0")
-    max_sensor_distance = db.Column(db.Float(), nullable=False, server_default="0")
 
     city = db.relationship("City")
 
@@ -59,6 +64,28 @@ class Zipcode(db.Model):  # type: ignore
         obj = super().__new__(cls)
         obj._distance_cache = {}
         return obj
+
+    def get_metrics(self) -> ZipcodeMetrics:
+        if not hasattr(self, "_metrics"):
+            self._metrics = ZipcodeMetrics(
+                num_sensors=self.metrics_data["num_sensors"],
+                max_sensor_distance=self.metrics_data["max_sensor_distance"],
+                min_sensor_distance=self.metrics_data["min_sensor_distance"],
+                sensor_ids=self.metrics_data["sensor_ids"],
+            )
+        return self._metrics
+
+    @property
+    def num_sensors(self) -> int:
+        return self.get_metrics().num_sensors
+
+    @property
+    def max_sensor_distance(self) -> int:
+        return self.get_metrics().max_sensor_distance
+
+    @property
+    def min_sensor_distance(self) -> int:
+        return self.get_metrics().min_sensor_distance
 
     @property
     def geohash(self) -> str:
