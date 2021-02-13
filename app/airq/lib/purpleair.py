@@ -8,7 +8,7 @@ PURPLEAIR_URL = "https://api.purpleair.com/v1/sensors"
 
 
 def call_purpleair_api() -> requests.Response:
-    fields = ["pm2.5", "latitude", "longitude", "last_seen", "channel_flags"]
+    fields = ["pm2.5", "latitude", "longitude", "last_seen", "channel_flags", "humidity"]
     params: typing.Dict[str, typing.Union[int, str]] = {
         "fields": ",".join(fields),
         "location_type": 0,  # 0 is for outdoors
