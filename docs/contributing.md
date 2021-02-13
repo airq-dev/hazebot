@@ -73,7 +73,7 @@ We use [Alembic](https://alembic.sqlalchemy.org/en/latest/) via the [Flask-Migra
 
 1. Fire up docker per the instruction in [Local Setup](#Local_Setup)
 2. Make the change to your model; e.g., adding a new column.
-3. Run `docker-compose web flask migrate -m "<some descriptive message>"`. This will generate a new migration file in the `migrations` directory.
+3. Run `docker-compose exec app flask db migrate -m "<some descriptive message>"`. This will generate a new migration file in the `migrations` directory.
 4. If you need to backfill data via a custom script, you can extend your migration script with a custom data migration. See `app/migrations/versions/549f168d1eaf_add_zipcode_id_to_request.py` for an example.
 4. Run `docker-compose web flask upgrade --sql`.
 5. Check that the resulting SQL looks good. Note that the `--sql` options outputs SQL for all migrations, not just yours. But you only need to look at the SQL for the migration your created.
