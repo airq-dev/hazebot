@@ -1,33 +1,40 @@
 # Translations template for PROJECT.
-# Copyright (C) 2020 ORGANIZATION
+# Copyright (C) 2021 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-28 20:26-0800\n"
+"POT-Creation-Date: 2021-03-14 10:45-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: airq/commands/about.py:14
 msgid ""
-"hazebot runs on PurpleAir sensor data and is a free service providing "
-"accessible local air quality information. Visit hazebot.org or email "
-"info@hazebot.org for feedback."
+"hazebot runs on PurpleAir sensor data and is a free service. Reach us at "
+"hazebot.org or info@hazebot.org. Press 7 for information on how to "
+"support our work."
 msgstr ""
 
-#: airq/commands/base.py:66
+#: airq/commands/base.py:71
 msgid ""
 "Looks like you haven't use hazebot before! Please text us a zipcode and "
 "we'll send you the air quality."
+msgstr ""
+
+#: airq/commands/donate.py:14
+msgid ""
+"Like this project? A few dollars allows hundreds of people to breathe "
+"easy with hazebot. Help us reach more by donating here: "
+"https://bit.ly/3bh0Cx9."
 msgstr ""
 
 #: airq/commands/feedback.py:20 airq/commands/feedback.py:30
@@ -76,7 +83,7 @@ msgid "Reply"
 msgstr ""
 
 #: airq/commands/menu.py:16
-msgid "1. Details and recommendations"
+msgid "1. Air recommendations"
 msgstr ""
 
 #: airq/commands/menu.py:17
@@ -88,7 +95,7 @@ msgid "3. Set preferences"
 msgstr ""
 
 #: airq/commands/menu.py:19
-msgid "4. Hazebot info"
+msgid "4. About us"
 msgstr ""
 
 #: airq/commands/menu.py:20
@@ -99,51 +106,50 @@ msgstr ""
 msgid "6. Stop alerts"
 msgstr ""
 
-#: airq/commands/menu.py:23
+#: airq/commands/menu.py:22
+msgid "7. Donate"
+msgstr ""
+
+#: airq/commands/menu.py:24
 msgid "Or, enter a new zipcode."
 msgstr ""
 
-#: airq/commands/prefs.py:15
+#: airq/commands/prefs.py:16
 msgid "Which preference do you want to set?"
 msgstr ""
 
-#: airq/commands/prefs.py:36
+#: airq/commands/prefs.py:37
 #, python-format
 msgid "Hmm, %(input)s doesn't seem to be a valid choice. Please try again."
 msgstr ""
 
-#: airq/commands/prefs.py:47
+#: airq/commands/prefs.py:48
 #, python-format
 msgid "Current: %(value)s"
 msgstr ""
 
-#: airq/commands/prefs.py:60
+#: airq/commands/prefs.py:61
 msgid "Hmm, looks like something went wrong. Try again?"
 msgstr ""
 
-#: airq/commands/prefs.py:69
-#, python-format
-msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
-msgstr ""
-
-#: airq/commands/prefs.py:86
+#: airq/commands/prefs.py:78
 #, python-format
 msgid "Your %(pref)s is now %(value)s"
 msgstr ""
 
-#: airq/commands/quality.py:20
+#: airq/commands/quality.py:19
 #, python-format
 msgid "Hmm. Are you sure %(zipcode)s is a valid US zipcode?"
 msgstr ""
 
-#: airq/commands/quality.py:32
+#: airq/commands/quality.py:31
 #, python-format
 msgid ""
 "Oops! We couldn't determine the air quality for \"%(zipcode)s\". Please "
 "try a different zip code."
 msgstr ""
 
-#: airq/commands/quality.py:51
+#: airq/commands/quality.py:50
 #, python-format
 msgid " (AQI %(aqi)s)"
 msgstr ""
@@ -156,42 +162,42 @@ msgid ""
 "%(pm25_level)s%(aqi_display)s."
 msgstr ""
 
-#: airq/commands/quality.py:66
+#: airq/commands/quality.py:68
 msgid ""
 "Save this contact and text us your zipcode whenever you'd like an instant"
 " update. And you can always text \"M\" to see the whole menu."
 msgstr ""
 
-#: airq/commands/quality.py:75
+#: airq/commands/quality.py:80
 #, python-format
 msgid "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s."
 msgstr ""
 
-#: airq/commands/quality.py:86
+#: airq/commands/quality.py:92
 msgid ""
 "Alerting is disabled. Text \"Y\" to re-enable alerts when air quality "
 "changes."
 msgstr ""
 
-#: airq/commands/quality.py:92
+#: airq/commands/quality.py:98
 #, python-format
 msgid "You are now receiving alerts for %(zipcode)s."
 msgstr ""
 
-#: airq/commands/quality.py:98
+#: airq/commands/quality.py:104
 msgid "Text \"M\" for Menu, \"E\" to end alerts."
 msgstr ""
 
-#: airq/commands/quality.py:124
+#: airq/commands/quality.py:128
 msgid "Here are the closest places with better air quality:"
 msgstr ""
 
-#: airq/commands/quality.py:134
+#: airq/commands/quality.py:138
 #, python-format
 msgid " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)"
 msgstr ""
 
-#: airq/commands/quality.py:142
+#: airq/commands/quality.py:146
 #, python-format
 msgid "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3."
 msgid_plural "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3."
@@ -225,112 +231,117 @@ msgstr ""
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr ""
 
-#: airq/lib/client_preferences.py:96
+#: airq/lib/client_preferences.py:54
+#, python-format
+msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
+msgstr ""
+
+#: airq/lib/client_preferences.py:133
 msgid "Select one of"
 msgstr ""
 
-#: airq/lib/client_preferences.py:145
+#: airq/lib/client_preferences.py:176
 #, python-format
 msgid "Enter an integer between %(min_value)s and %(max_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:147
+#: airq/lib/client_preferences.py:182
 #, python-format
 msgid "Enter an integer greater than or equal to %(min_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:149
+#: airq/lib/client_preferences.py:187
 #, python-format
 msgid "Enter an integer less than or equal to %(max_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:150
+#: airq/lib/client_preferences.py:191
 msgid "Enter an integer."
 msgstr ""
 
-#: airq/lib/readings.py:35
+#: airq/lib/readings.py:37
 msgid "GOOD"
 msgstr ""
 
-#: airq/lib/readings.py:37
+#: airq/lib/readings.py:39
 msgid "MODERATE"
 msgstr ""
 
-#: airq/lib/readings.py:39
+#: airq/lib/readings.py:41
 msgid "UNHEALTHY FOR SENSITIVE GROUPS"
 msgstr ""
 
-#: airq/lib/readings.py:41
+#: airq/lib/readings.py:43
 msgid "UNHEALTHY"
 msgstr ""
 
-#: airq/lib/readings.py:43
+#: airq/lib/readings.py:45
 msgid "VERY UNHEALTHY"
 msgstr ""
 
-#: airq/lib/readings.py:45
+#: airq/lib/readings.py:47
 msgid "HAZARDOUS"
 msgstr ""
 
-#: airq/lib/readings.py:50
+#: airq/lib/readings.py:52
 msgid ""
 "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air "
 "pollution poses little or no risk."
 msgstr ""
 
-#: airq/lib/readings.py:54
+#: airq/lib/readings.py:56
 msgid ""
 "MODERATE (AQI: 51 - 100) means air quality is acceptable; however, for "
 "some pollutants there may be a moderate health concern for a very small "
 "number of people who are unusually sensitive to air pollution."
 msgstr ""
 
-#: airq/lib/readings.py:58
+#: airq/lib/readings.py:60
 msgid ""
 "UNHEALTHY FOR SENSITIVE GROUPS (AQI: 101 - 150) means members of "
 "sensitive groups may experience health effects. The general public is not"
 " likely to be affected."
 msgstr ""
 
-#: airq/lib/readings.py:62
+#: airq/lib/readings.py:64
 msgid ""
 "UNHEALTHY (AQI: 151 - 200) means everyone may begin to experience health "
 "effects; members of sensitive groups may experience more serious health "
 "effects."
 msgstr ""
 
-#: airq/lib/readings.py:66
+#: airq/lib/readings.py:68
 msgid ""
 "VERY UNHEALTHY (AQI: 201 - 300): Health alert. Everyone may experience "
 "more serious health effects."
 msgstr ""
 
-#: airq/lib/readings.py:70
+#: airq/lib/readings.py:72
 msgid ""
 "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The "
 "entire population is more likely to be affected."
 msgstr ""
 
-#: airq/models/clients.py:230
+#: airq/models/clients.py:228
 msgid "Alert Frequency"
 msgstr ""
 
-#: airq/models/clients.py:231
+#: airq/models/clients.py:229
 msgid "By default, Hazebot sends alerts at most every 2 hours."
 msgstr ""
 
-#: airq/models/clients.py:240
+#: airq/models/clients.py:239
 msgid "Alert Threshold"
 msgstr ""
 
-#: airq/models/clients.py:241
+#: airq/models/clients.py:240
 msgid ""
 "AQI category below which Hazebot won't send alerts.\n"
 "For example, if you set this to MODERATE, Hazebot won't send alerts when "
 "AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr ""
 
-#: airq/models/clients.py:383
+#: airq/models/clients.py:367
 #, python-format
 msgid ""
 "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s "
@@ -339,7 +350,7 @@ msgid ""
 " Reply \"M\" for Menu or \"E\" to end alerts."
 msgstr ""
 
-#: airq/models/clients.py:423
+#: airq/models/clients.py:408
 msgid ""
 "Has Hazebot been helpful? We’re looking for ways to grow and improve, and"
 " we’d love your help. Save our contact and share Hazebot with a friend, "

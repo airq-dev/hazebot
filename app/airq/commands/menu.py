@@ -13,12 +13,13 @@ class ShowMenu(RegexCommand):
         return MessageResponse.from_strings(
             [
                 gettext("Reply"),
-                gettext("1. Details and recommendations"),
+                gettext("1. Air recommendations"),
                 gettext("2. Current AQI"),
                 gettext("3. Set preferences"),
-                gettext("4. Hazebot info"),
+                gettext("4. About us"),
                 gettext("5. Give feedback"),
                 gettext("6. Stop alerts"),
+                gettext("7. Donate"),
                 "",
                 gettext("Or, enter a new zipcode."),
             ]

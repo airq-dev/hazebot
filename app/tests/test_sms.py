@@ -160,12 +160,13 @@ class SMSTestCase(BaseTestCase):
     def test_get_menu(self):
         expected_response = (
             "Reply\n"
-            "1. Details and recommendations\n"
+            "1. Air recommendations\n"
             "2. Current AQI\n"
             "3. Set preferences\n"
-            "4. Hazebot info\n"
+            "4. About us\n"
             "5. Give feedback\n"
             "6. Stop alerts\n"
+            "7. Donate\n"
             "\n"
             "Or, enter a new zipcode."
         )
@@ -198,12 +199,25 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. "
-            "Visit hazebot.org or email info@hazebot.org for feedback.",
+            "hazebot runs on PurpleAir sensor data and is a free service. Reach us at hazebot.org or info@hazebot.org. Press 7 for information on how to support our work.",
             response.data,
         )
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.ABOUT)
+
+    def test_donate(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "7", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(1, Event.query.count())
+        self.assert_twilio_response(
+            "Like this project? A few dollars allows hundreds of people to breathe easy with hazebot. Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
+            response.data,
+        )
+        client_id = Client.query.filter_by(identifier="+13333333333").first().id
+        self.assert_event(client_id, EventType.DONATE)
 
     def test_unsubscribe(self):
         response = self.client.post(

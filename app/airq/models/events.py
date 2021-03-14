@@ -35,6 +35,7 @@ class EventType(enum.IntEnum):
     LIST_PREFS = 13
     SET_PREF_REQUEST = 14
     SET_PREF = 15
+    DONATE = 16
 
 
 class EventQuery(BaseQuery):
@@ -151,6 +152,8 @@ class Event(db.Model):  # type: ignore
             return SetPrefRequestEventSchema
         elif self.type_code == EventType.SET_PREF:
             return SetPrefEventSchema
+        elif self.type_code == EventType.DONATE:
+            return EmptySchema
         else:
             raise Exception(f"Unknown event type {self.type_code}")
 
