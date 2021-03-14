@@ -199,8 +199,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "hazebot runs on PurpleAir sensor data and is a free service. Reach us at hazebot.org or info@hazebot.org."
-            "Press 7 for information on how to support our work.",
+            "hazebot runs on PurpleAir sensor data and is a free service. Reach us at hazebot.org or info@hazebot.org. Press 7 for information on how to support our work.",
             response.data,
         )
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
