@@ -4,6 +4,7 @@ import typing
 from airq.commands.base import MessageResponse
 from airq.commands.base import SMSCommand
 from airq.commands.about import ShowAbout
+from airq.commands.donate import ShowDonate
 from airq.commands.invalid import InvalidInput
 from airq.commands.feedback import ReceiveFeedback
 from airq.commands.feedback import ShowFeedback
@@ -43,6 +44,7 @@ COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     ShowAbout,
     ShowFeedback,
     Unsubscribe,
+    ShowDonate,
 ]
 
 

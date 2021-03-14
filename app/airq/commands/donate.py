@@ -5,7 +5,7 @@ from airq.commands.base import RegexCommand
 from airq.models.events import EventType
 
 
-class ShowAbout(RegexCommand):
+class ShowDonate(RegexCommand):
     pattern = r"^7[\.\)]?$"
 
     def handle(self) -> MessageResponse:
