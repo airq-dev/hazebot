@@ -213,7 +213,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "Like this project? A few dollars allows hundreds of people to breathe easy with hazebot."
+            "Like this project? A few dollars allows hundreds of people to breathe easy with hazebot. "
             "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
             response.data,
         )
