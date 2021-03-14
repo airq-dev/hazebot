@@ -160,12 +160,13 @@ class SMSTestCase(BaseTestCase):
     def test_get_menu(self):
         expected_response = (
             "Reply\n"
-            "1. Details and recommendations\n"
+            "1. Air recommendations\n"
             "2. Current AQI\n"
             "3. Set preferences\n"
-            "4. Hazebot info\n"
+            "4. About us\n"
             "5. Give feedback\n"
             "6. Stop alerts\n"
+            "7. Donate\n"
             "\n"
             "Or, enter a new zipcode."
         )
