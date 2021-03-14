@@ -12,6 +12,6 @@ class ShowAbout(RegexCommand):
         self.client.log_event(EventType.ABOUT)
         return MessageResponse(
             body=gettext(
-                "hazebot runs on PurpleAir sensor data and is a free service providing accessible local air quality information. Visit hazebot.org or email info@hazebot.org for feedback."
+                "hazebot runs on PurpleAir sensor data and is a free service. Reach us at hazebot.org or info@hazebot.org. Press 7 for information on how to support our work."
             )
         )
