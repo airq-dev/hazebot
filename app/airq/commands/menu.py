@@ -19,6 +19,7 @@ class ShowMenu(RegexCommand):
                 gettext("4. About us"),
                 gettext("5. Give feedback"),
                 gettext("6. Stop alerts"),
+                gettext("7. Donate"),
                 "",
                 gettext("Or, enter a new zipcode."),
             ]
