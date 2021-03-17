@@ -32,6 +32,10 @@ Run all tests with `./test.sh` or a specific test with `./test.sh <tests.test_mo
 
 This script will start a separate docker cluster (isolated from the development cluster) using fixtures taken from a subset of Purpleair and GeoNames data near Portland, Oregon. This "static" data (e.g., zipcodes and cities) is not deleted between test runs. Instead, it is rebuilt as part of the test suite (specifically, during the `test_sync` case). This makes it possible to run the test suite without rebuilding this data before each test, speeding up test time substantially. And any change you make to the sync process will still be exercised when `test_sync` runs.
 
+## Adding, updating or removing strings
+
+If you add, update or remove strings which are visible to non-admin users, you'll need to make sure to include Spanish translations. To do this, follow the (unfortunately somewhat laborious) process laid out in the [translations](translations.md) docs. We're trying to make this process easier!
+
 ## Opening a PR
 
 Before you open a PR, please do the following:
