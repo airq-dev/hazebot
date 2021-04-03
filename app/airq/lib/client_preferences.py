@@ -6,7 +6,9 @@ from flask_babel import gettext
 from sqlalchemy.orm.attributes import flag_modified
 
 from airq.config import db
+from airq.lib.choices import ChoicesEnum
 from airq.lib.choices import IntChoicesEnum
+from airq.lib.choices import StrChoicesEnum
 
 
 if typing.TYPE_CHECKING:
@@ -17,7 +19,8 @@ class InvalidPrefValue(Exception):
     """This pref value is invalid."""
 
 
-TPreferenceValue = typing.TypeVar("TPreferenceValue", int, str)
+TPreferenceValue = typing.TypeVar("TPreferenceValue", bound=typing.Union[int, str])
+TChoicesEnum = typing.TypeVar("TChoicesEnum", bound=ChoicesEnum)
 
 
 # TODO: We could probably make this more type safe.
@@ -98,24 +101,24 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         """Get a prompt for the user to fill in this preference."""
 
 
-class IntegerChoicesPreference(ClientPreference[int]):
+class ChoicesPreference(typing.Generic[TPreferenceValue, TChoicesEnum], ClientPreference[TPreferenceValue]):
     def __init__(
         self,
         display_name: str,
         description: str,
-        default: int,
-        choices: typing.Type[IntChoicesEnum],
+        default: TPreferenceValue,
+        choices: typing.Type[TChoicesEnum]
     ):
         super().__init__(display_name, description, default)
         self._choices = choices
 
-    def _get_choices(self) -> typing.List[IntChoicesEnum]:
+    def _get_choices(self) -> typing.List[TChoicesEnum]:
         return list(self._choices)
 
-    def format_value(self, value: int) -> str:
+    def format_value(self, value: TPreferenceValue) -> str:
         return self._choices.from_value(value).display
 
-    def clean(self, user_input: str) -> typing.Optional[int]:
+    def clean(self, user_input: str) -> typing.Optional[TPreferenceValue]:
         choices = self._get_choices()
         try:
             idx = int(user_input)
@@ -125,7 +128,7 @@ class IntegerChoicesPreference(ClientPreference[int]):
         except (IndexError, TypeError, ValueError):
             return None
 
-    def _validate(self, value: int):
+    def _validate(self, value: TPreferenceValue):
         if value not in self._get_choices():
             raise InvalidPrefValue()
 
@@ -134,6 +137,14 @@ class IntegerChoicesPreference(ClientPreference[int]):
         for i, choice in enumerate(self._get_choices(), start=1):
             prompt.append(f"{i} - {choice.display}")
         return "\n".join(prompt)
+
+
+class IntegerChoicesPreference(ChoicesPreference[int, IntChoicesEnum]):
+    pass
+
+
+class StringChoicesPreference(ChoicesPreference[str, StrChoicesEnum]):
+    pass
 
 
 class IntegerPreference(ClientPreference[int]):

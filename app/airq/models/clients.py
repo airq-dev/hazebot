@@ -14,10 +14,13 @@ from twilio.base.exceptions import TwilioRestException
 from airq.config import db
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
+from airq.lib.client_preferences import StringChoicesPreference
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
+from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
+from airq.lib.readings import us_epa_conv
 from airq.lib.sms import coerce_phone_number
 from airq.lib.twilio import send_sms
 from airq.lib.twilio import TwilioErrorCode
@@ -250,6 +253,16 @@ class Client(db.Model):  # type: ignore
         choices=Pm25,
     )
 
+    conversion_strategy = StringChoicesPreference(
+        display_name=lazy_gettext("Conversion"),
+        description=lazy_gettext(
+            # TODO: Better description
+            "Conversion strategy to use when calculating AQI."
+        ),
+        default=ConversionStrategy.NONE.value,
+        choices=ConversionStrategy
+    )
+
     #
     # AQI
     #
@@ -331,14 +344,22 @@ class Client(db.Model):  # type: ignore
         if self.last_alert_sent_at >= timestamp() - alert_frequency:
             return False
 
-        curr_pm25 = self.zipcode.pm25
-        curr_humidity = self.zipcode.humidity
-        curr_pm_cf_1 = self.zipcode.pm_cf_1
+        # Derive curr and last pm25
+        if self.conversion_strategy == ConversionStrategy.US_EPA:
+            curr_pm25 = us_epa_conv(self.zipcode.pm_cf_1, self.zipcode.humdity)
+            if self.last_pm_cf_1 is not None and self.last_humidity is not None:
+                last_pm25 = us_epa_conv(self.last_pm_cf_1, self.last_humidity) 
+            else:
+                last_pm25 = 0
+        else:
+            curr_pm25 = self.zipcode.pm25
+            last_pm25 = self.last_pm25
+
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
         curr_aqi = pm25_to_aqi(curr_pm25)
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
-        last_aqi_level = Pm25.from_measurement(self.last_pm25)
+        last_aqi_level = Pm25.from_measurement(last_pm25)
         if curr_aqi_level == last_aqi_level:
             return False
 
@@ -380,9 +401,9 @@ class Client(db.Model):  # type: ignore
             return False
 
         self.last_alert_sent_at = timestamp()
-        self.last_pm25 = curr_pm25
-        self.last_pm_cf_1 = curr_pm_cf_1
-        self.last_humidity = curr_humidity
+        self.last_pm25 = self.zipcode.pm25
+        self.last_pm_cf_1 = self.zipcode.pm_cf_1
+        self.last_humidity = self.zipcode.humidity
         self.num_alerts_sent += 1
         db.session.commit()
 

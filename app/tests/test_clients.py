@@ -5,6 +5,7 @@ import typing
 from unittest import mock
 from twilio.base.exceptions import TwilioRestException
 
+from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
 from airq.lib.twilio import TwilioErrorCode
 from airq.models.clients import Client
@@ -364,3 +365,13 @@ class ClientTestCase(BaseTestCase):
 
         client = Client.query.get(client.id)
         self.assertEqual(35, client.alert_threshold)
+
+    def test_conversion_strategy(self):
+        client = self._make_client()
+        self.assertEqual(ConversionStrategy.NONE, client.conversion_strategy)
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.db.session.commit()
+
+        client = Client.query.get(client.id)
+        self.assertEqual(ConversionStrategy.US_EPA, client.conversion_strategy)

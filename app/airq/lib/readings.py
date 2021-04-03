@@ -1,10 +1,10 @@
 import enum
-import math
 import typing
 
 from flask_babel import gettext
 
 from airq.lib.choices import IntChoicesEnum
+from airq.lib.choices import StrChoicesEnum
 
 
 @enum.unique
@@ -75,23 +75,20 @@ class Pm25(IntChoicesEnum):
 
 
 def pm25_to_aqi(concentration: float) -> typing.Optional[int]:
-    c = math.floor(10 * concentration) / 10
-    if c >= 0 and c < 12.1:
-        return _linear(50, 0, 12.0, 0.0, c)
-    if c >= 12.1 and c < 35.5:
-        return _linear(100, 51, 35.4, 12.1, c)
-    if c >= 35.5 and c < 55.5:
-        return _linear(150, 101, 55.4, 35.5, c)
-    if c >= 55.5 and c < 150.5:
-        return _linear(200, 151, 150.4, 55.5, c)
-    if c >= 150.5 and c < 250.5:
-        return _linear(300, 201, 250.4, 150.5, c)
-    if c >= 250.5 and c < 350.5:
-        return _linear(400, 301, 350.4, 250.5, c)
-    if c >= 350.5 and c < 500.5:
-        return _linear(500, 401, 500.4, 350.5, c)
-
-    return None
+    if 350.5 < concentration:
+        return _linear(500, 401, 500, 350.5, concentration)
+    elif 250.5 < concentration:
+        return _linear(400, 301, 350.4, 250.5, concentration)
+    elif 150.5 < concentration:
+        return _linear(300, 201, 250.4, 150.5, concentration)
+    elif 55.5 < concentration:
+        return _linear(200, 151, 150.4, 55.5, concentration)
+    elif 35.5 < concentration:
+        return _linear(150, 101, 55.4, 35.5, concentration)
+    elif 12.1 < concentration:
+        return _linear(100, 51, 35.4, 12.1, concentration)
+    else:
+        return _linear(50, 0, 12, 0, concentration)
 
 
 def _linear(
@@ -101,3 +98,20 @@ def _linear(
         ((concentration - conc_low) / (conc_high - conc_low)) * (aqi_high - aqi_low)
         + aqi_low
     )
+
+
+@enum.unique
+class ConversionStrategy(StrChoicesEnum):
+    NONE = 'None'
+    US_EPA = 'US EPA'
+
+    @property
+    def display(self) -> str:
+        if self == self.US_EPA:
+            return gettext("US EPA")
+        else:
+            return gettext("None")
+
+
+def us_epa_conv(pm_cf_1: float, humidity: float) -> float:
+    return (0.534 * pm_cf_1) - (0.0844 * humidity) + 5.604

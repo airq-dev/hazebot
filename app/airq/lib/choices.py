@@ -20,3 +20,7 @@ class ChoicesEnum(enum.Enum):
 
 class IntChoicesEnum(int, ChoicesEnum):
     pass
+
+
+class StrChoicesEnum(str, ChoicesEnum):
+    pass

@@ -566,7 +566,8 @@ class SMSTestCase(BaseTestCase):
             "1 - Alert Frequency: By default, Hazebot sends alerts at most every 2 hours.\n"
             "2 - Alert Threshold: AQI category below which Hazebot won't send alerts.\n"
             "For example, if you set this to MODERATE, "
-            "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.",
+            "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.\n"
+            "3 - Conversion: Conversion strategy to use when calculating AQI.",
             response.data,
         )
         self.assertEqual(1, Event.query.count())
