@@ -12,7 +12,8 @@ from airq.celery import get_celery_logger
 from airq.config import db
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
-from airq.lib.purpleair import call_purpleair_api
+from airq.lib.purpleair import call_purpleair_data_api
+from airq.lib.purpleair import call_purpleair_sensors_api
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
 from airq.models.clients import Client
@@ -28,10 +29,10 @@ DESIRED_NUM_READINGS = 8
 DESIRED_READING_DISTANCE_KM = 2.5
 
 
-def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
+def _get_purpleair_sensors_data() -> typing.List[typing.Dict[str, typing.Any]]:
     logger = get_celery_logger()
     try:
-        resp = call_purpleair_api()
+        resp = call_purpleair_sensors_api()
     except (requests.RequestException, json.JSONDecodeError) as e:
         # Send an email to an admin if data lags by more than 30 minutes.
         # Otherwise, just log a warning as most of these errors are
@@ -69,6 +70,30 @@ def _get_purpleair_data() -> typing.List[typing.Dict[str, typing.Any]]:
         return data
 
 
+# TODO: Remove this once `pm_cf_1` is available via the sensors API.
+def _get_purpleair_pm_cf_1_data():
+    logger = get_celery_logger()
+    try:
+        resp = call_purpleair_data_api()
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        logger.error(
+            "Failed to retrieve pm_cf_1 data: %s",
+            e,
+            exc_info=True,
+        )
+        return []
+    else:
+        response_dict = resp.json()
+        fields = response_dict["fields"]
+        data = {}
+        for raw_data in response_dict["data"]:
+            zipped = dict(zip(fields, raw_data))
+            pm_cf_1 = zipped["pm_cf_1"]
+            if isinstance(pm_cf_1, float):
+                data[zipped["ID"]] = pm_cf_1
+        return data
+
+
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
     if sensor_data["last_seen"] < timestamp() - (60 * 60):
         # Out of date / maybe dead
@@ -102,7 +127,8 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 
 
 def _sensors_sync(
-    purpleair_data: typing.List[typing.Dict[str, typing.Any]]
+    purpleair_data: typing.List[typing.Dict[str, typing.Any]],
+    purpleair_pm_cf_1_data: typing.Dict[int, float],
 ) -> typing.List[int]:
     logger = get_celery_logger()
 
@@ -118,11 +144,17 @@ def _sensors_sync(
             longitude = result["longitude"]
             pm25 = float(result["pm2.5"])
             humidity = float(result["humidity"])
+
+            pm_cf_1 = purpleair_pm_cf_1_data.get(result["sensor_index"])
+            if pm_cf_1 is None:
+                continue
+
             data: typing.Dict[str, typing.Any] = {
                 "id": result["sensor_index"],
                 "latest_reading": pm25,
                 "humidity": humidity,
                 "updated_at": result["last_seen"],
+                "pm_cf_1": pm_cf_1,
             }
 
             if (
@@ -224,47 +256,51 @@ def _metrics_sync():
     ts = timestamp()
 
     zipcodes_to_sensors = collections.defaultdict(list)
-    for zipcode_id, latest_reading, humidity, sensor_id, distance in (
+    for zipcode_id, latest_reading, humidity, pm_cf_1, sensor_id, distance in (
         Sensor.query.join(SensorZipcodeRelation)
         .filter(Sensor.updated_at > ts - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
             Sensor.humidity,
+            Sensor.pm_cf_1,
             Sensor.id,
             SensorZipcodeRelation.distance,
         )
         .all()
     ):
         zipcodes_to_sensors[zipcode_id].append(
-            (latest_reading, humidity, sensor_id, distance)
+            (latest_reading, humidity, pm_cf_1, sensor_id, distance)
         )
 
     for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
-        readings: typing.List[float] = []
+        pm_25_readings: typing.List[float] = []
+        pm_cf_1_readings: typing.List[float] = []
         humidities: typing.List[float] = []
         closest_reading = float("inf")
         farthest_reading = 0.0
         sensor_ids: typing.List[int] = []
-        for reading, humidity, sensor_id, distance in sorted(
+        for pm_25, humidity, pm_cf_1, sensor_id, distance in sorted(
             sensor_tuples, key=lambda s: s[-1]
         ):
             if (
-                len(readings) < DESIRED_NUM_READINGS
+                len(pm_25_readings) < DESIRED_NUM_READINGS
                 or distance < DESIRED_READING_DISTANCE_KM
             ):
-                readings.append(reading)
+                pm_25_readings.append(pm_25)
                 humidities.append(humidity)
+                pm_cf_1_readings.append(pm_cf_1)
                 sensor_ids.append(sensor_id)
                 closest_reading = min(distance, closest_reading)
                 farthest_reading = max(distance, farthest_reading)
             else:
                 break
 
-        if readings:
-            num_sensors = len(readings)
-            pm25 = round(sum(readings) / num_sensors, ndigits=3)
+        if pm_25_readings:
+            num_sensors = len(pm_25_readings)
+            pm25 = round(sum(pm_25_readings) / num_sensors, ndigits=3)
             humidity = round(sum(humidities) / num_sensors, ndigits=3)
+            pm_cf_1 = round(sum(pm_cf_1_readings) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
             updates.append(
@@ -272,6 +308,7 @@ def _metrics_sync():
                     "id": zipcode_id,
                     "pm25": pm25,
                     "humidity": humidity,
+                    "pm_cf_1": pm_cf_1,
                     "pm25_updated_at": ts,
                     "metrics_data": {
                         "num_sensors": num_sensors,
@@ -320,10 +357,11 @@ def purpleair_sync():
     logger = get_celery_logger()
 
     logger.info("Fetching sensor from purpleair")
-    purpleair_data = _get_purpleair_data()
+    purpleair_data = _get_purpleair_sensors_data()
+    purpleair_pm_cf_1_data = _get_purpleair_pm_cf_1_data()
 
     logger.info("Recieved %s sensors", len(purpleair_data))
-    moved_sensor_ids = _sensors_sync(purpleair_data)
+    moved_sensor_ids = _sensors_sync(purpleair_data, purpleair_pm_cf_1_data)
 
     if moved_sensor_ids:
         logger.info("Syncing relations for %s sensors", len(moved_sensor_ids))
