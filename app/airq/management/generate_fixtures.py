@@ -7,7 +7,7 @@ import zipfile
 
 from airq.lib.geo import haversine_distance
 from airq.lib.http import chunked_download
-from airq.lib.purpleair import call_purpleair_api
+from airq.lib.purpleair import call_purpleair_sensors_api
 from airq.sync.geonames import COUNTRY_CODE
 from airq.sync.geonames import GEONAMES_URL
 from tests.base import BaseTestCase
@@ -34,7 +34,7 @@ def generate_fixtures():
     path = pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures"
     timestamp = BaseTestCase().get_mock_datetime().timestamp()
 
-    resp = call_purpleair_api()
+    resp = call_purpleair_sensors_api()
     response_json = resp.json()
     results = []
     num_skipped = 0

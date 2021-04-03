@@ -50,6 +50,7 @@ class Zipcode(db.Model):  # type: ignore
 
     pm25 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
     humidity = db.Column(db.Float(), nullable=False, server_default="0")
+    pm_cf_1 = db.Column(db.Float(), nullable=False, server_default="0")
     pm25_updated_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )

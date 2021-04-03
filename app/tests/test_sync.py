@@ -4,7 +4,8 @@ import logging
 from requests.exceptions import HTTPError
 from unittest import mock
 
-from airq.lib.purpleair import PURPLEAIR_URL
+from airq.lib.purpleair import PURPLEAIR_DATA_API_URL
+from airq.lib.purpleair import PURPLEAIR_SENSORS_API_URL
 from airq.models.cities import City
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
@@ -32,7 +33,8 @@ class SyncTestCase(BaseTestCase):
             {
                 GEONAMES_URL: "geonames/US.zip",
                 ZIP_2_TIMEZONES_URL: "geonames/zipcodes_to_timezones.gz",
-                PURPLEAIR_URL: "purpleair/purpleair.json",
+                PURPLEAIR_DATA_API_URL: "purpleair/pm_cf_1.json",
+                PURPLEAIR_SENSORS_API_URL: "purpleair/purpleair.json",
             }
         ):
             models_sync(only_if_empty=skip_force_rebuild, force_rebuild_geography=True)
@@ -52,7 +54,7 @@ class SyncTestCase(BaseTestCase):
     @mock.patch.object(logging.Logger, "log")
     def test_sync_error(self, mock_log):
         error = HTTPError("foo")
-        mock_requests = MockRequests({PURPLEAIR_URL: ErrorResponse(error)})
+        mock_requests = MockRequests({PURPLEAIR_SENSORS_API_URL: ErrorResponse(error), PURPLEAIR_DATA_API_URL: ErrorResponse(error)})
         with mock_requests:
             models_sync(only_if_empty=False, force_rebuild_geography=False)
         mock_log.assert_any_call(

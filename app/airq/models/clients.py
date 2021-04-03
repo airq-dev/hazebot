@@ -164,8 +164,11 @@ class Client(db.Model):  # type: ignore
         db.ForeignKey("zipcodes.id", name="clients_zipcode_id_fkey"),
         nullable=True,
     )
+
     last_pm25 = db.Column(db.Float(), nullable=True)
     last_humidity = db.Column(db.Float(), nullable=True)
+    last_pm_cf_1 = db.Column(db.Float(), nullable=True)
+
     last_alert_sent_at = db.Column(
         db.Integer(), nullable=False, index=True, server_default="0"
     )
@@ -283,6 +286,7 @@ class Client(db.Model):  # type: ignore
         if self.alerts_disabled_at > 0:
             self.last_pm25 = self.zipcode.pm25
             self.last_humidity = self.zipcode.humidity
+            self.last_pm_cf_1 = self.zipcode.pm_cf_1
             self.alerts_disabled_at = 0
             db.session.commit()
             self.log_event(EventType.RESUBSCRIBE, zipcode=self.zipcode.zipcode)
@@ -329,6 +333,7 @@ class Client(db.Model):  # type: ignore
 
         curr_pm25 = self.zipcode.pm25
         curr_humidity = self.zipcode.humidity
+        curr_pm_cf_1 = self.zipcode.pm_cf_1
         curr_aqi_level = Pm25.from_measurement(curr_pm25)
         curr_aqi = pm25_to_aqi(curr_pm25)
 
@@ -376,6 +381,7 @@ class Client(db.Model):  # type: ignore
 
         self.last_alert_sent_at = timestamp()
         self.last_pm25 = curr_pm25
+        self.last_pm_cf_1 = curr_pm_cf_1
         self.last_humidity = curr_humidity
         self.num_alerts_sent += 1
         db.session.commit()
