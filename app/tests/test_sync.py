@@ -54,7 +54,12 @@ class SyncTestCase(BaseTestCase):
     @mock.patch.object(logging.Logger, "log")
     def test_sync_error(self, mock_log):
         error = HTTPError("foo")
-        mock_requests = MockRequests({PURPLEAIR_SENSORS_API_URL: ErrorResponse(error), PURPLEAIR_DATA_API_URL: ErrorResponse(error)})
+        mock_requests = MockRequests(
+            {
+                PURPLEAIR_SENSORS_API_URL: ErrorResponse(error),
+                PURPLEAIR_DATA_API_URL: ErrorResponse(error),
+            }
+        )
         with mock_requests:
             models_sync(only_if_empty=False, force_rebuild_geography=False)
         mock_log.assert_any_call(

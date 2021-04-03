@@ -86,11 +86,11 @@ def _get_purpleair_pm_cf_1_data():
         response_dict = resp.json()
         fields = response_dict["fields"]
         data = {}
-        for raw_data in response_dict['data']:
+        for raw_data in response_dict["data"]:
             zipped = dict(zip(fields, raw_data))
-            pm_cf_1 = zipped['pm_cf_1']
+            pm_cf_1 = zipped["pm_cf_1"]
             if isinstance(pm_cf_1, float):
-                data[zipped['ID']] = pm_cf_1
+                data[zipped["ID"]] = pm_cf_1
         return data
 
 
@@ -128,7 +128,7 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 
 def _sensors_sync(
     purpleair_data: typing.List[typing.Dict[str, typing.Any]],
-    purpleair_pm_cf_1_data: typing.Dict[int, float]
+    purpleair_pm_cf_1_data: typing.Dict[int, float],
 ) -> typing.List[int]:
     logger = get_celery_logger()
 
@@ -154,7 +154,7 @@ def _sensors_sync(
                 "latest_reading": pm25,
                 "humidity": humidity,
                 "updated_at": result["last_seen"],
-                "pm_cf_1": pm_cf_1
+                "pm_cf_1": pm_cf_1,
             }
 
             if (

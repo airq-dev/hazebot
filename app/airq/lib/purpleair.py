@@ -33,6 +33,8 @@ def call_purpleair_sensors_api() -> requests.Response:
 # TODO: Remove this once `pm_cf_1` is added to the `fields` parameter
 # accepted by v1/sensors (the above function).
 def call_purpleair_data_api():
-    resp = requests.get('https://www.purpleair.com/data.json', params={'fields': 'pm_cf_1'})
+    resp = requests.get(
+        "https://www.purpleair.com/data.json", params={"fields": "pm_cf_1"}
+    )
     resp.raise_for_status()
     return resp
