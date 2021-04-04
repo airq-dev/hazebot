@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-03-14 10:45-0700\n"
+"POT-Creation-Date: 2021-04-03 19:36-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -149,12 +149,12 @@ msgid ""
 "try a different zip code."
 msgstr ""
 
-#: airq/commands/quality.py:50
+#: airq/commands/quality.py:53
 #, python-format
 msgid " (AQI %(aqi)s)"
 msgstr ""
 
-#: airq/commands/quality.py:58
+#: airq/commands/quality.py:63
 #, python-format
 msgid ""
 "Welcome to Hazebot! We'll send you alerts when air quality in %(city)s "
@@ -162,42 +162,42 @@ msgid ""
 "%(pm25_level)s%(aqi_display)s."
 msgstr ""
 
-#: airq/commands/quality.py:68
+#: airq/commands/quality.py:69
 msgid ""
 "Save this contact and text us your zipcode whenever you'd like an instant"
 " update. And you can always text \"M\" to see the whole menu."
 msgstr ""
 
-#: airq/commands/quality.py:80
+#: airq/commands/quality.py:85
 #, python-format
 msgid "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s."
 msgstr ""
 
-#: airq/commands/quality.py:92
+#: airq/commands/quality.py:93
 msgid ""
 "Alerting is disabled. Text \"Y\" to re-enable alerts when air quality "
 "changes."
 msgstr ""
 
-#: airq/commands/quality.py:98
+#: airq/commands/quality.py:99
 #, python-format
 msgid "You are now receiving alerts for %(zipcode)s."
 msgstr ""
 
-#: airq/commands/quality.py:104
+#: airq/commands/quality.py:105
 msgid "Text \"M\" for Menu, \"E\" to end alerts."
 msgstr ""
 
-#: airq/commands/quality.py:128
+#: airq/commands/quality.py:135
 msgid "Here are the closest places with better air quality:"
 msgstr ""
 
-#: airq/commands/quality.py:138
+#: airq/commands/quality.py:149
 #, python-format
 msgid " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)"
 msgstr ""
 
-#: airq/commands/quality.py:146
+#: airq/commands/quality.py:163
 #, python-format
 msgid "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3."
 msgid_plural "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3."
@@ -231,31 +231,31 @@ msgstr ""
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr ""
 
-#: airq/lib/client_preferences.py:54
+#: airq/lib/client_preferences.py:57
 #, python-format
 msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
 msgstr ""
 
-#: airq/lib/client_preferences.py:133
+#: airq/lib/client_preferences.py:138
 msgid "Select one of"
 msgstr ""
 
-#: airq/lib/client_preferences.py:176
+#: airq/lib/client_preferences.py:189
 #, python-format
 msgid "Enter an integer between %(min_value)s and %(max_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:182
+#: airq/lib/client_preferences.py:195
 #, python-format
 msgid "Enter an integer greater than or equal to %(min_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:187
+#: airq/lib/client_preferences.py:200
 #, python-format
 msgid "Enter an integer less than or equal to %(max_value)s."
 msgstr ""
 
-#: airq/lib/client_preferences.py:191
+#: airq/lib/client_preferences.py:204
 msgid "Enter an integer."
 msgstr ""
 
@@ -322,26 +322,44 @@ msgid ""
 "entire population is more likely to be affected."
 msgstr ""
 
-#: airq/models/clients.py:228
+#: airq/lib/readings.py:113
+msgid ""
+"US EPA — Note this is just for testing at the moment. Please report "
+"inaccuracies to info@hazebot.org."
+msgstr ""
+
+#: airq/lib/readings.py:117
+msgid "None"
+msgstr ""
+
+#: airq/models/clients.py:234
 msgid "Alert Frequency"
 msgstr ""
 
-#: airq/models/clients.py:229
+#: airq/models/clients.py:235
 msgid "By default, Hazebot sends alerts at most every 2 hours."
 msgstr ""
 
-#: airq/models/clients.py:239
+#: airq/models/clients.py:245
 msgid "Alert Threshold"
 msgstr ""
 
-#: airq/models/clients.py:240
+#: airq/models/clients.py:246
 msgid ""
 "AQI category below which Hazebot won't send alerts.\n"
 "For example, if you set this to MODERATE, Hazebot won't send alerts when "
 "AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr ""
 
-#: airq/models/clients.py:367
+#: airq/models/clients.py:257
+msgid "Conversion"
+msgstr ""
+
+#: airq/models/clients.py:258
+msgid "Conversion strategy to use when calculating AQI."
+msgstr ""
+
+#: airq/models/clients.py:414
 #, python-format
 msgid ""
 "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s "
@@ -350,7 +368,7 @@ msgid ""
 " Reply \"M\" for Menu or \"E\" to end alerts."
 msgstr ""
 
-#: airq/models/clients.py:408
+#: airq/models/clients.py:456
 msgid ""
 "Has Hazebot been helpful? We’re looking for ways to grow and improve, and"
 " we’d love your help. Save our contact and share Hazebot with a friend, "

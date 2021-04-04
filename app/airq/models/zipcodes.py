@@ -145,7 +145,7 @@ class Zipcode(db.Model):  # type: ignore
         zipcodes = [
             z
             for z in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
-            if z.get_current_pm25(conversion_strategy) < curr_pm25_level
+            if z.get_pm25_level(conversion_strategy) < curr_pm25_level
         ]
 
         return sorted(zipcodes, key=lambda z: self.distance(z))[:num_desired]
