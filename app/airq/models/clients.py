@@ -260,7 +260,7 @@ class Client(db.Model):  # type: ignore
             "Conversion strategy to use when calculating AQI."
         ),
         default=ConversionStrategy.NONE.value,
-        choices=ConversionStrategy
+        choices=ConversionStrategy,
     )
 
     #
@@ -291,11 +291,15 @@ class Client(db.Model):  # type: ignore
 
     def get_last_pm25(self):
         """Last Pm25 for this client as determined by its chosen strategy."""
-        return self.get_conversion_strategy().convert(self.last_pm25, self.last_pm_cf_1, self.last_humidity)
+        return self.get_conversion_strategy().convert(
+            self.last_pm25, self.last_pm_cf_1, self.last_humidity
+        )
 
     def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
         """Recommended zipcodes for this client."""
-        return self.zipcode.get_recommendations(num_desired, self.get_conversion_strategy())
+        return self.zipcode.get_recommendations(
+            num_desired, self.get_conversion_strategy()
+        )
 
     #
     # Alerting
@@ -404,10 +408,7 @@ class Client(db.Model):  # type: ignore
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
         was_alerted_recently = self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
         last_aqi = self.last_aqi
-        if (
-            was_alerted_recently
-            and abs(curr_aqi - last_aqi) < 20
-        ):
+        if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
             return False
 
         message = gettext(

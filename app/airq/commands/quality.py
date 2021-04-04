@@ -105,7 +105,9 @@ class GetQuality(BaseQualityCommand):
                 response.write(gettext('Text "M" for Menu, "E" to end alerts.'))
 
         self.client.log_event(
-            self.event_type, zipcode=zipcode.zipcode, pm25=self.client.get_current_pm25()
+            self.event_type,
+            zipcode=zipcode.zipcode,
+            pm25=self.client.get_current_pm25(),
         )
 
         return response
@@ -120,7 +122,11 @@ class GetDetails(BaseQualityCommand):
     pattern = r"^1[\.\)]?$"
 
     def _get_message(self, _zipcode: Zipcode) -> MessageResponse:
-        response = MessageResponse().write(self.client.get_current_pm25_level().description).write("")
+        response = (
+            MessageResponse()
+            .write(self.client.get_current_pm25_level().description)
+            .write("")
+        )
 
         num_desired = 3
         recommended_zipcodes = self.client.get_recommendations(num_desired)
@@ -135,9 +141,13 @@ class GetDetails(BaseQualityCommand):
                         " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)",
                         city=recommendation.city.name,
                         zipcode=recommendation.zipcode,
-                        pm25_level=recommendation.get_pm25_level(conversion_strategy).display.upper(),
+                        pm25_level=recommendation.get_pm25_level(
+                            conversion_strategy
+                        ).display.upper(),
                         distance=round(
-                            kilometers_to_miles(recommendation.distance(self.client.zipcode)),
+                            kilometers_to_miles(
+                                recommendation.distance(self.client.zipcode)
+                            ),
                             ndigits=1,
                         ),  # TODO: Make this based on locale
                     )

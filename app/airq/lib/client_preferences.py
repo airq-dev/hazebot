@@ -101,13 +101,15 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         """Get a prompt for the user to fill in this preference."""
 
 
-class ChoicesPreference(typing.Generic[TPreferenceValue, TChoicesEnum], ClientPreference[TPreferenceValue]):
+class ChoicesPreference(
+    typing.Generic[TPreferenceValue, TChoicesEnum], ClientPreference[TPreferenceValue]
+):
     def __init__(
         self,
         display_name: str,
         description: str,
         default: TPreferenceValue,
-        choices: typing.Type[TChoicesEnum]
+        choices: typing.Type[TChoicesEnum],
     ):
         super().__init__(display_name, description, default)
         self._choices = choices

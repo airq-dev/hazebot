@@ -102,23 +102,29 @@ def _linear(
 
 @enum.unique
 class ConversionStrategy(StrChoicesEnum):
-    NONE = 'None'
-    US_EPA = 'US EPA'
+    NONE = "None"
+    US_EPA = "US EPA"
 
     @property
     def display(self) -> str:
         if self == self.US_EPA:
-            return gettext("US EPA — Note this is just for testing at the moment. Data may be inaccurate.")
+            return gettext(
+                "US EPA — Note this is just for testing at the moment. Data may be inaccurate."
+            )
         else:
             return gettext("None")
 
     # TODO: This should probably accept a "Metrics" object
-    def convert(self, pm25: float, pm_cf_1: typing.Optional[float], humidity: typing.Optional[float]) -> float:
+    def convert(
+        self,
+        pm25: float,
+        pm_cf_1: typing.Optional[float],
+        humidity: typing.Optional[float],
+    ) -> float:
         if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
             return us_epa_conv(pm_cf_1, humidity)
         else:
             return pm25
-
 
 
 def us_epa_conv(pm_cf_1: float, humidity: float) -> float:

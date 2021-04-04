@@ -3,7 +3,7 @@ import enum
 import typing
 
 
-T = typing.TypeVar('T', bound='ChoicesEnum')
+T = typing.TypeVar("T", bound="ChoicesEnum")
 
 
 class ChoicesEnum(enum.Enum):

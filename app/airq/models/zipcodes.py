@@ -131,7 +131,9 @@ class Zipcode(db.Model):  # type: ignore
         """The pm25 category for this zipcode (e.g., Moderate)."""
         return Pm25.from_measurement(self.get_current_pm25(conversion_strategy))
 
-    def get_recommendations(self, num_desired: int, conversion_strategy: ConversionStrategy) -> typing.List["Zipcode"]:
+    def get_recommendations(
+        self, num_desired: int, conversion_strategy: ConversionStrategy
+    ) -> typing.List["Zipcode"]:
         """Get n recommended zipcodes near this zipcode, sorted by distance."""
         if self.is_pm25_stale:
             return []
@@ -142,8 +144,7 @@ class Zipcode(db.Model):  # type: ignore
         curr_pm25_level = self.get_pm25_level(conversion_strategy)
         zipcodes = [
             z
-            for z
-            in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
+            for z in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
             if z.get_current_pm25(conversion_strategy) < curr_pm25_level
         ]
 
