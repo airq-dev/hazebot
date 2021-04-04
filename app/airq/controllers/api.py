@@ -1,12 +1,10 @@
-from airq.commands.base import MessageResponse
 from flask import g
 from flask import request
 
 from airq import commands
+from airq.commands.base import MessageResponse
 from airq.config import csrf
 from airq.lib.client_preferences import ClientPreferencesRegistry, InvalidPrefValue
-from airq.lib.readings import ConversionStrategy
-from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
