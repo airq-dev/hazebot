@@ -68,7 +68,7 @@ class ClientTestCase(BaseTestCase):
 
         last_pm25 = zipcode.pm25
         client = self._make_client(last_pm25=last_pm25)
-        client.alert_threshold = Pm25.GOOD.value
+        client.alert_threshold = Pm25.GOOD
         self.db.session.commit()
 
         self.assertFalse(client.maybe_notify())
@@ -146,7 +146,7 @@ class ClientTestCase(BaseTestCase):
 
     def test_maybe_notify_with_alerting_threshold_set(self):
         client = self._make_client()
-        client.alert_threshold = Pm25.MODERATE.value
+        client.alert_threshold = Pm25.MODERATE
         self.db.session.commit()
         zipcode = client.zipcode
 
