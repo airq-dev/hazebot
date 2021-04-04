@@ -3,6 +3,7 @@ import collections
 import contextlib
 import typing
 
+from flask import g
 from flask_babel import gettext
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -235,7 +236,6 @@ class IntegerPreference(ClientPreference[int]):
 
 class ClientPreferencesRegistry:
     _prefs: typing.MutableMapping[str, ClientPreference] = collections.OrderedDict()
-    _overrides: typing.Dict[str, typing.Any] = {}
 
     @classmethod
     def register_pref(cls, name: str, pref: ClientPreference) -> None:
@@ -250,7 +250,7 @@ class ClientPreferencesRegistry:
         cls, pref: ClientPreference[TPreferenceValue], override: TPreferenceValue
     ):
         """Override a pref value."""
-        cls._overrides[pref.name] = override
+        g.setdefault('_pref_overrides', {})[pref.name] = override
 
     @classmethod
     @contextlib.contextmanager
@@ -265,12 +265,12 @@ class ClientPreferencesRegistry:
         try:
             yield
         finally:
-            cls._overrides.clear()
+            g.get('pref_overrides', {}).clear()
 
     @classmethod
     def get_override(cls, name: str) -> typing.Any:
         """Get the overriden value for a pref, if any."""
-        return cls._overrides.get(name)
+        return g.get('_prefs_overrides', {}).get(name)
 
     @classmethod
     def get_name(cls, pref: ClientPreference) -> str:
