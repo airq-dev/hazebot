@@ -7,7 +7,7 @@ from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
-from airq.lib.readings import pm25_to_aqi
+from airq.lib.readings import Readings
 from airq.config import db
 
 
@@ -78,6 +78,9 @@ class Zipcode(db.Model):  # type: ignore
             )
         return self._metrics
 
+    def get_readings(self) -> Readings:
+        return Readings(pm25=self.pm25, pm_cf_1=self.pm_cf_1, humidity=self.humidity)
+
     @property
     def num_sensors(self) -> int:
         return self.get_metrics().num_sensors
@@ -121,15 +124,15 @@ class Zipcode(db.Model):  # type: ignore
 
     def get_current_aqi(self, conversion_strategy: ConversionStrategy) -> int:
         """The AQI for this zipcode (e.g., 35) as determined by the provided strategy."""
-        return pm25_to_aqi(self.get_current_pm25(conversion_strategy))
+        return self.get_readings().get_aqi(conversion_strategy)
 
     def get_current_pm25(self, conversion_strategy: ConversionStrategy) -> float:
         """Current pm25 for this client, as determined by the provided strategy."""
-        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+        return self.get_readings().get_pm25(conversion_strategy)
 
     def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
         """The pm25 category for this zipcode (e.g., Moderate)."""
-        return Pm25.from_measurement(self.get_current_pm25(conversion_strategy))
+        return self.get_readings().get_pm25_level(conversion_strategy)
 
     def get_recommendations(
         self, num_desired: int, conversion_strategy: ConversionStrategy

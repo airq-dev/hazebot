@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import typing
 
@@ -5,6 +6,27 @@ from flask_babel import gettext
 
 from airq.lib.choices import IntChoicesEnum
 from airq.lib.choices import StrChoicesEnum
+
+
+@dataclasses.dataclass
+class Readings:
+    """Encapsulates a set of readings from PurpleAir."""
+
+    pm25: float
+    pm_cf_1: typing.Optional[float]
+    humidity: typing.Optional[float]
+
+    def get_pm25(self, conversion_strategy: "ConversionStrategy") -> float:
+        """Get the pm25 according to the given conversion strategy."""
+        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+
+    def get_pm25_level(self, conversion_strategy: "ConversionStrategy") -> "Pm25":
+        """Get the pm25 level according to the given conversion strategy."""
+        return Pm25.from_measurement(self.get_pm25(conversion_strategy))
+
+    def get_aqi(self, conversion_stragy: "ConversionStrategy") -> int:
+        """Get the aqi according to the given conversion strategy."""
+        return pm25_to_aqi(self.get_pm25(conversion_stragy))
 
 
 @enum.unique

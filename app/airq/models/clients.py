@@ -19,8 +19,7 @@ from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
-from airq.lib.readings import pm25_to_aqi
-from airq.lib.readings import us_epa_conv
+from airq.lib.readings import Readings
 from airq.lib.sms import coerce_phone_number
 from airq.lib.twilio import send_sms
 from airq.lib.twilio import TwilioErrorCode
@@ -267,6 +266,11 @@ class Client(db.Model):  # type: ignore
     # AQI
     #
 
+    def get_last_readings(self) -> Readings:
+        return Readings(
+            pm25=self.last_pm25, pm_cf_1=self.last_pm_cf_1, humidity=self.last_humidity
+        )
+
     @property
     def curr_aqi(self) -> int:
         """Current AQI for this client."""
@@ -275,7 +279,7 @@ class Client(db.Model):  # type: ignore
     @property
     def last_aqi(self) -> int:
         """Last AQI at which an alert was sent to this client."""
-        return pm25_to_aqi(self.get_last_pm25())
+        return self.get_last_readings().get_aqi(self.get_conversion_strategy())
 
     def get_conversion_strategy(self) -> ConversionStrategy:
         """Strategy used to determine the current AQI/Pm25 for this client."""
@@ -291,9 +295,7 @@ class Client(db.Model):  # type: ignore
 
     def get_last_pm25(self):
         """Last Pm25 for this client as determined by its chosen strategy."""
-        return self.get_conversion_strategy().convert(
-            self.last_pm25, self.last_pm_cf_1, self.last_humidity
-        )
+        return self.get_last_readings().get_pm25(self.get_conversion_strategy())
 
     def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
         """Recommended zipcodes for this client."""
