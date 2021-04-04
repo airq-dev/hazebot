@@ -122,11 +122,11 @@ class Zipcode(db.Model):  # type: ignore
         )
         return self._distance_cache[other.id]
 
-    def get_current_aqi(self, conversion_strategy: ConversionStrategy) -> int:
+    def get_aqi(self, conversion_strategy: ConversionStrategy) -> int:
         """The AQI for this zipcode (e.g., 35) as determined by the provided strategy."""
         return self.get_readings().get_aqi(conversion_strategy)
 
-    def get_current_pm25(self, conversion_strategy: ConversionStrategy) -> float:
+    def get_pm25(self, conversion_strategy: ConversionStrategy) -> float:
         """Current pm25 for this client, as determined by the provided strategy."""
         return self.get_readings().get_pm25(conversion_strategy)
 

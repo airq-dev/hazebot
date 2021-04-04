@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import math
 import typing
 
 from flask_babel import gettext
@@ -146,7 +147,7 @@ def _pm25_to_aqi(concentration: float) -> int:
 def _linear(
     aqi_high: int, aqi_low: int, conc_high: float, conc_low: float, concentration: float
 ) -> int:
-    return round(
+    return math.ceil(
         ((concentration - conc_low) / (conc_high - conc_low)) * (aqi_high - aqi_low)
         + aqi_low
     )

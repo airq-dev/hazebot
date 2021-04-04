@@ -277,11 +277,11 @@ class Client(db.Model):  # type: ignore
 
     def get_current_aqi(self) -> int:
         """Current AQI for this client."""
-        return self.zipcode.get_current_aqi(self.get_conversion_strategy())
+        return self.zipcode.get_aqi(self.get_conversion_strategy())
 
     def get_current_pm25(self) -> float:
         """Current Pm25 for this client as determined by its chosen strategy."""
-        return self.zipcode.get_current_pm25(self.get_conversion_strategy())
+        return self.zipcode.get_pm25(self.get_conversion_strategy())
 
     def get_current_pm25_level(self) -> Pm25:
         """Current Pm25 level for this client as determined by its chosen strategy."""

@@ -380,37 +380,79 @@ class ClientTestCase(BaseTestCase):
         client = Client.query.get(client.id)
         self.assertEqual(ConversionStrategy.US_EPA, client.conversion_strategy)
 
-    def test_get_current_pm25(self):
+    def test_get_current_aqi(self):
         client = self._make_client()
         zipcode = client.zipcode
         self.assertEqual(
-            client.get_current_pm25(),
-            ConversionStrategy.NONE.convert(
-                zipcode.pm25, zipcode.pm_cf_1, zipcode.humidity
-            ),
+            client.get_current_aqi(), zipcode.get_aqi(ConversionStrategy.NONE)
         )
 
         client.conversion_strategy = ConversionStrategy.US_EPA.value
         self.assertEqual(
-            client.get_current_pm25(),
-            ConversionStrategy.US_EPA.convert(
-                zipcode.pm25, zipcode.pm_cf_1, zipcode.humidity
-            ),
+            client.get_current_aqi(), zipcode.get_aqi(ConversionStrategy.US_EPA)
+        )
+
+    def test_get_current_pm25(self):
+        client = self._make_client()
+        zipcode = client.zipcode
+        self.assertEqual(
+            client.get_current_pm25(), zipcode.get_pm25(ConversionStrategy.NONE)
+        )
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(
+            client.get_current_pm25(), zipcode.get_pm25(ConversionStrategy.US_EPA)
+        )
+
+    def test_get_current_pm25_level(self):
+        client = self._make_client()
+        zipcode = client.zipcode
+        self.assertEqual(
+            client.get_current_pm25_level(),
+            zipcode.get_pm25_level(ConversionStrategy.NONE),
+        )
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(
+            client.get_current_pm25_level(),
+            zipcode.get_pm25_level(ConversionStrategy.US_EPA),
+        )
+
+    def test_get_last_aqi(self):
+        client = self._make_client(last_pm25=23.4, last_humidity=28, last_pm_cf_1=18.34)
+        self.assertEqual(
+            client.get_last_aqi(),
+            client.get_last_readings().get_aqi(ConversionStrategy.NONE),
+        )
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(
+            client.get_last_aqi(),
+            client.get_last_readings().get_aqi(ConversionStrategy.US_EPA),
         )
 
     def test_get_last_pm25(self):
         client = self._make_client(last_pm25=23.4, last_humidity=28, last_pm_cf_1=18.34)
         self.assertEqual(
             client.get_last_pm25(),
-            ConversionStrategy.NONE.convert(
-                client.last_pm25, client.last_pm_cf_1, client.last_humidity
-            ),
+            client.get_last_readings().get_pm25(ConversionStrategy.NONE),
         )
 
         client.conversion_strategy = ConversionStrategy.US_EPA.value
         self.assertEqual(
             client.get_last_pm25(),
-            ConversionStrategy.US_EPA.convert(
-                client.last_pm25, client.last_pm_cf_1, client.last_humidity
-            ),
+            client.get_last_readings().get_pm25(ConversionStrategy.US_EPA),
+        )
+
+    def test_get_last_pm25_level(self):
+        client = self._make_client(last_pm25=23.4, last_humidity=28, last_pm_cf_1=18.34)
+        self.assertEqual(
+            client.get_last_pm25_level(),
+            client.get_last_readings().get_pm25_level(ConversionStrategy.NONE),
+        )
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(
+            client.get_last_pm25_level(),
+            client.get_last_readings().get_pm25_level(ConversionStrategy.US_EPA),
         )
