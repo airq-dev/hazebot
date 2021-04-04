@@ -20,7 +20,7 @@ class InvalidPrefValue(Exception):
     """This pref value is invalid."""
 
 
-TClientPreference = typing.TypeVar("TClientPreference", bound='ClientPreference')
+TClientPreference = typing.TypeVar("TClientPreference", bound="ClientPreference")
 TPreferenceValue = typing.TypeVar(
     "TPreferenceValue", bound=typing.Union[int, str, ChoicesEnum]
 )
@@ -56,7 +56,9 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         ...
 
     def __get__(
-        self: TClientPreference, instance: typing.Optional["Client"], owner: typing.Type["Client"]
+        self: TClientPreference,
+        instance: typing.Optional["Client"],
+        owner: typing.Type["Client"],
     ) -> typing.Union[TPreferenceValue, TClientPreference]:
         if instance is None:
             return self
@@ -244,13 +246,18 @@ class ClientPreferencesRegistry:
         cls._prefs[name] = pref
 
     @classmethod
-    def register_override(cls, pref: ClientPreference[TPreferenceValue], override: TPreferenceValue):
+    def register_override(
+        cls, pref: ClientPreference[TPreferenceValue], override: TPreferenceValue
+    ):
         """Override a pref value."""
         cls._overrides[pref.name] = override
 
     @classmethod
     @contextlib.contextmanager
-    def register_overrides(cls, overrides: typing.Mapping[ClientPreference[TPreferenceValue], TPreferenceValue]):
+    def register_overrides(
+        cls,
+        overrides: typing.Mapping[ClientPreference[TPreferenceValue], TPreferenceValue],
+    ):
         """Override preference values while the context manager is active."""
         for pref, value in overrides.items():
             cls.register_override(pref, value)
