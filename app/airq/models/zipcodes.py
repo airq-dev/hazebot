@@ -5,6 +5,7 @@ from flask_sqlalchemy import BaseQuery
 
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
+from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
 from airq.lib.readings import pm25_to_aqi
 from airq.config import db
@@ -94,16 +95,6 @@ class Zipcode(db.Model):  # type: ignore
         """This zipcode's geohash."""
         return "".join([getattr(self, f"geohash_bit_{i}") for i in range(1, 13)])
 
-    @property
-    def aqi(self) -> typing.Optional[int]:
-        """The AQI for this zipcode (e.g., 35)."""
-        return pm25_to_aqi(self.pm25)
-
-    @property
-    def pm25_level(self) -> Pm25:
-        """The pm25 category for this zipcode (e.g., Moderate)."""
-        return Pm25.from_measurement(self.pm25)
-
     @classmethod
     def pm25_stale_cutoff(cls) -> float:
         """Timestamp before which pm25 measurements are considered stale."""
@@ -128,20 +119,32 @@ class Zipcode(db.Model):  # type: ignore
         )
         return self._distance_cache[other.id]
 
-    def get_recommendations(self, num_desired: int) -> typing.List["Zipcode"]:
+    def get_current_aqi(self, conversion_strategy: ConversionStrategy) -> int:
+        """The AQI for this zipcode (e.g., 35) as determined by the provided strategy."""
+        return pm25_to_aqi(self.get_current_pm25(conversion_strategy))
+
+    def get_current_pm25(self, conversion_strategy: ConversionStrategy) -> float:
+        """Current pm25 for this client, as determined by the provided strategy."""
+        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+
+    def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
+        """The pm25 category for this zipcode (e.g., Moderate)."""
+        return Pm25.from_measurement(self.get_current_pm25(conversion_strategy))
+
+    def get_recommendations(self, num_desired: int, conversion_strategy: ConversionStrategy) -> typing.List["Zipcode"]:
         """Get n recommended zipcodes near this zipcode, sorted by distance."""
-        if not self.pm25_level or self.is_pm25_stale:
+        if self.is_pm25_stale:
             return []
 
         cutoff = self.pm25_stale_cutoff()
-        zipcodes = (
-            Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff)
-            .filter(Zipcode.pm25 < self.pm25_level)
-            .all()
-        )
-        # Sorting 40000 zipcodes in memory is surprisingly fast.
-        #
-        # I wouldn't be surprised if doing this huge fetch every time actually leads to better
-        # performance since Postgres can easily cache the whole query.
-        #
+
+        # TODO: Make this faster somehow?
+        curr_pm25_level = self.get_pm25_level(conversion_strategy)
+        zipcodes = [
+            z
+            for z
+            in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
+            if z.get_current_pm25(conversion_strategy) < curr_pm25_level
+        ]
+
         return sorted(zipcodes, key=lambda z: self.distance(z))[:num_desired]

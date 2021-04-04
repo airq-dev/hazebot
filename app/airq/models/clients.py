@@ -268,8 +268,34 @@ class Client(db.Model):  # type: ignore
     #
 
     @property
-    def last_aqi(self) -> typing.Optional[int]:
-        return pm25_to_aqi(self.last_pm25)
+    def curr_aqi(self) -> int:
+        """Current AQI for this client."""
+        return self.zipcode.get_current_aqi(self.get_conversion_strategy())
+
+    @property
+    def last_aqi(self) -> int:
+        """Last AQI at which an alert was sent to this client."""
+        return pm25_to_aqi(self.get_last_pm25())
+
+    def get_conversion_strategy(self) -> ConversionStrategy:
+        """Strategy used to determine the current AQI/Pm25 for this client."""
+        return ConversionStrategy.from_value(self.conversion_strategy)
+
+    def get_current_pm25(self) -> float:
+        """Current Pm25 for this client as determined by its chosen strategy."""
+        return self.zipcode.get_current_pm25(self.get_conversion_strategy())
+
+    def get_current_pm25_level(self) -> Pm25:
+        """Current Pm25 level for this client as determined by its chosen strategy."""
+        return self.zipcode.get_pm25_level(self.get_conversion_strategy())
+
+    def get_last_pm25(self):
+        """Last Pm25 for this client as determined by its chosen strategy."""
+        return self.get_conversion_strategy().convert(self.last_pm25, self.last_pm_cf_1, self.last_humidity)
+
+    def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
+        """Recommended zipcodes for this client."""
+        return self.zipcode.get_recommendations(num_desired, self.get_conversion_strategy())
 
     #
     # Alerting
@@ -281,9 +307,14 @@ class Client(db.Model):  # type: ignore
 
     def update_subscription(self, zipcode: Zipcode) -> bool:
         self.last_pm25 = zipcode.pm25
+        self.last_humidity = zipcode.humidity
+        self.last_pm_cf_1 = zipcode.pm_cf_1
+
         curr_zipcode_id = self.zipcode_id
         self.zipcode_id = zipcode.id
+
         db.session.commit()
+
         return curr_zipcode_id != self.zipcode_id
 
     def disable_alerts(self, is_automatic=False):
@@ -344,21 +375,12 @@ class Client(db.Model):  # type: ignore
         if self.last_alert_sent_at >= timestamp() - alert_frequency:
             return False
 
-        # Derive curr and last pm25
-        if self.conversion_strategy == ConversionStrategy.US_EPA:
-            curr_pm25 = us_epa_conv(self.zipcode.pm_cf_1, self.zipcode.humdity)
-            if self.last_pm_cf_1 is not None and self.last_humidity is not None:
-                last_pm25 = us_epa_conv(self.last_pm_cf_1, self.last_humidity) 
-            else:
-                last_pm25 = 0
-        else:
-            curr_pm25 = self.zipcode.pm25
-            last_pm25 = self.last_pm25
-
-        curr_aqi_level = Pm25.from_measurement(curr_pm25)
-        curr_aqi = pm25_to_aqi(curr_pm25)
+        curr_pm25 = self.get_current_pm25()
+        curr_aqi_level = self.get_current_pm25_level()
+        curr_aqi = self.curr_aqi
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
+        last_pm25 = self.get_last_pm25()
         last_aqi_level = Pm25.from_measurement(last_pm25)
         if curr_aqi_level == last_aqi_level:
             return False
@@ -384,8 +406,6 @@ class Client(db.Model):  # type: ignore
         last_aqi = self.last_aqi
         if (
             was_alerted_recently
-            and last_aqi
-            and curr_aqi
             and abs(curr_aqi - last_aqi) < 20
         ):
             return False

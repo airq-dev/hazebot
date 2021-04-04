@@ -36,6 +36,8 @@ class ClientTestCase(BaseTestCase):
         last_activity_at: int = 0,
         last_alert_sent_at: int = 0,
         last_pm25: float = 0.0,
+        last_pm_cf_1: float = 0.0,
+        last_humidity: float = 0.0,
         alerts_disabled_at: int = 0,
         num_alerts_sent: int = 0,
         created_at: typing.Optional[datetime.datetime] = None,
@@ -48,6 +50,8 @@ class ClientTestCase(BaseTestCase):
             zipcode_id=self.zipcode.id,
             last_alert_sent_at=last_alert_sent_at,
             last_pm25=last_pm25,
+            last_pm_cf_1=last_pm_cf_1,
+            last_humidity=last_humidity,
             alerts_disabled_at=alerts_disabled_at,
             num_alerts_sent=num_alerts_sent,
             created_at=created_at or self.clock.now(),
@@ -123,7 +127,7 @@ class ClientTestCase(BaseTestCase):
         # Do not resend if the default frequency has passed but AQI levels have changed by under 20 points
         zipcode.pm25 -= 2
         self.db.session.commit()
-        self.assertGreater(20, abs(client.last_aqi - zipcode.aqi))
+        self.assertGreater(20, abs(client.last_aqi - client.curr_aqi))
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
 
@@ -375,3 +379,18 @@ class ClientTestCase(BaseTestCase):
 
         client = Client.query.get(client.id)
         self.assertEqual(ConversionStrategy.US_EPA, client.conversion_strategy)
+
+    def test_get_current_pm25(self):
+        client = self._make_client()
+        zipcode = client.zipcode
+        self.assertEqual(client.get_current_pm25(), ConversionStrategy.NONE.convert(zipcode.pm25, zipcode.pm_cf_1, zipcode.humidity))
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(client.get_current_pm25(), ConversionStrategy.US_EPA.convert(zipcode.pm25, zipcode.pm_cf_1, zipcode.humidity))
+
+    def test_get_last_pm25(self):
+        client = self._make_client(last_pm25=23.4, last_humidity=28, last_pm_cf_1=18.34)
+        self.assertEqual(client.get_last_pm25(), ConversionStrategy.NONE.convert(client.last_pm25, client.last_pm_cf_1, client.last_humidity))
+
+        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        self.assertEqual(client.get_last_pm25(), ConversionStrategy.US_EPA.convert(client.last_pm25, client.last_pm_cf_1, client.last_humidity))

@@ -46,11 +46,12 @@ class GetQuality(BaseQualityCommand):
     event_type = EventType.QUALITY
 
     def _get_message(self, zipcode: Zipcode) -> MessageResponse:
-        aqi = zipcode.aqi
-        aqi_display = gettext(" (AQI %(aqi)s)", aqi=aqi) if aqi else ""
-
         is_first_message = self.client.zipcode_id is None
         was_updated = self.client.update_subscription(zipcode)
+
+        aqi = self.client.curr_aqi
+        aqi_display = gettext(" (AQI %(aqi)s)", aqi=aqi)
+
         if self.client.is_enabled_for_alerts and is_first_message and was_updated:
             response = (
                 MessageResponse()
@@ -59,7 +60,7 @@ class GetQuality(BaseQualityCommand):
                         "Welcome to Hazebot! We'll send you alerts when air quality in %(city)s %(zipcode)s changes category. Air quality is now %(pm25_level)s%(aqi_display)s.",
                         city=zipcode.city.name,
                         zipcode=zipcode.zipcode,
-                        pm25_level=zipcode.pm25_level.display,
+                        pm25_level=self.client.get_current_pm25_level().display,
                         aqi_display=aqi_display,
                     )
                 )
@@ -81,7 +82,7 @@ class GetQuality(BaseQualityCommand):
                         "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s.",
                         city=zipcode.city.name,
                         zipcode=zipcode.zipcode,
-                        pm25_level=zipcode.pm25_level.display,
+                        pm25_level=self.client.get_current_pm25_level().display,
                         aqi_display=aqi_display,
                     )
                 )
@@ -104,7 +105,7 @@ class GetQuality(BaseQualityCommand):
                 response.write(gettext('Text "M" for Menu, "E" to end alerts.'))
 
         self.client.log_event(
-            self.event_type, zipcode=zipcode.zipcode, pm25=zipcode.pm25
+            self.event_type, zipcode=zipcode.zipcode, pm25=self.client.get_current_pm25()
         )
 
         return response
@@ -118,24 +119,25 @@ class GetLast(GetQuality):
 class GetDetails(BaseQualityCommand):
     pattern = r"^1[\.\)]?$"
 
-    def _get_message(self, zipcode: Zipcode) -> MessageResponse:
-        response = MessageResponse().write(zipcode.pm25_level.description).write("")
+    def _get_message(self, _zipcode: Zipcode) -> MessageResponse:
+        response = MessageResponse().write(self.client.get_current_pm25_level().description).write("")
 
         num_desired = 3
-        recommended_zipcodes = zipcode.get_recommendations(num_desired)
+        recommended_zipcodes = self.client.get_recommendations(num_desired)
         if recommended_zipcodes:
             response.write(
                 gettext("Here are the closest places with better air quality:")
             )
+            conversion_strategy = self.client.get_conversion_strategy()
             for recommendation in recommended_zipcodes:
                 response.write(
                     gettext(
                         " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)",
                         city=recommendation.city.name,
                         zipcode=recommendation.zipcode,
-                        pm25_level=recommendation.pm25_level.display.upper(),
+                        pm25_level=recommendation.get_pm25_level(conversion_strategy).display.upper(),
                         distance=round(
-                            kilometers_to_miles(recommendation.distance(zipcode)),
+                            kilometers_to_miles(recommendation.distance(self.client.zipcode)),
                             ndigits=1,
                         ),  # TODO: Make this based on locale
                     )
@@ -146,18 +148,18 @@ class GetDetails(BaseQualityCommand):
             ngettext(
                 "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3.",
                 "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3.",
-                zipcode.num_sensors,
-                zipcode=zipcode.zipcode,
-                pm25=zipcode.pm25,
+                self.client.zipcode.num_sensors,
+                zipcode=self.client.zipcode.zipcode,
+                pm25=self.client.get_current_pm25(),
             )
         )
 
         self.client.log_event(
             EventType.DETAILS,
-            zipcode=zipcode.zipcode,
+            zipcode=self.client.zipcode.zipcode,
             recommendations=[r.zipcode for r in recommended_zipcodes],
-            pm25=zipcode.pm25,
-            num_sensors=zipcode.num_sensors,
+            pm25=self.client.get_current_pm25(),
+            num_sensors=self.client.zipcode.num_sensors,
         )
 
         return response

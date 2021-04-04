@@ -74,7 +74,7 @@ class Pm25(IntChoicesEnum):
             )
 
 
-def pm25_to_aqi(concentration: float) -> typing.Optional[int]:
+def pm25_to_aqi(concentration: float) -> int:
     if 350.5 < concentration:
         return _linear(500, 401, 500, 350.5, concentration)
     elif 250.5 < concentration:
@@ -108,9 +108,17 @@ class ConversionStrategy(StrChoicesEnum):
     @property
     def display(self) -> str:
         if self == self.US_EPA:
-            return gettext("US EPA")
+            return gettext("US EPA — Note this is just for testing at the moment. Data may be inaccurate.")
         else:
             return gettext("None")
+
+    # TODO: This should probably accept a "Metrics" object
+    def convert(self, pm25: float, pm_cf_1: typing.Optional[float], humidity: typing.Optional[float]) -> float:
+        if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
+            return us_epa_conv(pm_cf_1, humidity)
+        else:
+            return pm25
+
 
 
 def us_epa_conv(pm_cf_1: float, humidity: float) -> float:

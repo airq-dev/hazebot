@@ -3,6 +3,9 @@ import enum
 import typing
 
 
+T = typing.TypeVar('T', bound='ChoicesEnum')
+
+
 class ChoicesEnum(enum.Enum):
     @property
     @abc.abstractmethod
@@ -14,7 +17,7 @@ class ChoicesEnum(enum.Enum):
     # which it can't understand if we call `enum_cls(value)`
     # directly.
     @classmethod
-    def from_value(cls, value: typing.Any) -> "ChoicesEnum":
+    def from_value(cls: typing.Type[T], value: typing.Any) -> T:
         return cls(value)
 
 
