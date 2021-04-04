@@ -24,7 +24,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 41).\n"
+            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 42).\n"
             "\n"
             'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
@@ -41,7 +41,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(2, Event.query.count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 41).\n"
+            "Portland 97204 is GOOD (AQI 42).\n"
             "\n"
             'Text "M" for Menu, "E" to end alerts.',
             response.data,
@@ -150,7 +150,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(2, Client.query.count())
         self.assertEqual(8, Event.query.count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 41).\n"
+            "Portland 97204 is GOOD (AQI 42).\n"
             "\n"
             "You are now receiving alerts for 97204.",
             response.data,
@@ -239,7 +239,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 41).\n"
+            "Welcome to Hazebot! We'll send you alerts when air quality in Portland 97204 changes category. Air quality is now GOOD (AQI 42).\n"
             "\n"
             'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
@@ -301,7 +301,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
         self.assert_twilio_response(
-            "Portland 97204 is GOOD (AQI 41).\n"
+            "Portland 97204 is GOOD (AQI 42).\n"
             "\n"
             'Alerting is disabled. Text "Y" to re-enable alerts when air quality changes.',
             response.data,
@@ -545,7 +545,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(1, Client.query.count())
         self.assertEqual(1, Event.query.count())
         self.assert_twilio_response(
-            "&#161;Bienvenido a Hazebot! Le enviaremos avisos cuando la calidad del aire en Portland 97204 cambie de categor&#237;a. La calidad del aire ahora es BUENO (AQI 41).\n"
+            "&#161;Bienvenido a Hazebot! Le enviaremos avisos cuando la calidad del aire en Portland 97204 cambie de categor&#237;a. La calidad del aire ahora es BUENO (AQI 42).\n"
             "\n"
             'Guardar este contacto y enviarnos un mensaje de texto con su c&#243;digo postal cuando desee una actualizaci&#243;n instant&#225;nea. Y siempre puede enviar un mensaje de texto con "M" para ver el men&#250; completo.',
             response.data,
