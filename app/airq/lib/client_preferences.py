@@ -4,6 +4,7 @@ import contextlib
 import typing
 
 from flask import g
+from flask import has_app_context
 from flask_babel import gettext
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -151,6 +152,8 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         choices = self._get_choices()
         try:
             idx = int(user_input)
+            if idx <= 0:
+                return None
             return choices[idx - 1]
         except (IndexError, TypeError, ValueError):
             return None
@@ -236,6 +239,7 @@ class IntegerPreference(ClientPreference[int]):
 
 class ClientPreferencesRegistry:
     _prefs: typing.MutableMapping[str, ClientPreference] = collections.OrderedDict()
+    _overrides: typing.Dict[str, typing.Any] = {}
 
     @classmethod
     def register_pref(cls, name: str, pref: ClientPreference) -> None:
@@ -246,11 +250,14 @@ class ClientPreferencesRegistry:
         cls._prefs[name] = pref
 
     @classmethod
-    def register_override(
-        cls, pref: ClientPreference[TPreferenceValue], override: TPreferenceValue
-    ):
-        """Override a pref value."""
-        g.setdefault('_pref_overrides', {})[pref.name] = override
+    def _get_overrides(cls) -> typing.Dict[str, typing.Any]:
+        """Get the overrides in a thread-safe manner."""
+        if has_app_context():
+            if not "_pref_overrides" in g:
+                g._pref_overrides = {}
+            return g._pref_overrides
+        else:
+            return cls._overrides
 
     @classmethod
     @contextlib.contextmanager
@@ -258,19 +265,19 @@ class ClientPreferencesRegistry:
         cls,
         overrides: typing.Mapping[ClientPreference[TPreferenceValue], TPreferenceValue],
     ):
-        """Override preference values while the context manager is active."""
+        """Override preference values for the duration of the current request."""
+        current_overrides = cls._get_overrides()
         for pref, value in overrides.items():
-            cls.register_override(pref, value)
-
+            current_overrides[pref.name] = value
         try:
             yield
         finally:
-            g.get('pref_overrides', {}).clear()
+            current_overrides.clear()
 
     @classmethod
     def get_override(cls, name: str) -> typing.Any:
         """Get the overriden value for a pref, if any."""
-        return g.get('_prefs_overrides', {}).get(name)
+        return cls._get_overrides().get(name)
 
     @classmethod
     def get_name(cls, pref: ClientPreference) -> str:
