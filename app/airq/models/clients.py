@@ -271,19 +271,13 @@ class Client(db.Model):  # type: ignore
             pm25=self.last_pm25, pm_cf_1=self.last_pm_cf_1, humidity=self.last_humidity
         )
 
-    @property
-    def curr_aqi(self) -> int:
-        """Current AQI for this client."""
-        return self.zipcode.get_current_aqi(self.get_conversion_strategy())
-
-    @property
-    def last_aqi(self) -> int:
-        """Last AQI at which an alert was sent to this client."""
-        return self.get_last_readings().get_aqi(self.get_conversion_strategy())
-
     def get_conversion_strategy(self) -> ConversionStrategy:
         """Strategy used to determine the current AQI/Pm25 for this client."""
         return ConversionStrategy.from_value(self.conversion_strategy)
+
+    def get_current_aqi(self) -> int:
+        """Current AQI for this client."""
+        return self.zipcode.get_current_aqi(self.get_conversion_strategy())
 
     def get_current_pm25(self) -> float:
         """Current Pm25 for this client as determined by its chosen strategy."""
@@ -293,9 +287,17 @@ class Client(db.Model):  # type: ignore
         """Current Pm25 level for this client as determined by its chosen strategy."""
         return self.zipcode.get_pm25_level(self.get_conversion_strategy())
 
-    def get_last_pm25(self):
+    def get_last_aqi(self) -> int:
+        """Last AQI at which an alert was sent to this client."""
+        return self.get_last_readings().get_aqi(self.get_conversion_strategy())
+
+    def get_last_pm25(self) -> float:
         """Last Pm25 for this client as determined by its chosen strategy."""
         return self.get_last_readings().get_pm25(self.get_conversion_strategy())
+
+    def get_last_pm25_level(self) -> Pm25:
+        """Last Pm25 level for this client as determined by its chosen strategy."""
+        return self.get_last_readings().get_pm25_level(self.get_conversion_strategy())
 
     def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
         """Recommended zipcodes for this client."""
@@ -383,11 +385,10 @@ class Client(db.Model):  # type: ignore
 
         curr_pm25 = self.get_current_pm25()
         curr_aqi_level = self.get_current_pm25_level()
-        curr_aqi = self.curr_aqi
+        curr_aqi = self.get_current_aqi()
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
-        last_pm25 = self.get_last_pm25()
-        last_aqi_level = Pm25.from_measurement(last_pm25)
+        last_aqi_level = self.get_last_pm25_level()
         if curr_aqi_level == last_aqi_level:
             return False
 
@@ -409,7 +410,7 @@ class Client(db.Model):  # type: ignore
 
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
         was_alerted_recently = self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
-        last_aqi = self.last_aqi
+        last_aqi = self.get_last_aqi
         if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
             return False
 

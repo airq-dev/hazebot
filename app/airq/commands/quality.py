@@ -49,8 +49,7 @@ class GetQuality(BaseQualityCommand):
         is_first_message = self.client.zipcode_id is None
         was_updated = self.client.update_subscription(zipcode)
 
-        aqi = self.client.curr_aqi
-        aqi_display = gettext(" (AQI %(aqi)s)", aqi=aqi)
+        aqi_display = gettext(" (AQI %(aqi)s)", aqi=self.client.get_current_aqi())
 
         if self.client.is_enabled_for_alerts and is_first_message and was_updated:
             response = (

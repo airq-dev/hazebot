@@ -26,7 +26,7 @@ class Readings:
 
     def get_aqi(self, conversion_stragy: "ConversionStrategy") -> int:
         """Get the aqi according to the given conversion strategy."""
-        return pm25_to_aqi(self.get_pm25(conversion_stragy))
+        return _pm25_to_aqi(self.get_pm25(conversion_stragy))
 
 
 @enum.unique
@@ -96,7 +96,7 @@ class Pm25(IntChoicesEnum):
             )
 
 
-def pm25_to_aqi(concentration: float) -> int:
+def _pm25_to_aqi(concentration: float) -> int:
     if 350.5 < concentration:
         return _linear(500, 401, 500, 350.5, concentration)
     elif 250.5 < concentration:

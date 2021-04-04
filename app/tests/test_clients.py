@@ -127,7 +127,7 @@ class ClientTestCase(BaseTestCase):
         # Do not resend if the default frequency has passed but AQI levels have changed by under 20 points
         zipcode.pm25 -= 2
         self.db.session.commit()
-        self.assertGreater(20, abs(client.last_aqi - client.curr_aqi))
+        self.assertGreater(20, abs(client.get_last_aqi() - client.get_current_aqi()))
         self.assertFalse(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
 
