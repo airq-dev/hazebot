@@ -142,7 +142,7 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
             return None
 
     def _validate(self, _value: TChoicesEnum):
-        pass # Valid by definition
+        pass  # Valid by definition
 
     def get_prompt(self) -> str:
         prompt = [gettext("Select one of")]

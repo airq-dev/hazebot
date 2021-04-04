@@ -43,7 +43,7 @@ class StringChoicesPreferenceTestCase(BaseTestCase):
             display_name="Foo Bar",
             description="Testing 123",
             default=ConversionStrategy.NONE,
-            choices=ConversionStrategy
+            choices=ConversionStrategy,
         )
 
     def test_clean(self):
