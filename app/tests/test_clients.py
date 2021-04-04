@@ -374,7 +374,7 @@ class ClientTestCase(BaseTestCase):
         client = self._make_client()
         self.assertEqual(ConversionStrategy.NONE, client.conversion_strategy)
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.db.session.commit()
 
         client = Client.query.get(client.id)
@@ -387,7 +387,7 @@ class ClientTestCase(BaseTestCase):
             client.get_current_aqi(), zipcode.get_aqi(ConversionStrategy.NONE)
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_current_aqi(), zipcode.get_aqi(ConversionStrategy.US_EPA)
         )
@@ -399,7 +399,7 @@ class ClientTestCase(BaseTestCase):
             client.get_current_pm25(), zipcode.get_pm25(ConversionStrategy.NONE)
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_current_pm25(), zipcode.get_pm25(ConversionStrategy.US_EPA)
         )
@@ -412,7 +412,7 @@ class ClientTestCase(BaseTestCase):
             zipcode.get_pm25_level(ConversionStrategy.NONE),
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_current_pm25_level(),
             zipcode.get_pm25_level(ConversionStrategy.US_EPA),
@@ -425,7 +425,7 @@ class ClientTestCase(BaseTestCase):
             client.get_last_readings().get_aqi(ConversionStrategy.NONE),
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_last_aqi(),
             client.get_last_readings().get_aqi(ConversionStrategy.US_EPA),
@@ -438,7 +438,7 @@ class ClientTestCase(BaseTestCase):
             client.get_last_readings().get_pm25(ConversionStrategy.NONE),
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_last_pm25(),
             client.get_last_readings().get_pm25(ConversionStrategy.US_EPA),
@@ -451,7 +451,7 @@ class ClientTestCase(BaseTestCase):
             client.get_last_readings().get_pm25_level(ConversionStrategy.NONE),
         )
 
-        client.conversion_strategy = ConversionStrategy.US_EPA.value
+        client.conversion_strategy = ConversionStrategy.US_EPA
         self.assertEqual(
             client.get_last_pm25_level(),
             client.get_last_readings().get_pm25_level(ConversionStrategy.US_EPA),

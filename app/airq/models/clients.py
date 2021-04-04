@@ -240,7 +240,7 @@ class Client(db.Model):  # type: ignore
         max_value=24,
     )
 
-    alert_threshold = IntegerChoicesPreference(
+    alert_threshold: IntegerChoicesPreference[Pm25] = IntegerChoicesPreference(
         display_name=lazy_gettext("Alert Threshold"),
         description=lazy_gettext(
             "AQI category below which Hazebot won't send alerts.\n"
@@ -248,17 +248,19 @@ class Client(db.Model):  # type: ignore
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
         # TODO: Change default back to "GOOD" next fire season.
-        default=Pm25.MODERATE.value,
+        default=Pm25.MODERATE,
         choices=Pm25,
     )
 
-    conversion_strategy = StringChoicesPreference(
+    conversion_strategy: StringChoicesPreference[
+        ConversionStrategy
+    ] = StringChoicesPreference(
         display_name=lazy_gettext("Conversion"),
         description=lazy_gettext(
             # TODO: Better description
             "Conversion strategy to use when calculating AQI."
         ),
-        default=ConversionStrategy.NONE.value,
+        default=ConversionStrategy.NONE,
         choices=ConversionStrategy,
     )
 
@@ -271,39 +273,33 @@ class Client(db.Model):  # type: ignore
             pm25=self.last_pm25, pm_cf_1=self.last_pm_cf_1, humidity=self.last_humidity
         )
 
-    def get_conversion_strategy(self) -> ConversionStrategy:
-        """Strategy used to determine the current AQI/Pm25 for this client."""
-        return ConversionStrategy.from_value(self.conversion_strategy)
-
     def get_current_aqi(self) -> int:
         """Current AQI for this client."""
-        return self.zipcode.get_aqi(self.get_conversion_strategy())
+        return self.zipcode.get_aqi(self.conversion_strategy)
 
     def get_current_pm25(self) -> float:
         """Current Pm25 for this client as determined by its chosen strategy."""
-        return self.zipcode.get_pm25(self.get_conversion_strategy())
+        return self.zipcode.get_pm25(self.conversion_strategy)
 
     def get_current_pm25_level(self) -> Pm25:
         """Current Pm25 level for this client as determined by its chosen strategy."""
-        return self.zipcode.get_pm25_level(self.get_conversion_strategy())
+        return self.zipcode.get_pm25_level(self.conversion_strategy)
 
     def get_last_aqi(self) -> int:
         """Last AQI at which an alert was sent to this client."""
-        return self.get_last_readings().get_aqi(self.get_conversion_strategy())
+        return self.get_last_readings().get_aqi(self.conversion_strategy)
 
     def get_last_pm25(self) -> float:
         """Last Pm25 for this client as determined by its chosen strategy."""
-        return self.get_last_readings().get_pm25(self.get_conversion_strategy())
+        return self.get_last_readings().get_pm25(self.conversion_strategy)
 
     def get_last_pm25_level(self) -> Pm25:
         """Last Pm25 level for this client as determined by its chosen strategy."""
-        return self.get_last_readings().get_pm25_level(self.get_conversion_strategy())
+        return self.get_last_readings().get_pm25_level(self.conversion_strategy)
 
     def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
         """Recommended zipcodes for this client."""
-        return self.zipcode.get_recommendations(
-            num_desired, self.get_conversion_strategy()
-        )
+        return self.zipcode.get_recommendations(num_desired, self.conversion_strategy)
 
     #
     # Alerting

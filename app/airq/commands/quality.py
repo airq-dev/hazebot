@@ -133,7 +133,7 @@ class GetDetails(BaseQualityCommand):
             response.write(
                 gettext("Here are the closest places with better air quality:")
             )
-            conversion_strategy = self.client.get_conversion_strategy()
+            conversion_strategy = self.client.conversion_strategy
             for recommendation in recommended_zipcodes:
                 response.write(
                     gettext(

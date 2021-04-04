@@ -19,8 +19,12 @@ class InvalidPrefValue(Exception):
     """This pref value is invalid."""
 
 
-TPreferenceValue = typing.TypeVar("TPreferenceValue", bound=typing.Union[int, str])
+TPreferenceValue = typing.TypeVar(
+    "TPreferenceValue", bound=typing.Union[int, str, ChoicesEnum]
+)
 TChoicesEnum = typing.TypeVar("TChoicesEnum", bound=ChoicesEnum)
+TIntChoicesEnum = typing.TypeVar("TIntChoicesEnum", bound=IntChoicesEnum)
+TStrChoicesEnum = typing.TypeVar("TStrChoicesEnum", bound=StrChoicesEnum)
 
 
 # TODO: We could probably make this more type safe.
@@ -101,14 +105,12 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         """Get a prompt for the user to fill in this preference."""
 
 
-class ChoicesPreference(
-    typing.Generic[TPreferenceValue, TChoicesEnum], ClientPreference[TPreferenceValue]
-):
+class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesEnum]):
     def __init__(
         self,
         display_name: str,
         description: str,
-        default: TPreferenceValue,
+        default: TChoicesEnum,
         choices: typing.Type[TChoicesEnum],
     ):
         super().__init__(display_name, description, default)
@@ -120,13 +122,13 @@ class ChoicesPreference(
     def format_value(self, value: TPreferenceValue) -> str:
         return self._choices.from_value(value).display
 
-    def clean(self, user_input: str) -> typing.Optional[TPreferenceValue]:
+    def clean(self, user_input: str) -> typing.Optional[TChoicesEnum]:
         choices = self._get_choices()
         try:
             idx = int(user_input)
             if idx <= 0:
                 return None
-            return choices[idx - 1].value
+            return choices[idx - 1]
         except (IndexError, TypeError, ValueError):
             return None
 
@@ -141,11 +143,11 @@ class ChoicesPreference(
         return "\n".join(prompt)
 
 
-class IntegerChoicesPreference(ChoicesPreference[int, IntChoicesEnum]):
+class IntegerChoicesPreference(ChoicesPreference[TIntChoicesEnum]):
     pass
 
 
-class StringChoicesPreference(ChoicesPreference[str, StrChoicesEnum]):
+class StringChoicesPreference(ChoicesPreference[TStrChoicesEnum]):
     pass
 
 

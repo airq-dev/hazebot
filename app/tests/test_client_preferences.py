@@ -9,7 +9,7 @@ class IntegerChoicesPreferenceTestCase(BaseTestCase):
         return IntegerChoicesPreference(
             display_name="Foo Bar",
             description="Testing 123",
-            default=Pm25.UNHEALTHY.value,
+            default=Pm25.UNHEALTHY,
             choices=Pm25,
         )
 

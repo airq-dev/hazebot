@@ -25,18 +25,16 @@ class ConversionStrategy(StrChoicesEnum):
         else:
             return gettext("None")
 
-    # TODO: This should probably accept a "Metrics" object
-    def convert(
-        self,
-        pm25: float,
-        pm_cf_1: typing.Optional[float],
-        humidity: typing.Optional[float],
-    ) -> float:
+    def convert(self, readings: "Readings") -> float:
         """Convert raw data into a pm25 we can use."""
-        if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
-            return _us_epa_conv(pm_cf_1, humidity)
+        if (
+            self == self.US_EPA
+            and readings.pm_cf_1 is not None
+            and readings.humidity is not None
+        ):
+            return _us_epa_conv(readings.pm_cf_1, readings.humidity)
         else:
-            return pm25
+            return readings.pm25
 
 
 @enum.unique
@@ -116,7 +114,7 @@ class Readings:
 
     def get_pm25(self, conversion_strategy: ConversionStrategy) -> float:
         """Get the pm25 according to the given conversion strategy."""
-        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+        return conversion_strategy.convert(self)
 
     def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
         """Get the pm25 level according to the given conversion strategy."""
