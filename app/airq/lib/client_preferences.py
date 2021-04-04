@@ -27,7 +27,6 @@ TIntChoicesEnum = typing.TypeVar("TIntChoicesEnum", bound=IntChoicesEnum)
 TStrChoicesEnum = typing.TypeVar("TStrChoicesEnum", bound=StrChoicesEnum)
 
 
-# TODO: We could probably make this more type safe.
 class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     def __init__(
         self,
@@ -47,7 +46,10 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     ) -> TPreferenceValue:
         if instance is not None:
             preferences = instance.preferences or {}
-            return preferences.get(self.name, self.default)  # type: ignore
+            value = preferences.get(self.name)
+            if value is not None:
+                return self._cast(value)
+            return self.default
         return self
 
     def __set__(self, client: "Client", value: TPreferenceValue):
@@ -84,6 +86,10 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     def __set_name__(self, owner: typing.Type["Client"], name: str) -> None:
         ClientPreferencesRegistry.register_pref(name, self)
 
+    @abc.abstractmethod
+    def _cast(self, value: typing.Any) -> TPreferenceValue:
+        pass
+
     @property
     def name(self) -> str:
         return ClientPreferencesRegistry.get_name(self)
@@ -119,8 +125,11 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
     def _get_choices(self) -> typing.List[TChoicesEnum]:
         return list(self._choices)
 
-    def format_value(self, value: TPreferenceValue) -> str:
-        return self._choices.from_value(value).display
+    def _cast(self, value: typing.Any) -> TChoicesEnum:
+        return self._choices.from_value(value)
+
+    def format_value(self, value: TChoicesEnum) -> str:
+        return value.display
 
     def clean(self, user_input: str) -> typing.Optional[TChoicesEnum]:
         choices = self._get_choices()
@@ -132,9 +141,8 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         except (IndexError, TypeError, ValueError):
             return None
 
-    def _validate(self, value: TPreferenceValue):
-        if value not in self._get_choices():
-            raise InvalidPrefValue()
+    def _validate(self, _value: TChoicesEnum):
+        pass # Valid by definition
 
     def get_prompt(self) -> str:
         prompt = [gettext("Select one of")]
@@ -171,6 +179,10 @@ class IntegerPreference(ClientPreference[int]):
 
     def format_value(self, value: int) -> str:
         return str(value)
+
+    def _cast(self, value: typing.Any) -> int:
+        assert isinstance(value, int)
+        return value
 
     def clean(self, user_input: str) -> typing.Optional[int]:
         try:
