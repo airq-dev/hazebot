@@ -102,6 +102,8 @@ def _linear(
 
 @enum.unique
 class ConversionStrategy(StrChoicesEnum):
+    """Determines how we will adjust the determine pm25."""
+
     NONE = "None"
     US_EPA = "US EPA"
 
@@ -109,7 +111,7 @@ class ConversionStrategy(StrChoicesEnum):
     def display(self) -> str:
         if self == self.US_EPA:
             return gettext(
-                "US EPA — Note this is just for testing at the moment. Data may be inaccurate."
+                "US EPA — Note this is just for testing at the moment. Please report inaccuracies to info@hazebot.org."
             )
         else:
             return gettext("None")
@@ -121,6 +123,7 @@ class ConversionStrategy(StrChoicesEnum):
         pm_cf_1: typing.Optional[float],
         humidity: typing.Optional[float],
     ) -> float:
+        """Convert raw data into a pm25 we can use."""
         if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
             return us_epa_conv(pm_cf_1, humidity)
         else:
@@ -128,4 +131,5 @@ class ConversionStrategy(StrChoicesEnum):
 
 
 def us_epa_conv(pm_cf_1: float, humidity: float) -> float:
+    # See https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=349513&Lab=CEMM
     return (0.534 * pm_cf_1) - (0.0844 * humidity) + 5.604
