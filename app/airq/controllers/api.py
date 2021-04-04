@@ -2,7 +2,9 @@ from flask import g
 from flask import request
 
 from airq import commands
+from airq.commands.base import MessageResponse
 from airq.config import csrf
+from airq.lib.client_preferences import ClientPreferencesRegistry, InvalidPrefValue
 from airq.models.clients import ClientIdentifierType
 
 
@@ -34,12 +36,29 @@ def sms_reply(locale: str) -> str:
 def test_command(locale: str) -> str:
     supported_locale = _get_supported_locale(locale)
     g.locale = supported_locale
-    command = request.args.get("command", "").strip()
+
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]
     else:
         ip = request.remote_addr
-    response = commands.handle_command(
-        command, ip, ClientIdentifierType.IP, supported_locale
-    )
+
+    args = request.args.copy()
+    command = args.pop("command", "").strip()
+    overrides = {}
+    for k, v in args.items():
+        pref = ClientPreferencesRegistry.get_by_name(k)
+        if pref:
+            try:
+                overrides[pref] = pref.validate(v)
+            except InvalidPrefValue as e:
+                msg = str(e)
+                if not msg:
+                    msg = '{}: Invalid value "{}"'.format(pref.name, v)
+                return MessageResponse().write(msg).as_html()
+
+    with ClientPreferencesRegistry.register_overrides(overrides):
+        response = commands.handle_command(
+            command, ip, ClientIdentifierType.IP, supported_locale
+        )
+
     return response.as_html()

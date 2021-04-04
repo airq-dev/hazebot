@@ -13,8 +13,11 @@ class ChoicesEnum(enum.Enum):
         ...
 
     @classmethod
-    def from_value(cls: typing.Type[T], value: typing.Any) -> T:
-        return cls(value)
+    def from_value(cls: typing.Type[T], value: typing.Any) -> typing.Optional[T]:
+        for m in cls:
+            if m.value == value:
+                return m
+        return None
 
 
 class IntChoicesEnum(int, ChoicesEnum):
