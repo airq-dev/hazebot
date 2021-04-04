@@ -8,17 +8,12 @@ You can also visit us at [hazebot.org](https://www.hazebot.org). Hazebot is buil
 
 ## Contributing
 
-Contributions are very welcome. Please see a detailed guide to contributing [here](docs/contributing.md#Contributing). You can always reach us on our [Slack channel](https://join.slack.com/t/hazebot/shared_invite/zt-hoogtwy8-9yeYFKyg0MRCtyC9US0k3Q) if you'd like to get involved.
+Contributions are very welcome. Please see a detailed guide to contributing [here](docs/contributing.md#Contributing). You can always reach us on our [Slack](https://join.slack.com/t/hazebot/shared_invite/zt-hoogtwy8-9yeYFKyg0MRCtyC9US0k3Q) if you'd like to get involved.
 
 ## Features
 
-To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every two hours, and only between the hours of 8AM and 9PM.
+To use Hazebot, simply text your zipcode to 26AQISAFE2 or (262) 747-2332, and we will send you an alert when the air quality in your zipcode changes [categories](https://cfpub.epa.gov/airnow/index.cfm?action=aqibasics.aqi). Hazebot sends each user no more than one alert every two hours, and only between the hours of 8AM and 9PM. You can also customize your alerting preferences via SMS.
 
-We also support several SMS "commands":
-* `1`: Get details about the air quality in your zipcode, and recommendations of nearby areas with healthier air.
-* `2`: Get up-to-date metrics for your zipcode, without waiting for an alert.
-* `3`: Get info about hazebot.
-* `m`: View the hazebot menu (basically commands `1`, `2`, and `3`).
-* `u`: Unsubscribe from alerts.
+We also support several SMS "commands", the full list of which can be viewed in the Hazebot menu (by texting "M" to Hazebot).
 
 If interested, you can read about the technical implementation of Hazebot in our [architecture docs](docs/architecture.md).
