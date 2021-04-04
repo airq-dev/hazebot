@@ -8,25 +8,34 @@ from airq.lib.choices import IntChoicesEnum
 from airq.lib.choices import StrChoicesEnum
 
 
-@dataclasses.dataclass
-class Readings:
-    """Encapsulates a set of readings from PurpleAir."""
+@enum.unique
+class ConversionStrategy(StrChoicesEnum):
+    """Determines how we will adjust the determine pm25."""
 
-    pm25: float
-    pm_cf_1: typing.Optional[float]
-    humidity: typing.Optional[float]
+    NONE = "None"
+    US_EPA = "US EPA"
 
-    def get_pm25(self, conversion_strategy: "ConversionStrategy") -> float:
-        """Get the pm25 according to the given conversion strategy."""
-        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+    @property
+    def display(self) -> str:
+        if self == self.US_EPA:
+            return gettext(
+                "US EPA — Note this is just for testing at the moment. Please report inaccuracies to info@hazebot.org."
+            )
+        else:
+            return gettext("None")
 
-    def get_pm25_level(self, conversion_strategy: "ConversionStrategy") -> "Pm25":
-        """Get the pm25 level according to the given conversion strategy."""
-        return Pm25.from_measurement(self.get_pm25(conversion_strategy))
-
-    def get_aqi(self, conversion_stragy: "ConversionStrategy") -> int:
-        """Get the aqi according to the given conversion strategy."""
-        return _pm25_to_aqi(self.get_pm25(conversion_stragy))
+    # TODO: This should probably accept a "Metrics" object
+    def convert(
+        self,
+        pm25: float,
+        pm_cf_1: typing.Optional[float],
+        humidity: typing.Optional[float],
+    ) -> float:
+        """Convert raw data into a pm25 we can use."""
+        if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
+            return _us_epa_conv(pm_cf_1, humidity)
+        else:
+            return pm25
 
 
 @enum.unique
@@ -96,6 +105,27 @@ class Pm25(IntChoicesEnum):
             )
 
 
+@dataclasses.dataclass
+class Readings:
+    """Encapsulates a set of readings from PurpleAir."""
+
+    pm25: float
+    pm_cf_1: typing.Optional[float]
+    humidity: typing.Optional[float]
+
+    def get_pm25(self, conversion_strategy: ConversionStrategy) -> float:
+        """Get the pm25 according to the given conversion strategy."""
+        return conversion_strategy.convert(self.pm25, self.pm_cf_1, self.humidity)
+
+    def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
+        """Get the pm25 level according to the given conversion strategy."""
+        return Pm25.from_measurement(self.get_pm25(conversion_strategy))
+
+    def get_aqi(self, conversion_stragy: ConversionStrategy) -> int:
+        """Get the aqi according to the given conversion strategy."""
+        return _pm25_to_aqi(self.get_pm25(conversion_stragy))
+
+
 def _pm25_to_aqi(concentration: float) -> int:
     if 350.5 < concentration:
         return _linear(500, 401, 500, 350.5, concentration)
@@ -122,36 +152,6 @@ def _linear(
     )
 
 
-@enum.unique
-class ConversionStrategy(StrChoicesEnum):
-    """Determines how we will adjust the determine pm25."""
-
-    NONE = "None"
-    US_EPA = "US EPA"
-
-    @property
-    def display(self) -> str:
-        if self == self.US_EPA:
-            return gettext(
-                "US EPA — Note this is just for testing at the moment. Please report inaccuracies to info@hazebot.org."
-            )
-        else:
-            return gettext("None")
-
-    # TODO: This should probably accept a "Metrics" object
-    def convert(
-        self,
-        pm25: float,
-        pm_cf_1: typing.Optional[float],
-        humidity: typing.Optional[float],
-    ) -> float:
-        """Convert raw data into a pm25 we can use."""
-        if self == self.US_EPA and pm_cf_1 is not None and humidity is not None:
-            return us_epa_conv(pm_cf_1, humidity)
-        else:
-            return pm25
-
-
-def us_epa_conv(pm_cf_1: float, humidity: float) -> float:
+def _us_epa_conv(pm_cf_1: float, humidity: float) -> float:
     # See https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=349513&Lab=CEMM
     return (0.534 * pm_cf_1) - (0.0844 * humidity) + 5.604
