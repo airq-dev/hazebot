@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import math
 import typing
 
 from flask_babel import gettext
