@@ -14,10 +14,12 @@ from twilio.base.exceptions import TwilioRestException
 from airq.config import db
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
+from airq.lib.client_preferences import StringChoicesPreference
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
+from airq.lib.readings import ConversionStrategy
 from airq.lib.readings import Pm25
-from airq.lib.readings import pm25_to_aqi
+from airq.lib.readings import Readings
 from airq.lib.sms import coerce_phone_number
 from airq.lib.twilio import send_sms
 from airq.lib.twilio import TwilioErrorCode
@@ -238,7 +240,7 @@ class Client(db.Model):  # type: ignore
         max_value=24,
     )
 
-    alert_threshold = IntegerChoicesPreference(
+    alert_threshold: IntegerChoicesPreference[Pm25] = IntegerChoicesPreference(
         display_name=lazy_gettext("Alert Threshold"),
         description=lazy_gettext(
             "AQI category below which Hazebot won't send alerts.\n"
@@ -246,17 +248,58 @@ class Client(db.Model):  # type: ignore
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
         # TODO: Change default back to "GOOD" next fire season.
-        default=Pm25.MODERATE.value,
+        default=Pm25.MODERATE,
         choices=Pm25,
+    )
+
+    conversion_strategy: StringChoicesPreference[
+        ConversionStrategy
+    ] = StringChoicesPreference(
+        display_name=lazy_gettext("Conversion"),
+        description=lazy_gettext(
+            # TODO: Better description
+            "Conversion strategy to use when calculating AQI."
+        ),
+        default=ConversionStrategy.NONE,
+        choices=ConversionStrategy,
     )
 
     #
     # AQI
     #
 
-    @property
-    def last_aqi(self) -> typing.Optional[int]:
-        return pm25_to_aqi(self.last_pm25)
+    def get_last_readings(self) -> Readings:
+        return Readings(
+            pm25=self.last_pm25, pm_cf_1=self.last_pm_cf_1, humidity=self.last_humidity
+        )
+
+    def get_current_aqi(self) -> int:
+        """Current AQI for this client."""
+        return self.zipcode.get_aqi(self.conversion_strategy)
+
+    def get_current_pm25(self) -> float:
+        """Current Pm25 for this client as determined by its chosen strategy."""
+        return self.zipcode.get_pm25(self.conversion_strategy)
+
+    def get_current_pm25_level(self) -> Pm25:
+        """Current Pm25 level for this client as determined by its chosen strategy."""
+        return self.zipcode.get_pm25_level(self.conversion_strategy)
+
+    def get_last_aqi(self) -> int:
+        """Last AQI at which an alert was sent to this client."""
+        return self.get_last_readings().get_aqi(self.conversion_strategy)
+
+    def get_last_pm25(self) -> float:
+        """Last Pm25 for this client as determined by its chosen strategy."""
+        return self.get_last_readings().get_pm25(self.conversion_strategy)
+
+    def get_last_pm25_level(self) -> Pm25:
+        """Last Pm25 level for this client as determined by its chosen strategy."""
+        return self.get_last_readings().get_pm25_level(self.conversion_strategy)
+
+    def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
+        """Recommended zipcodes for this client."""
+        return self.zipcode.get_recommendations(num_desired, self.conversion_strategy)
 
     #
     # Alerting
@@ -268,9 +311,14 @@ class Client(db.Model):  # type: ignore
 
     def update_subscription(self, zipcode: Zipcode) -> bool:
         self.last_pm25 = zipcode.pm25
+        self.last_humidity = zipcode.humidity
+        self.last_pm_cf_1 = zipcode.pm_cf_1
+
         curr_zipcode_id = self.zipcode_id
         self.zipcode_id = zipcode.id
+
         db.session.commit()
+
         return curr_zipcode_id != self.zipcode_id
 
     def disable_alerts(self, is_automatic=False):
@@ -331,14 +379,12 @@ class Client(db.Model):  # type: ignore
         if self.last_alert_sent_at >= timestamp() - alert_frequency:
             return False
 
-        curr_pm25 = self.zipcode.pm25
-        curr_humidity = self.zipcode.humidity
-        curr_pm_cf_1 = self.zipcode.pm_cf_1
-        curr_aqi_level = Pm25.from_measurement(curr_pm25)
-        curr_aqi = pm25_to_aqi(curr_pm25)
+        curr_pm25 = self.get_current_pm25()
+        curr_aqi_level = self.get_current_pm25_level()
+        curr_aqi = self.get_current_aqi()
 
         # Only send if the pm25 changed a level since the last time we sent this alert.
-        last_aqi_level = Pm25.from_measurement(self.last_pm25)
+        last_aqi_level = self.get_last_pm25_level()
         if curr_aqi_level == last_aqi_level:
             return False
 
@@ -360,13 +406,8 @@ class Client(db.Model):  # type: ignore
 
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
         was_alerted_recently = self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
-        last_aqi = self.last_aqi
-        if (
-            was_alerted_recently
-            and last_aqi
-            and curr_aqi
-            and abs(curr_aqi - last_aqi) < 20
-        ):
+        last_aqi = self.get_last_aqi()
+        if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
             return False
 
         message = gettext(
@@ -380,9 +421,9 @@ class Client(db.Model):  # type: ignore
             return False
 
         self.last_alert_sent_at = timestamp()
-        self.last_pm25 = curr_pm25
-        self.last_pm_cf_1 = curr_pm_cf_1
-        self.last_humidity = curr_humidity
+        self.last_pm25 = self.zipcode.pm25
+        self.last_pm_cf_1 = self.zipcode.pm_cf_1
+        self.last_humidity = self.zipcode.humidity
         self.num_alerts_sent += 1
         db.session.commit()
 

@@ -6,7 +6,9 @@ from flask_babel import gettext
 from sqlalchemy.orm.attributes import flag_modified
 
 from airq.config import db
+from airq.lib.choices import ChoicesEnum
 from airq.lib.choices import IntChoicesEnum
+from airq.lib.choices import StrChoicesEnum
 
 
 if typing.TYPE_CHECKING:
@@ -17,10 +19,14 @@ class InvalidPrefValue(Exception):
     """This pref value is invalid."""
 
 
-TPreferenceValue = typing.TypeVar("TPreferenceValue", int, str)
+TPreferenceValue = typing.TypeVar(
+    "TPreferenceValue", bound=typing.Union[int, str, ChoicesEnum]
+)
+TChoicesEnum = typing.TypeVar("TChoicesEnum", bound=ChoicesEnum)
+TIntChoicesEnum = typing.TypeVar("TIntChoicesEnum", bound=IntChoicesEnum)
+TStrChoicesEnum = typing.TypeVar("TStrChoicesEnum", bound=StrChoicesEnum)
 
 
-# TODO: We could probably make this more type safe.
 class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     def __init__(
         self,
@@ -40,7 +46,10 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     ) -> TPreferenceValue:
         if instance is not None:
             preferences = instance.preferences or {}
-            return preferences.get(self.name, self.default)  # type: ignore
+            value = preferences.get(self.name)
+            if value is not None:
+                return self._cast(value)
+            return self.default
         return self
 
     def __set__(self, client: "Client", value: TPreferenceValue):
@@ -77,6 +86,10 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
     def __set_name__(self, owner: typing.Type["Client"], name: str) -> None:
         ClientPreferencesRegistry.register_pref(name, self)
 
+    @abc.abstractmethod
+    def _cast(self, value: typing.Any) -> TPreferenceValue:
+        pass
+
     @property
     def name(self) -> str:
         return ClientPreferencesRegistry.get_name(self)
@@ -98,42 +111,52 @@ class ClientPreference(abc.ABC, typing.Generic[TPreferenceValue]):
         """Get a prompt for the user to fill in this preference."""
 
 
-class IntegerChoicesPreference(ClientPreference[int]):
+class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesEnum]):
     def __init__(
         self,
         display_name: str,
         description: str,
-        default: int,
-        choices: typing.Type[IntChoicesEnum],
+        default: TChoicesEnum,
+        choices: typing.Type[TChoicesEnum],
     ):
         super().__init__(display_name, description, default)
         self._choices = choices
 
-    def _get_choices(self) -> typing.List[IntChoicesEnum]:
+    def _get_choices(self) -> typing.List[TChoicesEnum]:
         return list(self._choices)
 
-    def format_value(self, value: int) -> str:
-        return self._choices.from_value(value).display
+    def _cast(self, value: typing.Any) -> TChoicesEnum:
+        return self._choices.from_value(value)
 
-    def clean(self, user_input: str) -> typing.Optional[int]:
+    def format_value(self, value: TChoicesEnum) -> str:
+        return value.display
+
+    def clean(self, user_input: str) -> typing.Optional[TChoicesEnum]:
         choices = self._get_choices()
         try:
             idx = int(user_input)
             if idx <= 0:
                 return None
-            return choices[idx - 1].value
+            return choices[idx - 1]
         except (IndexError, TypeError, ValueError):
             return None
 
-    def _validate(self, value: int):
-        if value not in self._get_choices():
-            raise InvalidPrefValue()
+    def _validate(self, _value: TChoicesEnum):
+        pass  # Valid by definition
 
     def get_prompt(self) -> str:
         prompt = [gettext("Select one of")]
         for i, choice in enumerate(self._get_choices(), start=1):
             prompt.append(f"{i} - {choice.display}")
         return "\n".join(prompt)
+
+
+class IntegerChoicesPreference(ChoicesPreference[TIntChoicesEnum]):
+    pass
+
+
+class StringChoicesPreference(ChoicesPreference[TStrChoicesEnum]):
+    pass
 
 
 class IntegerPreference(ClientPreference[int]):
@@ -156,6 +179,10 @@ class IntegerPreference(ClientPreference[int]):
 
     def format_value(self, value: int) -> str:
         return str(value)
+
+    def _cast(self, value: typing.Any) -> int:
+        assert isinstance(value, int)
+        return value
 
     def clean(self, user_input: str) -> typing.Optional[int]:
         try:

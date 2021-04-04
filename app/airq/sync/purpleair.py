@@ -73,6 +73,7 @@ def _get_purpleair_sensors_data() -> typing.List[typing.Dict[str, typing.Any]]:
 # TODO: Remove this once `pm_cf_1` is available via the sensors API.
 def _get_purpleair_pm_cf_1_data():
     logger = get_celery_logger()
+    data = {}
     try:
         resp = call_purpleair_data_api()
     except (requests.RequestException, json.JSONDecodeError) as e:
@@ -81,17 +82,15 @@ def _get_purpleair_pm_cf_1_data():
             e,
             exc_info=True,
         )
-        return []
     else:
         response_dict = resp.json()
         fields = response_dict["fields"]
-        data = {}
         for raw_data in response_dict["data"]:
             zipped = dict(zip(fields, raw_data))
             pm_cf_1 = zipped["pm_cf_1"]
             if isinstance(pm_cf_1, float):
                 data[zipped["ID"]] = pm_cf_1
-        return data
+    return data
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
