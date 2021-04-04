@@ -49,13 +49,12 @@ def test_command(locale: str) -> str:
         pref = ClientPreferencesRegistry.get_by_name(k)
         if pref:
             try:
-                v = pref.validate(v)
+                overrides[pref] = pref.validate(v)
             except InvalidPrefValue as e:
                 msg = str(e)
                 if not msg:
                     msg = '{}: Invalid value "{}"'.format(pref.name, v)
                 return MessageResponse().write(msg).as_html()
-        overrides[pref] = v
 
     with ClientPreferencesRegistry.register_overrides(overrides):
         response = commands.handle_command(
