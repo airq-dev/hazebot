@@ -17,7 +17,7 @@ from airq.lib.client_preferences import IntegerPreference
 from airq.lib.client_preferences import StringChoicesPreference
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
-from airq.lib.readings import ConversionStrategy
+from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from airq.lib.readings import Readings
 from airq.lib.sms import coerce_phone_number
@@ -234,8 +234,7 @@ class Client(db.Model):  # type: ignore
         description=lazy_gettext(
             "By default, Hazebot sends alerts at most every 2 hours."
         ),
-        # TODO: Change default back to "2" next fire season.
-        default=6,
+        default=2,
         min_value=0,
         max_value=24,
     )
@@ -247,21 +246,20 @@ class Client(db.Model):  # type: ignore
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
-        # TODO: Change default back to "GOOD" next fire season.
-        default=Pm25.MODERATE,
+        default=Pm25.GOOD,
         choices=Pm25,
     )
 
-    conversion_strategy: StringChoicesPreference[
-        ConversionStrategy
+    conversion_factor: StringChoicesPreference[
+        ConversionFactor
     ] = StringChoicesPreference(
-        display_name=lazy_gettext("Conversion"),
+        display_name=lazy_gettext("Conversion Factor"),
         description=lazy_gettext(
-            # TODO: Better description
-            "Conversion strategy to use when calculating AQI."
+            "Conversion factor to use when calculating AQI. "
+            "For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
         ),
-        default=ConversionStrategy.NONE,
-        choices=ConversionStrategy,
+        default=ConversionFactor.NONE,
+        choices=ConversionFactor,
     )
 
     #
@@ -275,31 +273,31 @@ class Client(db.Model):  # type: ignore
 
     def get_current_aqi(self) -> int:
         """Current AQI for this client."""
-        return self.zipcode.get_aqi(self.conversion_strategy)
+        return self.zipcode.get_aqi(self.conversion_factor)
 
     def get_current_pm25(self) -> float:
         """Current Pm25 for this client as determined by its chosen strategy."""
-        return self.zipcode.get_pm25(self.conversion_strategy)
+        return self.zipcode.get_pm25(self.conversion_factor)
 
     def get_current_pm25_level(self) -> Pm25:
         """Current Pm25 level for this client as determined by its chosen strategy."""
-        return self.zipcode.get_pm25_level(self.conversion_strategy)
+        return self.zipcode.get_pm25_level(self.conversion_factor)
 
     def get_last_aqi(self) -> int:
         """Last AQI at which an alert was sent to this client."""
-        return self.get_last_readings().get_aqi(self.conversion_strategy)
+        return self.get_last_readings().get_aqi(self.conversion_factor)
 
     def get_last_pm25(self) -> float:
         """Last Pm25 for this client as determined by its chosen strategy."""
-        return self.get_last_readings().get_pm25(self.conversion_strategy)
+        return self.get_last_readings().get_pm25(self.conversion_factor)
 
     def get_last_pm25_level(self) -> Pm25:
         """Last Pm25 level for this client as determined by its chosen strategy."""
-        return self.get_last_readings().get_pm25_level(self.conversion_strategy)
+        return self.get_last_readings().get_pm25_level(self.conversion_factor)
 
     def get_recommendations(self, num_desired: int) -> typing.List[Zipcode]:
         """Recommended zipcodes for this client."""
-        return self.zipcode.get_recommendations(num_desired, self.conversion_strategy)
+        return self.zipcode.get_recommendations(num_desired, self.conversion_factor)
 
     #
     # Alerting

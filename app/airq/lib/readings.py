@@ -10,7 +10,7 @@ from airq.lib.choices import StrChoicesEnum
 
 
 @enum.unique
-class ConversionStrategy(StrChoicesEnum):
+class ConversionFactor(StrChoicesEnum):
     """Determines how we will adjust the determine pm25."""
 
     NONE = "None"
@@ -19,9 +19,7 @@ class ConversionStrategy(StrChoicesEnum):
     @property
     def display(self) -> str:
         if self == self.US_EPA:
-            return gettext(
-                "US EPA — Note this is just for testing at the moment. Please report inaccuracies to info@hazebot.org."
-            )
+            return gettext("US EPA")
         else:
             return gettext("None")
 
@@ -112,15 +110,15 @@ class Readings:
     pm_cf_1: typing.Optional[float]
     humidity: typing.Optional[float]
 
-    def get_pm25(self, conversion_strategy: ConversionStrategy) -> float:
+    def get_pm25(self, conversion_factor: ConversionFactor) -> float:
         """Get the pm25 according to the given conversion strategy."""
-        return conversion_strategy.convert(self)
+        return conversion_factor.convert(self)
 
-    def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
+    def get_pm25_level(self, conversion_factor: ConversionFactor) -> Pm25:
         """Get the pm25 level according to the given conversion strategy."""
-        return Pm25.from_measurement(self.get_pm25(conversion_strategy))
+        return Pm25.from_measurement(self.get_pm25(conversion_factor))
 
-    def get_aqi(self, conversion_stragy: ConversionStrategy) -> int:
+    def get_aqi(self, conversion_stragy: ConversionFactor) -> int:
         """Get the aqi according to the given conversion strategy."""
         return _pm25_to_aqi(self.get_pm25(conversion_stragy))
 

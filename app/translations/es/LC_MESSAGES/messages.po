@@ -92,43 +92,43 @@ msgstr "Hmm. ¿Está seguro de que %(zipcode)s es un código postal válido de l
 msgid "Oops! We couldn't determine the air quality for \"%(zipcode)s\". Please try a different zip code."
 msgstr "¡Ups! No pudimos determinar la calidad del aire para \"%(zipcode)s\". Probar con un código postal diferente."
 
-#: airq/commands/quality.py:53
+#: airq/commands/quality.py:52
 msgid " (AQI %(aqi)s)"
 msgstr " (AQI %(aqi)s)"
 
-#: airq/commands/quality.py:63
+#: airq/commands/quality.py:62
 msgid "Welcome to Hazebot! We'll send you alerts when air quality in %(city)s %(zipcode)s changes category. Air quality is now %(pm25_level)s%(aqi_display)s."
 msgstr "¡Bienvenido a Hazebot! Le enviaremos avisos cuando la calidad del aire en %(city)s %(zipcode)s cambie de categoría. La calidad del aire ahora es %(pm25_level)s%(aqi_display)s."
 
-#: airq/commands/quality.py:69
+#: airq/commands/quality.py:68
 msgid "Save this contact and text us your zipcode whenever you'd like an instant update. And you can always text \"M\" to see the whole menu."
 msgstr "Guardar este contacto y enviarnos un mensaje de texto con su código postal cuando desee una actualización instantánea. Y siempre puede enviar un mensaje de texto con \"M\" para ver el menú completo."
 
-#: airq/commands/quality.py:85
+#: airq/commands/quality.py:84
 msgid "%(city)s %(zipcode)s is %(pm25_level)s%(aqi_display)s."
 msgstr "%(city)s %(zipcode)s es %(pm25_level)s %(aqi_display)s."
 
-#: airq/commands/quality.py:93
+#: airq/commands/quality.py:92
 msgid "Alerting is disabled. Text \"Y\" to re-enable alerts when air quality changes."
 msgstr "El aviso está desactivado. Enviar un mensaje de texto con \"Y\" para volver a habilitar los avisos cuando cambie la calidad del aire."
 
-#: airq/commands/quality.py:99
+#: airq/commands/quality.py:98
 msgid "You are now receiving alerts for %(zipcode)s."
 msgstr "Ahora está recibiendo avisos para %(zipcode)s."
 
-#: airq/commands/quality.py:105
+#: airq/commands/quality.py:104
 msgid "Text \"M\" for Menu, \"E\" to end alerts."
 msgstr "Enviar \"M\" para el menú, \"E\" para parar los avisos."
 
-#: airq/commands/quality.py:135
+#: airq/commands/quality.py:134
 msgid "Here are the closest places with better air quality:"
 msgstr "Estos son los lugares más cercanos con mejor calidad de aire:"
 
-#: airq/commands/quality.py:149
+#: airq/commands/quality.py:148
 msgid " - %(city)s %(zipcode)s: %(pm25_level)s (%(distance)s mi)"
 msgstr " - %(city)s %(zipcode)s: %(pm25_level)s ( %(distance)s mi)"
 
-#: airq/commands/quality.py:163
+#: airq/commands/quality.py:162
 msgid "Average PM2.5 from %(num)d sensor near %(zipcode)s is %(pm25)s ug/m^3."
 msgid_plural "Average PM2.5 from %(num)d sensors near %(zipcode)s is %(pm25)s ug/m^3."
 msgstr[0] "El promedio de PM2.5 del sensor cerca de %(zipcode)s es %(pm25)s ug/m^3."
@@ -154,59 +154,59 @@ msgstr "¡Entendido! No recibirá actualizaciones de la calidad del aire hasta q
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr "Decirnos por qué se va para que podamos mejorar nuestro servicio:"
 
-#: airq/lib/client_preferences.py:138
+#: airq/lib/client_preferences.py:148
 msgid "Select one of"
 msgstr "Seleccione uno de"
 
-#: airq/lib/readings.py:37
+#: airq/lib/readings.py:65
 msgid "GOOD"
 msgstr "BUENO"
 
-#: airq/lib/readings.py:39
+#: airq/lib/readings.py:67
 msgid "MODERATE"
 msgstr "MODERADO"
 
-#: airq/lib/readings.py:41
+#: airq/lib/readings.py:69
 msgid "UNHEALTHY FOR SENSITIVE GROUPS"
 msgstr "INSALUBRE PARA GRUPOS SENSIBLES"
 
-#: airq/lib/readings.py:43
+#: airq/lib/readings.py:71
 msgid "UNHEALTHY"
 msgstr "INSALUBRE"
 
-#: airq/lib/readings.py:45
+#: airq/lib/readings.py:73
 msgid "VERY UNHEALTHY"
 msgstr "MUY INSALUBRE"
 
-#: airq/lib/readings.py:47
+#: airq/lib/readings.py:75
 msgid "HAZARDOUS"
 msgstr "PELIGROSO"
 
-#: airq/lib/readings.py:52
+#: airq/lib/readings.py:80
 msgid "GOOD (AQI: 0 - 50) means air quality is considered satisfactory, and air pollution poses little or no risk."
 msgstr "BUENO (AQI: 0 - 50) significa que la calidad del aire se considera satisfactoria y que la contaminación del aire presenta poco o ningún riesgo."
 
-#: airq/lib/readings.py:56
+#: airq/lib/readings.py:84
 msgid "MODERATE (AQI: 51 - 100) means air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution."
 msgstr "MODERADO (AQI: 51 - 100) significa que la calidad del aire es aceptable; sin embargo, para algunos contaminantes puede haber un problema de salud moderado para un número pequeño de personas que son inusualmente sensibles a la contaminación del aire."
 
-#: airq/lib/readings.py:60
+#: airq/lib/readings.py:88
 msgid "UNHEALTHY FOR SENSITIVE GROUPS (AQI: 101 - 150) means members of sensitive groups may experience health effects. The general public is not likely to be affected."
 msgstr "INSALUBRE PARA GRUPOS SENSIBLES (AQI: 101 - 150) significa que los miembros de grupos sensibles pueden experimentar efectos sobre la salud. No es probable que el público en general se vea afectado."
 
-#: airq/lib/readings.py:64
+#: airq/lib/readings.py:92
 msgid "UNHEALTHY (AQI: 151 - 200) means everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects."
 msgstr "INSALUBRE (AQI: 151 - 200) significa que todos pueden comenzar a experimentar efectos sobre la salud; los miembros de grupos sensibles pueden experimentar efectos de salud más graves."
 
-#: airq/lib/readings.py:68
+#: airq/lib/readings.py:96
 msgid "VERY UNHEALTHY (AQI: 201 - 300): Health alert. Everyone may experience more serious health effects."
 msgstr "MUY INSALUBRE (AQI: 201 - 300): Aviso de salud. Todos pueden experimentar efectos de salud más graves."
 
-#: airq/lib/readings.py:72
+#: airq/lib/readings.py:100
 msgid "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
 msgstr "PELIGROSO (AQI: 301 - 500): Advertencias sanitarias de situaciones de emergencia. Es más probable que toda la población se vea afectada."
 
-#: airq/models/clients.py:414
+#: airq/models/clients.py:411
 msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
 "\n"
 " Reply \"M\" for Menu or \"E\" to end alerts."
@@ -214,11 +214,11 @@ msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_lev
 "\n"
 "Responder \"M\" para el menú o \"E\" para parar los avisos."
 
-#: airq/models/clients.py:456
+#: airq/models/clients.py:453
 msgid "Has Hazebot been helpful? We’re looking for ways to grow and improve, and we’d love your help. Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
 msgstr "Hazebot ha sido de ayuda? Buscamos formas de crecer y mejorar, y nos encantaría su ayuda. Guardar nuestro contacto y compartir Hazebot con un amigo, o enviar un mensaje de texto con \"comentarios\" para dar comentarios."
 
-#: airq/models/clients.py:246
+#: airq/models/clients.py:244
 msgid "AQI category below which Hazebot won't send alerts.\n"
 "For example, if you set this to MODERATE, Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr "Categoría de AQI por debajo de la cual Hazebot no enviará alertas.\n"
@@ -232,7 +232,7 @@ msgstr "Mmm, %(input)s no parece ser una opción válida. Inténtalo de nuevo."
 msgid "Current: %(value)s"
 msgstr "Actual: %(value)s"
 
-#: airq/lib/client_preferences.py:57
+#: airq/lib/client_preferences.py:63
 msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
 msgstr "Mmm, \"%(input)s\" no parece ser una opción válida."
 
@@ -240,31 +240,31 @@ msgstr "Mmm, \"%(input)s\" no parece ser una opción válida."
 msgid "Your %(pref)s is now %(value)s"
 msgstr "Tu %(pref)s ahora es %(value)s"
 
-#: airq/lib/client_preferences.py:189
+#: airq/lib/client_preferences.py:203
 msgid "Enter an integer between %(min_value)s and %(max_value)s."
 msgstr "Ingrese un número entero entre %(min_value)s y %(max_value)s"
 
-#: airq/lib/client_preferences.py:195
+#: airq/lib/client_preferences.py:209
 msgid "Enter an integer greater than or equal to %(min_value)s."
 msgstr "Ingrese un número entero mayor o igual que %(min_value)s."
 
-#: airq/lib/client_preferences.py:200
+#: airq/lib/client_preferences.py:214
 msgid "Enter an integer less than or equal to %(max_value)s."
 msgstr "Ingrese un número entero menor o igual que %(max_value)s."
 
-#: airq/lib/client_preferences.py:204
+#: airq/lib/client_preferences.py:218
 msgid "Enter an integer."
 msgstr "Ingrese un número entero."
 
-#: airq/models/clients.py:234
+#: airq/models/clients.py:233
 msgid "Alert Frequency"
 msgstr "Frecuencia de alerta."
 
-#: airq/models/clients.py:235
+#: airq/models/clients.py:234
 msgid "By default, Hazebot sends alerts at most every 2 hours."
 msgstr "De forma predeterminada, Hazebot envía alertas como máximo cada 2 horas."
 
-#: airq/models/clients.py:245
+#: airq/models/clients.py:243
 msgid "Alert Threshold"
 msgstr "Límite de alerta"
 
@@ -288,19 +288,19 @@ msgstr "4. Sobre nosotros"
 msgid "7. Donate"
 msgstr "7. Donar"
 
-#: airq/lib/readings.py:113
-msgid "US EPA — Note this is just for testing at the moment. Please report inaccuracies to info@hazebot.org."
-msgstr "US EPA — Tenga en cuenta que esto es solo para pruebas en este momento. Informe las inexactitudes a info@hazebot.org."
-
-#: airq/lib/readings.py:117
+#: airq/lib/readings.py:24
 msgid "None"
 msgstr "Ninguna"
 
-#: airq/models/clients.py:257
-msgid "Conversion"
-msgstr "Conversión"
+#: airq/lib/readings.py:22
+msgid "US EPA"
+msgstr "US EPA"
 
-#: airq/models/clients.py:258
-msgid "Conversion strategy to use when calculating AQI."
-msgstr "Estrategia de conversión para usar al calcular el AQI."
+#: airq/models/clients.py:256
+msgid "Conversion Factor"
+msgstr "Factor de conversión"
+
+#: airq/models/clients.py:257
+msgid "Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
+msgstr "Factor de conversión a utilizar al calcular el AQI. Para más detalles, consulte https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
 

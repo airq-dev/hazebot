@@ -567,7 +567,7 @@ class SMSTestCase(BaseTestCase):
             "2 - Alert Threshold: AQI category below which Hazebot won't send alerts.\n"
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.\n"
-            "3 - Conversion: Conversion strategy to use when calculating AQI.",
+            "3 - Conversion Factor: Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1.",
             response.data,
         )
         self.assertEqual(1, Event.query.count())
