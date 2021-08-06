@@ -39,9 +39,7 @@ class ZipcodeTestCase(BaseTestCase):
 
     def test_get_recommendations(self):
         zipcode = Zipcode.query.filter_by(zipcode="97204").first()
-        self.assertListEqual(
-            [], zipcode.get_recommendations(3, ConversionFactor.NONE)
-        )
+        self.assertListEqual([], zipcode.get_recommendations(3, ConversionFactor.NONE))
 
         zipcode = Zipcode.query.filter_by(zipcode="97038").first()
         self.assertListEqual(
