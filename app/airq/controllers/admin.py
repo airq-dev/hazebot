@@ -86,6 +86,7 @@ def admin_bulk_sms():
             form.data["message"],
             form.data["last_active_at"].timestamp(),
             form.data["locale"],
+            test_phone_number=form.data["test_phone_number"] or None
         )
         flash("Sent!")
         return redirect(url_for("admin_summary"))

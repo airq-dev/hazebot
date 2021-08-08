@@ -31,6 +31,7 @@ class BulkSMSForm(FlaskForm):
     )
     last_active_at = LocalDateTimeField("Last Active At", validators=[DataRequired()])
     locale = SelectField("Locale", choices=[("en", "English"), ("es", "Spanish")])
+    test_phone_number = StringField("Test Phone Number")
     submit_btn = SubmitField("Submit")
 
 
