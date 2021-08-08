@@ -82,7 +82,11 @@ def admin_bulk_sms():
         return redirect(url_for("admin_summary"))
     form = BulkSMSForm(last_active_at=now())
     if form.validate_on_submit():
-        bulk_send.delay(form.data["message"], form.data["last_active_at"].timestamp(), form.data['locale'])
+        bulk_send.delay(
+            form.data["message"],
+            form.data["last_active_at"].timestamp(),
+            form.data["locale"],
+        )
         flash("Sent!")
         return redirect(url_for("admin_summary"))
     return render_template(
