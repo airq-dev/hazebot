@@ -5,7 +5,7 @@ from flask_sqlalchemy import BaseQuery
 
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
-from airq.lib.readings import ConversionStrategy
+from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from airq.lib.readings import Readings
 from airq.config import db
@@ -101,7 +101,7 @@ class Zipcode(db.Model):  # type: ignore
     @classmethod
     def pm25_stale_cutoff(cls) -> float:
         """Timestamp before which pm25 measurements are considered stale."""
-        return timestamp() - (60 * 120)
+        return timestamp() - (60 * 60)
 
     @property
     def is_pm25_stale(self) -> bool:
@@ -122,20 +122,20 @@ class Zipcode(db.Model):  # type: ignore
         )
         return self._distance_cache[other.id]
 
-    def get_aqi(self, conversion_strategy: ConversionStrategy) -> int:
+    def get_aqi(self, conversion_factor: ConversionFactor) -> int:
         """The AQI for this zipcode (e.g., 35) as determined by the provided strategy."""
-        return self.get_readings().get_aqi(conversion_strategy)
+        return self.get_readings().get_aqi(conversion_factor)
 
-    def get_pm25(self, conversion_strategy: ConversionStrategy) -> float:
+    def get_pm25(self, conversion_factor: ConversionFactor) -> float:
         """Current pm25 for this client, as determined by the provided strategy."""
-        return self.get_readings().get_pm25(conversion_strategy)
+        return self.get_readings().get_pm25(conversion_factor)
 
-    def get_pm25_level(self, conversion_strategy: ConversionStrategy) -> Pm25:
+    def get_pm25_level(self, conversion_factor: ConversionFactor) -> Pm25:
         """The pm25 category for this zipcode (e.g., Moderate)."""
-        return self.get_readings().get_pm25_level(conversion_strategy)
+        return self.get_readings().get_pm25_level(conversion_factor)
 
     def get_recommendations(
-        self, num_desired: int, conversion_strategy: ConversionStrategy
+        self, num_desired: int, conversion_factor: ConversionFactor
     ) -> typing.List["Zipcode"]:
         """Get n recommended zipcodes near this zipcode, sorted by distance."""
         if self.is_pm25_stale:
@@ -144,11 +144,11 @@ class Zipcode(db.Model):  # type: ignore
         cutoff = self.pm25_stale_cutoff()
 
         # TODO: Make this faster somehow?
-        curr_pm25_level = self.get_pm25_level(conversion_strategy)
+        curr_pm25_level = self.get_pm25_level(conversion_factor)
         zipcodes = [
             z
             for z in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
-            if z.get_pm25_level(conversion_strategy) < curr_pm25_level
+            if z.get_pm25_level(conversion_factor) < curr_pm25_level
         ]
 
         return sorted(zipcodes, key=lambda z: self.distance(z))[:num_desired]

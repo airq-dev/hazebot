@@ -1,6 +1,6 @@
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import StringChoicesPreference
-from airq.lib.readings import ConversionStrategy
+from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from tests.base import BaseTestCase
 
@@ -38,26 +38,26 @@ class IntegerChoicesPreferenceTestCase(BaseTestCase):
 
 class StringChoicesPreferenceTestCase(BaseTestCase):
     @staticmethod
-    def _get_pref() -> StringChoicesPreference[ConversionStrategy]:
+    def _get_pref() -> StringChoicesPreference[ConversionFactor]:
         return StringChoicesPreference(
             display_name="Foo Bar",
             description="Testing 123",
-            default=ConversionStrategy.NONE,
-            choices=ConversionStrategy,
+            default=ConversionFactor.NONE,
+            choices=ConversionFactor,
         )
 
     def test_clean(self):
         pref = self._get_pref()
         self.assertIsNone(pref.clean("0"))
         self.assertIsNone(pref.clean("20"))
-        self.assertEqual(ConversionStrategy.NONE, pref.clean("1"))
-        self.assertEqual(ConversionStrategy.US_EPA, pref.clean("2"))
+        self.assertEqual(ConversionFactor.NONE, pref.clean("1"))
+        self.assertEqual(ConversionFactor.US_EPA, pref.clean("2"))
 
     def test_get_prompt(self):
         pref = self._get_pref()
         self.assertEqual(
             "Select one of\n"
             "1 - None\n"
-            "2 - {}".format(ConversionStrategy.US_EPA.display),
+            "2 - {}".format(ConversionFactor.US_EPA.display),
             pref.get_prompt(),
         )

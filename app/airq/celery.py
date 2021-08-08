@@ -14,7 +14,7 @@ BEAT_SCHEDULE = {}
 if not config.TESTING:
     BEAT_SCHEDULE["models_sync"] = {
         "task": "airq.tasks.models_sync",
-        "schedule": crontab(minute=0, hour="*"),
+        "schedule": crontab(minute="*/10"),  # Every 10 minutes
     }
 
 

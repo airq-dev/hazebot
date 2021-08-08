@@ -84,6 +84,9 @@
         {% with field=form.last_active_at %}
             {% include "partials/_field.html" %}
         {% endwith %}
+        {% with field=form.locale %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
         <span class="num-clients" id="num-clients"></span>
         {% with field=form.submit_btn %}
             {% include "partials/_field.html" %}
