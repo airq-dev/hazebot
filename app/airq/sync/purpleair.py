@@ -77,7 +77,7 @@ def _get_purpleair_pm_cf_1_data():
     try:
         resp = call_purpleair_data_api()
     except (requests.RequestException, json.JSONDecodeError) as e:
-        logger.error(
+        logger.warning(
             "Failed to retrieve pm_cf_1 data: %s",
             e,
             exc_info=True,
