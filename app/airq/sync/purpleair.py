@@ -32,7 +32,7 @@ DESIRED_READING_DISTANCE_KM = 2.5
 def _get_purpleair_sensors_data() -> typing.List[typing.Dict[str, typing.Any]]:
     logger = get_celery_logger()
     try:
-        resp = call_purpleair_sensors_api()
+        response_dict = call_purpleair_sensors_api().json()
     except (requests.RequestException, json.JSONDecodeError) as e:
         # Send an email to an admin if data lags by more than 30 minutes.
         # Otherwise, just log a warning as most of these errors are
@@ -54,7 +54,6 @@ def _get_purpleair_sensors_data() -> typing.List[typing.Dict[str, typing.Any]]:
         )
         return []
     else:
-        response_dict = resp.json()
         fields = response_dict["fields"]
         channel_flags = response_dict["channel_flags"]
         data = []
@@ -75,21 +74,21 @@ def _get_purpleair_pm_cf_1_data():
     logger = get_celery_logger()
     data = {}
     try:
-        resp = call_purpleair_data_api()
+        response_dict = call_purpleair_data_api().json()
     except (requests.RequestException, json.JSONDecodeError) as e:
-        logger.error(
+        logger.warning(
             "Failed to retrieve pm_cf_1 data: %s",
             e,
             exc_info=True,
         )
     else:
-        response_dict = resp.json()
-        fields = response_dict["fields"]
-        for raw_data in response_dict["data"]:
-            zipped = dict(zip(fields, raw_data))
-            pm_cf_1 = zipped["pm_cf_1"]
-            if isinstance(pm_cf_1, float):
-                data[zipped["ID"]] = pm_cf_1
+        fields = response_dict.get("fields")
+        if fields:
+            for raw_data in response_dict["data"]:
+                zipped = dict(zip(fields, raw_data))
+                pm_cf_1 = zipped["pm_cf_1"]
+                if isinstance(pm_cf_1, float):
+                    data[zipped["ID"]] = pm_cf_1
     return data
 
 
