@@ -1,12 +1,15 @@
+import datetime
 import os
 import logging
 
 from requests.exceptions import HTTPError
 from unittest import mock
 
+from airq.lib.clock import now
 from airq.lib.purpleair import PURPLEAIR_DATA_API_URL
 from airq.lib.purpleair import PURPLEAIR_SENSORS_API_URL
 from airq.models.cities import City
+from airq.models.metrics import Metric
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
@@ -81,3 +84,38 @@ class SyncTestCase(BaseTestCase):
             error,
             exc_info=True,
         )
+
+    def test_prune_metrics(self):
+        zipcode = Zipcode.query.first()
+        old_metric = Metric(
+            zipcode_id=zipcode.id,
+            pm25=0,
+            humidity=0,
+            pm_cf_1=0,
+            created_at=now()
+            - datetime.timedelta(days=Metric.RETENTION_DAYS, seconds=1),
+        )
+        new_metric = Metric(
+            zipcode_id=zipcode.id,
+            pm25=0,
+            humidity=0,
+            pm_cf_1=0,
+            created_at=now() - datetime.timedelta(days=Metric.RETENTION_DAYS),
+        )
+        self.db.session.add(old_metric)
+        self.db.session.add(new_metric)
+        self.db.session.commit()
+
+        self.assertEqual(Metric.query.filter_by(id=old_metric.id).count(), 1)
+        self.assertEqual(Metric.query.filter_by(id=new_metric.id).count(), 1)
+
+        with MockRequests.for_urls(
+            {
+                PURPLEAIR_DATA_API_URL: "purpleair/pm_cf_1.json",
+                PURPLEAIR_SENSORS_API_URL: "purpleair/purpleair.json",
+            }
+        ):
+            models_sync()
+
+        self.assertEqual(Metric.query.filter_by(id=old_metric.id).count(), 0)
+        self.assertEqual(Metric.query.filter_by(id=new_metric.id).count(), 1)
