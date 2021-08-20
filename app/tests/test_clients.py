@@ -12,23 +12,28 @@ from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.events import Event
 from airq.models.events import EventType
+from airq.models.metrics import Metric
 from airq.models.zipcodes import Zipcode
 from tests.base import BaseTestCase
 
 
 class ClientTestCase(BaseTestCase):
     zipcode: typing.Optional[Zipcode] = None
+    metric: typing.Optional[Metric] = None
 
     def setUp(self) -> None:
         super().setUp()
         self.zipcode = Zipcode.query.filter_by(zipcode="97204").first()
         assert self.zipcode is not None, "Mypy is unhappy"
-        self._zipcode_pm25 = self.zipcode.pm25
+        self.metric = self.zipcode.get_latest_metric()
+        self._zipcode_pm25 = self.metric.pm25
 
     def tearDown(self) -> None:
         super().tearDown()
         assert self.zipcode is not None, "Mypy is unahppy"
         self.zipcode.pm25 = self._zipcode_pm25
+        assert self.metric is not None, "Mypy is unahppy"
+        self.metric.pm25 = self._zipcode_pm25
         self.db.session.commit()
 
     def _make_client(
@@ -63,10 +68,12 @@ class ClientTestCase(BaseTestCase):
     def test_maybe_notify(self):
         zipcode = self.zipcode
         assert zipcode is not None, "Mypy is unhappy"
-        zipcode.pm25 = 11
+        metric = zipcode.get_latest_metric()
+        assert metric is not None, "Mypy is unhappy"
+        metric.pm25 = 11
         self.db.session.commit()
 
-        last_pm25 = zipcode.pm25
+        last_pm25 = metric.pm25
         client = self._make_client(last_pm25=last_pm25)
         client.alert_threshold = Pm25.GOOD.value
         self.db.session.commit()
@@ -100,7 +107,7 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(0, client.last_alert_sent_at)
         self.assertEqual(0, Event.query.count())
 
-        zipcode.pm25 += 2  # tips us over into moderate
+        metric.pm25 += 2  # tips us over into moderate
         self.db.session.commit()
         self.assertTrue(client.maybe_notify())
         self.assertEqual(1, client.num_alerts_sent)
@@ -109,10 +116,10 @@ class ClientTestCase(BaseTestCase):
             client.id,
             EventType.ALERT,
             zipcode=zipcode.zipcode,
-            pm25=self.zipcode.pm25,
+            pm25=metric.pm25,
         )
 
-        # Do not resend if the default frequnecy hasn't elapsed
+        # Do not resend if the default frequency hasn't elapsed
         self.clock.now().timestamp()
         self.clock.advance()
         self.assertFalse(client.maybe_notify())
@@ -125,7 +132,7 @@ class ClientTestCase(BaseTestCase):
         self.assertEqual(1, client.num_alerts_sent)
 
         # Do not resend if the default frequency has passed but AQI levels have changed by under 20 points
-        zipcode.pm25 -= 2
+        metric.pm25 -= 2
         self.db.session.commit()
         self.assertGreater(20, abs(client.get_last_aqi() - client.get_current_aqi()))
         self.assertFalse(client.maybe_notify())
@@ -141,7 +148,7 @@ class ClientTestCase(BaseTestCase):
             client.id,
             EventType.ALERT,
             zipcode=zipcode.zipcode,
-            pm25=zipcode.pm25,
+            pm25=metric.pm25,
         )
 
     def test_maybe_notify_with_alerting_threshold_set(self):
@@ -149,6 +156,7 @@ class ClientTestCase(BaseTestCase):
         client.alert_threshold = Pm25.MODERATE.value
         self.db.session.commit()
         zipcode = client.zipcode
+        metric = zipcode.get_latest_metric()
 
         test_cases = (
             (Pm25.MODERATE - 1, Pm25.MODERATE, False),
@@ -173,7 +181,7 @@ class ClientTestCase(BaseTestCase):
             ):
                 client.last_alert_sent_at = 0
                 client.last_pm25 = last_pm25
-                zipcode.pm25 = curr_pm25
+                metric.pm25 = curr_pm25
                 self.db.session.commit()
                 self.assertEqual(expected_result, client.maybe_notify())
 

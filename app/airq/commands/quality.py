@@ -26,7 +26,7 @@ class BaseQualityCommand(RegexCommand):
                 return self._get_missing_zipcode_message()
             zipcode = self.client.zipcode
 
-        if not zipcode.pm25 or zipcode.is_pm25_stale:
+        if not zipcode.has_readings or zipcode.is_pm25_stale:
             return MessageResponse(
                 body=gettext(
                     'Oops! We couldn\'t determine the air quality for "%(zipcode)s". Please try a different zip code.',

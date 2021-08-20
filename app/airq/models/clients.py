@@ -419,9 +419,12 @@ class Client(db.Model):  # type: ignore
             return False
 
         self.last_alert_sent_at = timestamp()
-        self.last_pm25 = self.zipcode.pm25
-        self.last_pm_cf_1 = self.zipcode.pm_cf_1
-        self.last_humidity = self.zipcode.humidity
+
+        # TODO: Read from propertie on `zipcode` once we drop the columns
+        metric = self.zipcode.get_latest_metric()
+        self.last_pm25 = metric.pm25
+        self.last_pm_cf_1 = metric.pm_cf_1
+        self.last_humidity = metric.humidity
         self.num_alerts_sent += 1
         db.session.commit()
 

@@ -27,6 +27,7 @@ class BaseTestCase(unittest.TestCase):
     _persistent_models = (
         models.relations.SensorZipcodeRelation,
         models.sensors.Sensor,
+        models.metrics.Metric,
         models.zipcodes.Zipcode,
         models.cities.City,
     )

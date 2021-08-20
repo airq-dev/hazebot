@@ -9,6 +9,7 @@ from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from airq.lib.readings import Readings
 from airq.config import db
+from airq.models.metrics import Metric
 
 
 @dataclasses.dataclass
@@ -68,30 +69,33 @@ class Zipcode(db.Model):  # type: ignore
         obj._distance_cache = {}
         return obj
 
-    def get_metrics(self) -> ZipcodeMetrics:
-        if not hasattr(self, "_metrics"):
-            self._metrics = ZipcodeMetrics(
-                num_sensors=self.metrics_data["num_sensors"],
-                max_sensor_distance=self.metrics_data["max_sensor_distance"],
-                min_sensor_distance=self.metrics_data["min_sensor_distance"],
-                sensor_ids=self.metrics_data["sensor_ids"],
+    def get_latest_metric(self) -> Metric:
+        if not hasattr(self, "_latest_metric"):
+            self._latest_metric = (
+                Metric.query.filter_by(zipcode_id=self.id)
+                .order_by(Metric.created_at.desc())
+                .first()
             )
-        return self._metrics
+        return self._latest_metric
 
     def get_readings(self) -> Readings:
-        return Readings(pm25=self.pm25, pm_cf_1=self.pm_cf_1, humidity=self.humidity)
+        return self.get_latest_metric().get_readings()
+
+    @property
+    def has_readings(self) -> bool:
+        return self.get_latest_metric() is not None
 
     @property
     def num_sensors(self) -> int:
-        return self.get_metrics().num_sensors
+        return self.get_latest_metric().num_sensors
 
     @property
     def max_sensor_distance(self) -> int:
-        return self.get_metrics().max_sensor_distance
+        return self.get_latest_metric().max_sensor_distance
 
     @property
     def min_sensor_distance(self) -> int:
-        return self.get_metrics().min_sensor_distance
+        return self.get_latest_metric().min_sensor_distance
 
     @property
     def geohash(self) -> str:
