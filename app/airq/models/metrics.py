@@ -34,4 +34,4 @@ class Metric(db.Model):  # type: ignore
         db.TIMESTAMP(timezone=True), default=now, index=True, nullable=False
     )
 
-    RETENTION_DAYS = 7
+    RETENTION_DAYS = 3
