@@ -10,6 +10,7 @@ from flask_babel import force_locale
 
 from airq.celery import get_celery_logger
 from airq.config import db
+from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
 from airq.lib.purpleair import call_purpleair_data_api
@@ -17,6 +18,7 @@ from airq.lib.purpleair import call_purpleair_sensors_api
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
 from airq.models.clients import Client
+from airq.models.metrics import Metric
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
@@ -251,12 +253,13 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
 def _metrics_sync():
     logger = get_celery_logger()
     updates = []
-    ts = timestamp()
+    metrics = []
+    ts = now()
 
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, humidity, pm_cf_1, sensor_id, distance in (
         Sensor.query.join(SensorZipcodeRelation)
-        .filter(Sensor.updated_at > ts - (30 * 60))
+        .filter(Sensor.updated_at > ts.timestamp() - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
             Sensor.latest_reading,
@@ -301,26 +304,49 @@ def _metrics_sync():
             pm_cf_1 = round(sum(pm_cf_1_readings) / num_sensors, ndigits=3)
             min_sensor_distance = round(closest_reading, ndigits=3)
             max_sensor_distance = round(farthest_reading, ndigits=3)
+            details = {
+                "num_sensors": num_sensors,
+                "min_sensor_distance": min_sensor_distance,
+                "max_sensor_distance": max_sensor_distance,
+                "sensor_ids": sensor_ids,
+            }
             updates.append(
                 {
                     "id": zipcode_id,
                     "pm25": pm25,
                     "humidity": humidity,
                     "pm_cf_1": pm_cf_1,
-                    "pm25_updated_at": ts,
-                    "metrics_data": {
-                        "num_sensors": num_sensors,
-                        "min_sensor_distance": min_sensor_distance,
-                        "max_sensor_distance": max_sensor_distance,
-                        "sensor_ids": sensor_ids,
-                    },
+                    "pm25_updated_at": ts.timestamp(),
+                    "metrics_data": details,
                 }
+            )
+            metrics.append(
+                Metric(
+                    zipcode_id=zipcode_id,
+                    pm25=pm25,
+                    humidity=humidity,
+                    pm_cf_1=pm_cf_1,
+                    created_at=ts,
+                    details=details,
+                )
             )
 
     logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
+
+    logger.info("Persisting %s metrics", len(metrics))
+    for metrics in chunk_list(metrics, batch_size=5000):
+        db.session.bulk_save_objects(metrics)
+        db.session.commit()
+
+
+def _prune_metrics():
+    logger = get_celery_logger()
+
+    num_deleted = Metric.query.filter_for_deletion().delete()
+    logger.info("Deleted %s stale metrics", num_deleted)
 
 
 def _send_alerts():
@@ -373,3 +399,6 @@ def purpleair_sync():
 
     logger.info("Requesting shares")
     _send_share_requests()
+
+    logger.info("Pruning metrics")
+    _prune_metrics()
