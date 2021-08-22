@@ -206,14 +206,6 @@ msgstr "MUY INSALUBRE (AQI: 201 - 300): Aviso de salud. Todos pueden experimenta
 msgid "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
 msgstr "PELIGROSO (AQI: 301 - 500): Advertencias sanitarias de situaciones de emergencia. Es más probable que toda la población se vea afectada."
 
-#: airq/models/clients.py:411
-msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
-"\n"
-" Reply \"M\" for Menu or \"E\" to end alerts."
-msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
-"\n"
-"Responder \"M\" para el menú o \"E\" para parar los avisos."
-
 #: airq/models/clients.py:453
 msgid "Has Hazebot been helpful? We’re looking for ways to grow and improve, and we’d love your help. Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
 msgstr "Hazebot ha sido de ayuda? Buscamos formas de crecer y mejorar, y nos encantaría su ayuda. Guardar nuestro contacto y compartir Hazebot con un amigo, o enviar un mensaje de texto con \"comentarios\" para dar comentarios."
@@ -303,4 +295,12 @@ msgstr "Factor de conversión"
 #: airq/models/clients.py:257
 msgid "Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
 msgstr "Factor de conversión a utilizar al calcular el AQI. Para más detalles, consulte https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
+
+#: airq/models/clients.py:411
+msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+"\n"
+"Reply \"M\" for Menu or \"E\" to end alerts."
+msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+"\n"
+"Responder \"M\" para el menú o \"E\" para parar los avisos."
 
