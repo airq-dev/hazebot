@@ -87,6 +87,9 @@
         {% with field=form.locale %}
             {% include "partials/_field.html" %}
         {% endwith %}
+        {% with field=form.is_feedback_request %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
         <span class="num-clients" id="num-clients"></span>
         {% with field=form.submit_btn %}
             {% include "partials/_field.html" %}

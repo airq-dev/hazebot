@@ -2,10 +2,15 @@ from airq.lib.readings import Pm25
 from airq.models.clients import Client
 from airq.models.events import Event
 from airq.models.events import EventType
+from airq.tasks import bulk_send
 from tests.base import BaseTestCase
 
 
 class SMSTestCase(BaseTestCase):
+    def _create_client(self) -> Client:
+        self.client.post("/sms/en", data={"Body": "97204", "From": "+13333333333"})
+        return Client.query.filter_by(identifier="+13333333333").first()
+
     def test_get_quality(self):
         response = self.client.post(
             "/sms/en", data={"Body": "00000", "From": "+12222222222"}
@@ -277,11 +282,11 @@ class SMSTestCase(BaseTestCase):
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
             "Tell us why you're leaving so we can improve our service:\n"
-            "1. Air quality is not a concern in my area\n"
-            "2. SMS texts are not my preferred information source\n"
-            "3. Alerts are too frequent\n"
-            "4. Information is inaccurate\n"
-            "5. Other",
+            "A. Air quality is not a concern in my area\n"
+            "B. SMS texts are not my preferred information source\n"
+            "C. Alerts are too frequent\n"
+            "D. Information is inaccurate\n"
+            "E. Other",
             response.data,
         )
         client = Client.query.first()
@@ -292,7 +297,7 @@ class SMSTestCase(BaseTestCase):
         # Give some feedback
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "1", "From": "+12222222222"}
+            "/sms/en", data={"Body": "A", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -381,11 +386,11 @@ class SMSTestCase(BaseTestCase):
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
             "Tell us why you're leaving so we can improve our service:\n"
-            "1. Air quality is not a concern in my area\n"
-            "2. SMS texts are not my preferred information source\n"
-            "3. Alerts are too frequent\n"
-            "4. Information is inaccurate\n"
-            "5. Other",
+            "A. Air quality is not a concern in my area\n"
+            "B. SMS texts are not my preferred information source\n"
+            "C. Alerts are too frequent\n"
+            "D. Information is inaccurate\n"
+            "E. Other",
             response.data,
         )
         client = Client.query.first()
@@ -395,7 +400,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "5", "From": "+12222222222"}
+            "/sms/en", data={"Body": "E", "From": "+12222222222"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
@@ -453,11 +458,11 @@ class SMSTestCase(BaseTestCase):
             "Got it! You will not receive air quality updates until you text a new zipcode.\n"
             "\n"
             "Tell us why you're leaving so we can improve our service:\n"
-            "1. Air quality is not a concern in my area\n"
-            "2. SMS texts are not my preferred information source\n"
-            "3. Alerts are too frequent\n"
-            "4. Information is inaccurate\n"
-            "5. Other",
+            "A. Air quality is not a concern in my area\n"
+            "B. SMS texts are not my preferred information source\n"
+            "C. Alerts are too frequent\n"
+            "D. Information is inaccurate\n"
+            "E. Other",
             response.data,
         )
 
@@ -538,13 +543,13 @@ class SMSTestCase(BaseTestCase):
         # unsubscribe flow.
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+            "/sms/en", data={"Body": "A", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, Client.query.count())
         self.assertEqual(4, Event.query.count())
         self.assert_twilio_response("Thank you for your feedback!", response.data)
-        self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="1")
+        self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="A")
 
     def test_translations(self):
         response = self.client.post(
@@ -578,11 +583,11 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
             "Which preference do you want to set?\n"
-            "1 - Alert Frequency: By default, Hazebot sends alerts at most every 2 hours.\n"
-            "2 - Alert Threshold: AQI category below which Hazebot won't send alerts.\n"
+            "A - Alert Frequency: By default, Hazebot sends alerts at most every 2 hours.\n"
+            "B - Alert Threshold: AQI category below which Hazebot won't send alerts.\n"
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD.\n"
-            "3 - Conversion Factor: Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1.",
+            "C - Conversion Factor: Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1.",
             response.data,
         )
         self.assertEqual(1, Event.query.count())
@@ -601,7 +606,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+            "/sms/en", data={"Body": "A", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
@@ -640,7 +645,7 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "1", "From": "+13333333333"}
+            "/sms/en", data={"Body": "A", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
@@ -662,17 +667,17 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+            "/sms/en", data={"Body": "B", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
             f"Select one of\n"
-            f"1 - GOOD\n"
-            f"2 - MODERATE\n"
-            f"3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
-            f"4 - UNHEALTHY\n"
-            f"5 - VERY UNHEALTHY\n"
-            f"6 - HAZARDOUS\n"
+            f"A - GOOD\n"
+            f"B - MODERATE\n"
+            f"C - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            f"D - UNHEALTHY\n"
+            f"E - VERY UNHEALTHY\n"
+            f"F - HAZARDOUS\n"
             f"Current: {default_pm25.display}",
             response.data,
         )
@@ -685,7 +690,7 @@ class SMSTestCase(BaseTestCase):
         self.clock.advance()
         response = self.client.post(
             "/sms/en",
-            data={"Body": list(Pm25).index(new_pm25) + 1, "From": "+13333333333"},
+            data={"Body": "C", "From": "+13333333333"},
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
@@ -709,17 +714,130 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+            "/sms/en", data={"Body": "B", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
             f"Select one of\n"
-            f"1 - GOOD\n"
-            f"2 - MODERATE\n"
-            f"3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
-            f"4 - UNHEALTHY\n"
-            f"5 - VERY UNHEALTHY\n"
-            f"6 - HAZARDOUS\n"
+            f"A - GOOD\n"
+            f"B - MODERATE\n"
+            f"C - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            f"D - UNHEALTHY\n"
+            f"E - VERY UNHEALTHY\n"
+            f"F - HAZARDOUS\n"
             f"Current: {new_pm25.display}",
             response.data,
         )
+
+    def test_solicit_feedback(self):
+        client_id = self._create_client().id
+        self.assertEqual(1, Event.query.count())
+
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
+        self.assertEqual(2, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_event(
+            client_id, EventType.FEEDBACK_RECEIVED, feedback="This is some feedback"
+        )
+        self.assertEqual(3, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            'Unrecognized option "This is some feedback". Reply with M for the menu or U to stop this alert.',
+            response.data,
+        )
+        self.assertEqual(3, Event.query.count())
+
+    def test_solicit_feedback_with_interleaved_events(self):
+        client_id = self._create_client().id
+        self.assertEqual(1, Event.query.count())
+
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
+        self.assertEqual(2, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_any_event(client_id, EventType.LAST)
+        self.assertEqual(3, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "3", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_event(client_id, EventType.LIST_PREFS)
+        self.assertEqual(4, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "B", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_any_event(client_id, EventType.SET_PREF_REQUEST)
+        self.assertEqual(5, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "B", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_any_event(client_id, EventType.SET_PREF)
+        self.assertEqual(6, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_event(
+            client_id, EventType.FEEDBACK_RECEIVED, feedback="This is some feedback"
+        )
+        self.assertEqual(7, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            'Unrecognized option "This is some feedback". Reply with M for the menu or U to stop this alert.',
+            response.data,
+        )
+        self.assertEqual(7, Event.query.count())
+
+    def test_solicit_feedback_beyond_window(self):
+        client_id = self._create_client().id
+        self.assertEqual(1, Event.query.count())
+
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
+        self.assertEqual(2, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "2", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_any_event(client_id, EventType.LAST)
+        self.assertEqual(3, Event.query.count())
+
+        self.clock.advance(amount=4 * 24 * 60 * 60 - 1)
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(3, Event.query.count())

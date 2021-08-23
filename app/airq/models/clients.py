@@ -72,10 +72,8 @@ class ClientQuery(BaseQuery):
         return self.filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
 
     def filter_inactive_since(self, timestamp: float) -> "ClientQuery":
-        return (
-            self.filter_phones()
-            .filter(Client.last_activity_at < timestamp)
-            .filter(Client.last_alert_sent_at < timestamp)
+        return self.filter(Client.last_activity_at < timestamp).filter(
+            Client.last_alert_sent_at < timestamp
         )
 
     def filter_eligible_for_sending(self) -> "ClientQuery":
@@ -497,9 +495,39 @@ class Client(db.Model):  # type: ignore
         return None
 
     def should_accept_feedback(self) -> bool:
-        return self.has_recent_last_event_of_type(
-            EventType.FEEDBACK_BEGIN
-        ) or self.has_recent_last_event_of_type(EventType.UNSUBSCRIBE)
+        # First check if we have a feedback request
+        cutoff = now() - datetime.timedelta(days=4)
+        feedback_request_event = self.get_event_of_type_after(
+            EventType.FEEDBACK_REQUEST, cutoff
+        )
+        if feedback_request_event:
+            # Check whether feedback was responded to
+            return not self.get_event_of_type_after(
+                EventType.FEEDBACK_RECEIVED,
+                feedback_request_event.timestamp
+            )
+
+        return self.has_recent_last_events_of_type(
+            {
+                EventType.FEEDBACK_BEGIN,
+                EventType.UNSUBSCRIBE,
+            }
+        )
+
+    def get_event_of_type_after(
+        self, event_type: EventType, cutoff: datetime.datetime
+    ) -> typing.Optional[Event]:
+        return (
+            Event.query.filter(Event.client_id == self.id)
+            .filter(Event.timestamp > cutoff)
+            .filter(Event.type_code == event_type)
+            .first()
+        )
+
+    def has_recent_last_events_of_type(
+        self, event_types: typing.Set[EventType]
+    ) -> bool:
+        return any(self.has_recent_last_event_of_type(e) for e in event_types)
 
     def has_recent_last_event_of_type(self, event_type: EventType) -> bool:
         last_event = self.get_last_client_event()

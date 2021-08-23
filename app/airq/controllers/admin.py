@@ -25,7 +25,7 @@ from airq.lib.sms import coerce_phone_number
 from airq.lib.sms import is_valid_phone_number
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
-from airq.models.events import Event
+from airq.models.events import Event, EventType
 from airq.models.zipcodes import Zipcode
 from airq.models.users import User
 from airq.tasks import bulk_send
@@ -86,6 +86,7 @@ def admin_bulk_sms():
             form.data["message"],
             form.data["last_active_at"].timestamp(),
             form.data["locale"],
+            form.data["is_feedback_request"],
         )
         flash("Sent!")
         return redirect(url_for("admin_summary"))

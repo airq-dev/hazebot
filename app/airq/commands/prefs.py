@@ -14,8 +14,8 @@ class ListPrefs(RegexCommand):
     def handle(self) -> MessageResponse:
         response = MessageResponse()
         response.write(gettext("Which preference do you want to set?"))
-        for i, pref in ClientPreferencesRegistry.iter_with_index():
-            response.write(f"{i} - {pref.display_name}: {pref.description}")
+        for letter, pref in ClientPreferencesRegistry.iter_with_letters():
+            response.write(f"{letter} - {pref.display_name}: {pref.description}")
         self.client.log_event(EventType.LIST_PREFS)
         return response
 
@@ -25,13 +25,8 @@ class RequestSetPref(SMSCommand):
         return self.client.has_recent_last_event_of_type(EventType.LIST_PREFS)
 
     def handle(self) -> MessageResponse:
-        try:
-            idx = int(self.user_input.strip())
-        except (TypeError, ValueError):
-            pref = None
-        else:
-            pref = ClientPreferencesRegistry.get_by_index(idx)
-
+        letter = self.user_input.strip()
+        pref = ClientPreferencesRegistry.get_by_letter(letter)
         if pref is None:
             return MessageResponse(
                 body=gettext(

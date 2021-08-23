@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import FileField
+from wtforms import BooleanField
 from wtforms import PasswordField
 from wtforms import SelectField
 from wtforms import StringField
@@ -31,6 +32,7 @@ class BulkSMSForm(FlaskForm):
     )
     last_active_at = LocalDateTimeField("Last Active At", validators=[DataRequired()])
     locale = SelectField("Locale", choices=[("en", "English"), ("es", "Spanish")])
+    is_feedback_request = BooleanField("Is Feedback Request")
     submit_btn = SubmitField("Submit")
 
 

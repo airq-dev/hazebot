@@ -26,12 +26,12 @@ class ReceiveFeedback(SMSCommand):
 
     def handle(self) -> MessageResponse:
         selected_choice = self._get_selected_choice()
-        if selected_choice == "5":
+        if selected_choice == "E":
             return MessageResponse(body=gettext("Please enter your feedback below:"))
 
         feedback = self.user_input
         if selected_choice:
-            feedback = self.feedback_choices().get(selected_choice, feedback)
+            feedback = dict(self.feedback_choices()).get(selected_choice, feedback)
 
         send_email(
             ["info@hazebot.org"],
@@ -52,7 +52,7 @@ class ReceiveFeedback(SMSCommand):
             next(
                 (
                     k
-                    for k in self.feedback_choices()
+                    for k, _ in self.feedback_choices()
                     if re.match(r"^{}[\.\.)]?$".format(k), self.user_input)
                 ),
                 None,
@@ -62,17 +62,11 @@ class ReceiveFeedback(SMSCommand):
         )
 
     @staticmethod
-    def feedback_choices() -> typing.Dict[str, str]:
-        return {
-            str(i): choice
-            for i, choice in enumerate(
-                [
-                    gettext("Air quality is not a concern in my area"),
-                    gettext("SMS texts are not my preferred information source"),
-                    gettext("Alerts are too frequent"),
-                    gettext("Information is inaccurate"),
-                    gettext("Other"),
-                ],
-                start=1,
-            )
-        }
+    def feedback_choices() -> typing.List[typing.Tuple[str, str]]:
+        return [
+            ("A", gettext("Air quality is not a concern in my area")),
+            ("B", gettext("SMS texts are not my preferred information source")),
+            ("C", gettext("Alerts are too frequent")),
+            ("D", gettext("Information is inaccurate")),
+            ("E", gettext("Other")),
+        ]
