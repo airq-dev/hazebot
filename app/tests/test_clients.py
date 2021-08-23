@@ -362,7 +362,7 @@ class ClientTestCase(BaseTestCase):
 
     def test_alert_threshold(self):
         client = self._make_client()
-        self.assertEqual(0, client.alert_threshold)
+        self.assertEqual(12, client.alert_threshold)
 
         client.alert_threshold = Pm25.UNHEALTHY_FOR_SENSITIVE_GROUPS.value
         self.db.session.commit()
