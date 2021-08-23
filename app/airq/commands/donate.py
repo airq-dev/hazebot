@@ -6,7 +6,7 @@ from airq.models.events import EventType
 
 
 class ShowDonate(RegexCommand):
-    pattern = r"^7[\.\)]?$"
+    pattern = r"^(7[\.\)]?|donate)$"
 
     def handle(self) -> MessageResponse:
         self.client.log_event(EventType.DONATE)

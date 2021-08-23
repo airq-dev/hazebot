@@ -708,3 +708,26 @@ class SMSTestCase(BaseTestCase):
             f"Current: {new_pm25.display}",
             response.data,
         )
+
+    def test_donate(self):
+        response = self.client.post(
+            "/sms/en", data={"Body": "DoNaTe", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Like this project? "
+            "A few dollars allows hundreds of people to breathe easy with hazebot. "
+            "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
+            response.data
+        )
+
+        response = self.client.post(
+            "/sms/en", data={"Body": "7", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Like this project? "
+            "A few dollars allows hundreds of people to breathe easy with hazebot. "
+            "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
+            response.data
+        )
