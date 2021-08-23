@@ -124,7 +124,7 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         self._choices = choices
 
     def _get_choices_with_letters(self) -> typing.List[typing.Tuple[str, TChoicesEnum]]:
-        choices: typing.List[TChoicesEnum] = self._choices
+        choices: typing.List[TChoicesEnum] = list(self._choices)
         out = []
         for i, choice in enumerate(choices):
             out.append((string.ascii_uppercase[i], choice))
