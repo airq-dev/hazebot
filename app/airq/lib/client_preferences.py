@@ -241,11 +241,11 @@ class ClientPreferencesRegistry:
         return cls.get_by_name(name).default
 
     @classmethod
-    def iter_with_letters(cls) -> typing.Iterator[typing.Tuple[int, ClientPreference]]:
-        return [
+    def iter_with_letters(cls) -> typing.Iterator[typing.Tuple[str, ClientPreference]]:
+        return (
             (string.ascii_uppercase[i], name)
             for i, name in enumerate(cls._prefs.values())
-        ]
+        )
 
     @classmethod
     def get_by_letter(cls, letter: string) -> typing.Optional[ClientPreference]:
