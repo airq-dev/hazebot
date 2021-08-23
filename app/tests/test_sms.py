@@ -718,7 +718,7 @@ class SMSTestCase(BaseTestCase):
             "Like this project? "
             "A few dollars allows hundreds of people to breathe easy with hazebot. "
             "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
-            response.data
+            response.data,
         )
 
         response = self.client.post(
@@ -729,5 +729,5 @@ class SMSTestCase(BaseTestCase):
             "Like this project? "
             "A few dollars allows hundreds of people to breathe easy with hazebot. "
             "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
-            response.data
+            response.data,
         )
