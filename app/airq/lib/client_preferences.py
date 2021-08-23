@@ -124,10 +124,11 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         self._choices = choices
 
     def _get_choices_with_letters(self) -> typing.List[typing.Tuple[str, TChoicesEnum]]:
-        return [
-            (string.ascii_uppercase[i], choice)
-            for i, choice in enumerate(self._choices)
-        ]
+        choices: typing.List[TChoicesEnum] = self._choices
+        out = []
+        for i, choice in enumerate(choices):
+            out.append((string.ascii_uppercase[i], choice))
+        return out
 
     def _cast(self, value: typing.Any) -> TChoicesEnum:
         return self._choices.from_value(value)
@@ -248,7 +249,7 @@ class ClientPreferencesRegistry:
         )
 
     @classmethod
-    def get_by_letter(cls, letter: string) -> typing.Optional[ClientPreference]:
+    def get_by_letter(cls, letter: str) -> typing.Optional[ClientPreference]:
         for l, pref in cls.iter_with_letters():
             if l == letter:
                 return pref
