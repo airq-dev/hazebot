@@ -503,8 +503,7 @@ class Client(db.Model):  # type: ignore
         if feedback_request_event:
             # Check whether feedback was responded to
             return not self.get_event_of_type_after(
-                EventType.FEEDBACK_RECEIVED,
-                feedback_request_event.timestamp
+                EventType.FEEDBACK_RECEIVED, feedback_request_event.timestamp
             )
 
         return self.has_recent_last_events_of_type(
