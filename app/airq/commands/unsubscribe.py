@@ -29,6 +29,6 @@ class Unsubscribe(RegexCommand):
             "",
             gettext("Tell us why you're leaving so we can improve our service:"),
         ]
-        for key, choice in ReceiveFeedback.feedback_choices().items():
+        for key, choice in ReceiveFeedback.feedback_choices():
             message.append(f"{key}. {choice}")
         return MessageResponse.from_strings(message)

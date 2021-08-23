@@ -21,30 +21,29 @@ from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
 
+# TODO: Create a more robust system for describing command precedence,
+# when to use nested commands, etc.
 COMMANDS: typing.List[typing.Type[SMSCommand]] = [
     #
-    # Commands which should always take precedence come first
+    # SetPref needs to come before numbered commands because it interprets
+    # certain input (e.g., "0") as selecting an option instead of choosing a command.
     #
-    GetQuality,
-    ShowMenu,
-    #
-    # ReceiveFeedback needs to come before numbered commands because it interprets
-    # certain input (e.g., "1") as selecting an option instead of choosing a command.
-    #
-    ReceiveFeedback,
-    RequestSetPref,
     SetPref,
-    #
-    # The "regular" (number-based) commands come next. Order does not matter for these.
-    #
     GetDetails,
     GetLast,
+    GetQuality,
     ListPrefs,
     Resubscribe,
     ShowAbout,
     ShowFeedback,
-    Unsubscribe,
     ShowDonate,
+    ShowMenu,
+    RequestSetPref,
+    ReceiveFeedback,
+    # Unsubscribe comes last because "E" unsubscribes, but certain nested commands use "E"
+    # as an option. Therefore, putting this last means we won't accidentally unsub people
+    # who are trying to enter one of these nested commands.
+    Unsubscribe,
 ]
 
 
