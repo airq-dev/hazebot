@@ -219,6 +219,21 @@ class SMSTestCase(BaseTestCase):
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
         self.assert_event(client_id, EventType.DONATE)
 
+        response = self.client.post(
+            "/sms/en", data={"Body": "DoNaTe", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(2, Event.query.count())
+        self.assert_twilio_response(
+            "Like this project? "
+            "A few dollars allows hundreds of people to breathe easy with hazebot. "
+            "Help us reach more by donating here: https://bit.ly/3bh0Cx9.",
+            response.data,
+        )
+        client_id = Client.query.filter_by(identifier="+13333333333").first().id
+        self.assert_event(client_id, EventType.DONATE)
+
     def test_unsubscribe(self):
         response = self.client.post(
             "/sms/en", data={"Body": "U", "From": "+12222222222"}
