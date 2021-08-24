@@ -359,7 +359,11 @@ class Client(db.Model):  # type: ignore
         if self.identifier_type.can_receive_messages:
             try:
                 send_message(
-                    message, self.identifier, self.identifier_type, self.locale, media=media
+                    message,
+                    self.identifier,
+                    self.identifier_type,
+                    self.locale,
+                    media=media,
                 )
             except TwilioRestException as e:
                 code = TwilioErrorCode.from_exc(e)
