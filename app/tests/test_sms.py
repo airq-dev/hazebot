@@ -739,12 +739,10 @@ class SMSTestCase(BaseTestCase):
 
         self.clock.advance()
         response = self.client.post(
-            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+            "/sms/en", data={"Body": "E", "From": "+13333333333"}
         )
         self.assertEqual(200, response.status_code)
-        self.assert_event(
-            client_id, EventType.FEEDBACK_RECEIVED, feedback="This is some feedback"
-        )
+        self.assert_event(client_id, EventType.FEEDBACK_RECEIVED, feedback="E")
         self.assertEqual(3, Event.query.count())
 
         self.clock.advance()

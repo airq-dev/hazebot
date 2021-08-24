@@ -222,7 +222,7 @@ class ClientTestCase(BaseTestCase):
         self.assertTrue(client.is_enabled_for_alerts)
         self.assertEqual(0, Event.query.count())
         with mock.patch(
-            "airq.models.clients.send_sms",
+            "airq.models.clients.send_message",
             side_effect=TwilioRestException(
                 "", "", code=TwilioErrorCode.OUT_OF_REGION.value
             ),
@@ -239,7 +239,7 @@ class ClientTestCase(BaseTestCase):
         self.assertTrue(client.is_enabled_for_alerts)
         self.assertEqual(0, Event.query.count())
         with mock.patch(
-            "airq.models.clients.send_sms",
+            "airq.models.clients.send_message",
             side_effect=TwilioRestException("", "", code=77),
         ):
             with self.assertRaises(Exception):
