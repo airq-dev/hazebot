@@ -11,6 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from twilio.base.exceptions import TwilioRestException
 
+from airq import config
 from airq.config import db
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
@@ -77,8 +78,14 @@ class ClientQuery(BaseQuery):
         query = self.filter(Client.last_activity_at < timestamp).filter(
             Client.last_alert_sent_at < timestamp
         )
+        if not config.DEV:
+            # Don't bother in dev since it makes testing harder.
+            # We want to be able to look at the logs to confirm this sent even when not using ngrok.
+            query = query.filter_phones()
         if not include_unsubscribed:
-            query = query.filter(Client.alerts_disabled_at == 0)
+            query = query.filter(Client.alerts_disabled_at == 0).filter(
+                Client.zipcode_id.isnot(None)
+            )
         return query
 
     def filter_eligible_for_sending(self) -> "ClientQuery":
