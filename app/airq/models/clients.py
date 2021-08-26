@@ -71,10 +71,15 @@ class ClientQuery(BaseQuery):
     def filter_phones(self) -> "ClientQuery":
         return self.filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
 
-    def filter_inactive_since(self, timestamp: float) -> "ClientQuery":
-        return self.filter(Client.last_activity_at < timestamp).filter(
+    def filter_inactive_since(
+        self, timestamp: float, include_unsubscribed: bool
+    ) -> "ClientQuery":
+        query = self.filter(Client.last_activity_at < timestamp).filter(
             Client.last_alert_sent_at < timestamp
         )
+        if not include_unsubscribed:
+            query = query.filter(Client.alerts_disabled_at == 0)
+        return query
 
     def filter_eligible_for_sending(self) -> "ClientQuery":
         return (
