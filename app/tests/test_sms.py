@@ -733,7 +733,7 @@ class SMSTestCase(BaseTestCase):
         client_id = self._create_client().id
         self.assertEqual(1, Event.query.count())
 
-        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True, True)
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
 
@@ -762,7 +762,7 @@ class SMSTestCase(BaseTestCase):
         client_id = self._create_client().id
         self.assertEqual(1, Event.query.count())
 
-        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True, True)
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
 
@@ -823,7 +823,7 @@ class SMSTestCase(BaseTestCase):
         client_id = self._create_client().id
         self.assertEqual(1, Event.query.count())
 
-        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True)
+        bulk_send("Asking for feedback?", self.clock.now().timestamp() + 1, "en", True, True)
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
 
