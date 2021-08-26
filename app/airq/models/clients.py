@@ -428,6 +428,8 @@ class Client(db.Model):  # type: ignore
         if was_alerted_recently and abs(curr_aqi - last_aqi) < 50:
             return False
 
+        # Warning! This is a template message used by Whatsapp. If you change it, make sure to add the new copy
+        # in the Twilio console or we won't be able to send it to Whatsapp users.
         message = gettext(
             'Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n\nReply "M" for Menu or "E" to end alerts.',
             city=self.zipcode.city.name,
