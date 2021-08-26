@@ -13,10 +13,11 @@
     <script type="application/javascript">
         document.addEventListener("DOMContentLoaded", function () {
             const lastActivityInput = document.getElementById('last_active_at');
+            const includeUnsubscribedInput = document.getElementById('include_unsubscribed');
             const numClientsDisplay = document.getElementById('num-clients');
             let numClients = {{ num_inactive|tojson }};
 
-            displayNumClients = () => {
+            const displayNumClients = () => {
                 const date = new Date(lastActivityInput.value);
                 numClientsDisplay.textContent = (
                     numClients + 
@@ -35,16 +36,20 @@
                 );
             };
 
-            displayNumClients();
-
-            lastActivityInput.addEventListener('change', async () => {
+            const updateNumClients = async () => {
                 const date =  new Date(lastActivityInput.value);
+                const includeUnsubscribed = includeUnsubscribedInput.checked;
                 const ts = Math.floor(date.getTime() / 1000);
-                const response = await fetch('/admin/stats?last_active_at=' + ts);
+                const response = await fetch('/admin/stats?last_active_at=' + ts + '&include_unsubscribed=' + includeUnsubscribed);
                 const stats = await response.json();
                 numClients = stats.num_clients;
                 displayNumClients();
-            });
+            }
+
+            displayNumClients();
+
+            lastActivityInput.addEventListener('change', updateNumClients);
+            includeUnsubscribedInput.addEventListener('change', updateNumClients);
 
             const form = document.getElementsByTagName('form')[0];
             form.addEventListener('submit', (event) => {
@@ -85,6 +90,9 @@
             {% include "partials/_field.html" %}
         {% endwith %}
         {% with field=form.locale %}
+            {% include "partials/_field.html" %}
+        {% endwith %}
+        {% with field=form.include_unsubscribed %}
             {% include "partials/_field.html" %}
         {% endwith %}
         {% with field=form.is_feedback_request %}

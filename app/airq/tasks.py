@@ -15,12 +15,18 @@ def models_sync():
 
 @celery.task()
 def bulk_send(
-    message: str, last_active_at: float, locale: str, is_feedback_request: bool
+    message: str,
+    last_active_at: float,
+    locale: str,
+    include_unsubscribed: bool,
+    is_feedback_request: bool,
 ):
     from airq.models.clients import Client
 
     num_sent = 0
-    for client in Client.query.filter_inactive_since(last_active_at).all():
+    for client in Client.query.filter_inactive_since(
+        last_active_at, include_unsubscribed
+    ).all():
         if client.locale == locale:
             try:
                 if client.send_message(message):

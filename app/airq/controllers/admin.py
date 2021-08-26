@@ -19,13 +19,14 @@ from airq.forms import BulkClientUploadForm
 from airq.forms import BulkSMSForm
 from airq.forms import LoginForm
 from airq.forms import SMSForm
+from airq.lib import http
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.sms import coerce_phone_number
 from airq.lib.sms import is_valid_phone_number
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
-from airq.models.events import Event, EventType
+from airq.models.events import Event
 from airq.models.zipcodes import Zipcode
 from airq.models.users import User
 from airq.tasks import bulk_send
@@ -70,9 +71,14 @@ def admin_summary() -> str:
 @admin_required
 def admin_stats():
     last_active_at = request.args.get("last_active_at")
+    include_unsubscribed = http.parse_boolean(
+        request.args.get("include_unsubscribed", "")
+    )
     if not last_active_at:
         return Response(status=400)
-    num_clients = Client.query.filter_inactive_since(last_active_at).count()
+    num_clients = Client.query.filter_inactive_since(
+        last_active_at, include_unsubscribed
+    ).count()
     return jsonify({"num_clients": num_clients})
 
 
@@ -80,12 +86,13 @@ def admin_stats():
 def admin_bulk_sms():
     if not current_user.can_send_sms:
         return redirect(url_for("admin_summary"))
-    form = BulkSMSForm(last_active_at=now())
+    form = BulkSMSForm(last_active_at=now(), include_unsubscribed=False)
     if form.validate_on_submit():
         bulk_send.delay(
             form.data["message"],
             form.data["last_active_at"].timestamp(),
             form.data["locale"],
+            form.data["include_unsubscribed"],
             form.data["is_feedback_request"],
         )
         flash("Sent!")
@@ -93,7 +100,9 @@ def admin_bulk_sms():
     return render_template(
         "bulk_sms.html",
         form=form,
-        num_inactive=Client.query.filter_inactive_since(timestamp()).count(),
+        num_inactive=Client.query.filter_inactive_since(
+            timestamp(), form.data["include_unsubscribed"]
+        ).count(),
     )
 
 
