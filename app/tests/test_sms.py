@@ -738,7 +738,7 @@ class SMSTestCase(BaseTestCase):
             last_active_at=self.clock.now().timestamp() + 1,
             locale="en",
             include_unsubscribed=True,
-            is_feedbck_request=True,
+            is_feedback_request=True,
         )
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
@@ -773,7 +773,7 @@ class SMSTestCase(BaseTestCase):
             last_active_at=self.clock.now().timestamp() + 1,
             locale="en",
             include_unsubscribed=True,
-            is_feedbck_request=True,
+            is_feedback_request=True,
         )
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
@@ -840,7 +840,7 @@ class SMSTestCase(BaseTestCase):
             last_active_at=self.clock.now().timestamp() + 1,
             locale="en",
             include_unsubscribed=True,
-            is_feedbck_request=True,
+            is_feedback_request=True,
         )
         self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
         self.assertEqual(2, Event.query.count())
