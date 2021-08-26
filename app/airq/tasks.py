@@ -15,6 +15,7 @@ def models_sync():
 
 @celery.task()
 def bulk_send(
+    *,
     message: str,
     last_active_at: float,
     locale: str,
