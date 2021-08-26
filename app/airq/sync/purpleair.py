@@ -18,7 +18,6 @@ from airq.lib.purpleair import call_purpleair_sensors_api
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
 from airq.models.clients import Client
-from airq.models.metrics import Metric
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
@@ -253,7 +252,6 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
 def _metrics_sync():
     logger = get_celery_logger()
     updates = []
-    metrics = []
     ts = now()
 
     zipcodes_to_sensors = collections.defaultdict(list)
@@ -320,33 +318,11 @@ def _metrics_sync():
                     "metrics_data": details,
                 }
             )
-            metrics.append(
-                Metric(
-                    zipcode_id=zipcode_id,
-                    pm25=pm25,
-                    humidity=humidity,
-                    pm_cf_1=pm_cf_1,
-                    created_at=ts,
-                    details=details,
-                )
-            )
 
     logger.info("Updating %s zipcodes", len(updates))
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()
-
-    logger.info("Persisting %s metrics", len(metrics))
-    for metrics in chunk_list(metrics, batch_size=5000):
-        db.session.bulk_save_objects(metrics)
-        db.session.commit()
-
-
-def _prune_metrics():
-    logger = get_celery_logger()
-
-    num_deleted = Metric.query.filter_for_deletion().delete()
-    logger.info("Deleted %s stale metrics", num_deleted)
 
 
 def _send_alerts():
@@ -399,6 +375,3 @@ def purpleair_sync():
 
     logger.info("Requesting shares")
     _send_share_requests()
-
-    logger.info("Pruning metrics")
-    _prune_metrics()
