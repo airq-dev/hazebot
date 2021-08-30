@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 def _should_sync_geonames() -> bool:
     now = datetime.datetime.now()
     day = datetime.datetime(year=now.year, month=now.month, day=now.day)
+    # Run between midnight and five minutes after midnight
     if (now.timestamp() - day.timestamp()) / 60 < 5:
         return True
 

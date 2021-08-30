@@ -3,7 +3,6 @@ import decimal
 import geohash
 import gzip
 import logging
-import requests
 import typing
 import zipfile
 
@@ -117,6 +116,7 @@ def _zipcodes_sync(
             or obj.latitude != latitude
             or obj.longitude != longitude
             or timezone != obj.timezone
+            or obj.coordinates is None
         ):
             gh = geohash.encode(latitude, longitude)
             data = dict(
@@ -125,6 +125,7 @@ def _zipcodes_sync(
                 latitude=latitude,
                 longitude=longitude,
                 timezone=timezone,
+                coordinates=f"POINT({longitude} {latitude})",
                 **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
             )
             if obj:
@@ -144,6 +145,8 @@ def _zipcodes_sync(
         for mappings in chunk_list(updates):
             db.session.bulk_update_mappings(Zipcode, mappings)
             db.session.commit()
+
+    # TODO: Should we delete zipcodes not in the GeoNames data?
 
 
 def geonames_sync():

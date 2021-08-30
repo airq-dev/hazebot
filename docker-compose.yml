@@ -25,7 +25,7 @@ services:
   redis:
     image: redis:alpine
   db:
-    image: postgres
+    image: postgis/postgis
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
