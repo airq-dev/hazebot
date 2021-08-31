@@ -2,6 +2,8 @@ import dataclasses
 import typing
 
 from flask_sqlalchemy import BaseQuery
+from sqlalchemy import func
+from geoalchemy2 import Geometry
 
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
@@ -22,6 +24,11 @@ class ZipcodeMetrics:
 class ZipcodeQuery(BaseQuery):
     def get_by_zipcode(self, zipcode: str) -> typing.Optional["Zipcode"]:
         return self.filter_by(zipcode=zipcode).first()
+
+    def order_by_distance(self, zipcode: "Zipcode") -> "ZipcodeQuery":
+        return self.order_by(
+            func.ST_DistanceSphere(Zipcode.coordinates, zipcode.coordinates)
+        )
 
 
 class Zipcode(db.Model):  # type: ignore
@@ -48,6 +55,7 @@ class Zipcode(db.Model):  # type: ignore
     geohash_bit_10 = db.Column(db.String(), nullable=False)
     geohash_bit_11 = db.Column(db.String(), nullable=False)
     geohash_bit_12 = db.Column(db.String(), nullable=False)
+    coordinates = db.Column(Geometry("POINT"), nullable=True)
 
     pm25 = db.Column(db.Float(), nullable=False, index=True, server_default="0")
     humidity = db.Column(db.Float(), nullable=False, server_default="0")
@@ -147,8 +155,10 @@ class Zipcode(db.Model):  # type: ignore
         curr_pm25_level = self.get_pm25_level(conversion_factor)
         zipcodes = [
             z
-            for z in Zipcode.query.filter(Zipcode.pm25_updated_at > cutoff).all()
+            for z in Zipcode.query.filter(
+                Zipcode.pm25_updated_at > cutoff
+            ).order_by_distance(self)
             if z.get_pm25_level(conversion_factor) < curr_pm25_level
         ]
 
-        return sorted(zipcodes, key=lambda z: self.distance(z))[:num_desired]
+        return zipcodes[:num_desired]
