@@ -6,6 +6,8 @@ import math
 import requests
 import typing
 
+from sqlalchemy import and_
+from sqlalchemy import func
 from flask_babel import force_locale
 
 from airq.celery import get_celery_logger
@@ -165,6 +167,7 @@ def _sensors_sync(
                 data.update(
                     latitude=latitude,
                     longitude=longitude,
+                    coordinates=f'POINT({longitude}, {latitude})'
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["sensor_index"])
@@ -256,16 +259,16 @@ def _metrics_sync():
 
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, humidity, pm_cf_1, sensor_id, distance in (
-        Sensor.query.join(SensorZipcodeRelation)
+        Zipcode.query.join(Sensor, and_(func.ST_DistanceSphere(Zipcode.coordinates, Sensor.coordinates)) <= 25000)
         .filter(Sensor.updated_at > ts.timestamp() - (30 * 60))
         .with_entities(
-            SensorZipcodeRelation.zipcode_id,
+            Zipcode.id,
             Sensor.latest_reading,
             Sensor.humidity,
             Sensor.pm_cf_1,
             Sensor.id,
-            SensorZipcodeRelation.distance,
         )
+        .add_column(func.ST_DistanceSphere(Zipcode.coordinates, Sensor.coordinates).label('distance'))
         .all()
     ):
         zipcodes_to_sensors[zipcode_id].append(
