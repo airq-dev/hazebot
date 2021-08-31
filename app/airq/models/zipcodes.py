@@ -162,8 +162,3 @@ class Zipcode(db.Model):  # type: ignore
         ]
 
         return zipcodes[:num_desired]
-
-    def get_within_radius(self, radius):
-        return Zipcode.query.filter(
-            func.ST_DistanceSphere(Zipcode.coordinates, self.coordinates) < radius
-        ).all()
