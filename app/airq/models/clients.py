@@ -22,8 +22,6 @@ from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from airq.lib.readings import Readings
 from airq.lib.sms import coerce_phone_number
-from airq.lib.twilio import send_sms
-from airq.lib.twilio import TwilioErrorCode
 from airq.models.events import Event
 from airq.models.events import EventType
 from airq.models.zipcodes import Zipcode
@@ -35,6 +33,11 @@ logger = logging.getLogger(__name__)
 class ClientIdentifierType(enum.Enum):
     PHONE_NUMBER = 1
     IP = 2
+    WHATSAPP = 3
+
+    @property
+    def can_receive_messages(self) -> bool:
+        return self != self.IP
 
 
 class ClientQuery(BaseQuery):
@@ -70,7 +73,7 @@ class ClientQuery(BaseQuery):
     #
 
     def filter_phones(self) -> "ClientQuery":
-        return self.filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
+        return self.filter(Client.type_code != ClientIdentifierType.IP)
 
     def filter_inactive_since(
         self, timestamp: float, include_unsubscribed: bool
@@ -213,6 +216,10 @@ class Client(db.Model):  # type: ignore
     # Time after which the client shouldn't treat an event as "recent"
     # and therefore shouldn't include it in its state
     EVENT_RESPONSE_TIME = datetime.timedelta(hours=1)
+
+    @property
+    def identifier_type(self) -> ClientIdentifierType:
+        return ClientIdentifierType(self.type_code)
 
     @classmethod
     def get_share_window(self) -> typing.Tuple[int, int]:
@@ -358,12 +365,28 @@ class Client(db.Model):  # type: ignore
         return send_start <= dt.hour < send_end
 
     def send_message(self, message: str, media: typing.Optional[str] = None) -> bool:
-        if self.type_code == ClientIdentifierType.PHONE_NUMBER:
+        from airq.lib.twilio import send_message
+        from airq.lib.twilio import TwilioErrorCode
+
+        if self.identifier_type.can_receive_messages:
             try:
-                send_sms(message, self.identifier, self.locale, media=media)
+                send_message(
+                    message,
+                    self.identifier,
+                    self.identifier_type,
+                    self.locale,
+                    media=media,
+                )
             except TwilioRestException as e:
                 code = TwilioErrorCode.from_exc(e)
-                if code:
+                if code == TwilioErrorCode.NO_CONVERSATION:
+                    logger.exception(
+                        'Sent non-template message "%s" to %s outside of a conversation',
+                        message,
+                        self,
+                    )
+                    return False
+                elif code:
                     logger.warning(
                         "Disabling alerts for recipient %s: %s",
                         self,
@@ -374,7 +397,6 @@ class Client(db.Model):  # type: ignore
                 else:
                     raise
         else:
-            # Other clients types don't yet support message sending.
             logger.info("Not messaging client %s: %s", self.id, message)
 
         return True
@@ -418,6 +440,8 @@ class Client(db.Model):  # type: ignore
         if was_alerted_recently and abs(curr_aqi - last_aqi) < 50:
             return False
 
+        # Warning! This is a template message used by Whatsapp. If you change it, make sure to add the new copy
+        # in the Twilio console or we won't be able to send it to Whatsapp users.
         message = gettext(
             'Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n\nReply "M" for Menu or "E" to end alerts.',
             city=self.zipcode.city.name,
