@@ -507,23 +507,27 @@ class Client(db.Model):  # type: ignore
         return None
 
     def should_accept_feedback(self) -> bool:
-        # First check if we have a feedback request
-        cutoff = now() - datetime.timedelta(days=4)
-        feedback_request_event = self.get_event_of_type_after(
-            EventType.FEEDBACK_REQUEST, cutoff
-        )
-        if feedback_request_event:
-            # Check whether feedback was responded to
-            return not self.get_event_of_type_after(
-                EventType.FEEDBACK_RECEIVED, feedback_request_event.timestamp
-            )
-
-        return self.has_recent_last_events_of_type(
+        # First check if the most recent event is a feedback begin or unsub event
+        if self.has_recent_last_events_of_type(
             {
                 EventType.FEEDBACK_BEGIN,
                 EventType.UNSUBSCRIBE,
             }
+        ):
+            return True
+
+        # Then check if we have an outstanding feedback request
+        cutoff = now() - datetime.timedelta(days=4)
+        feedback_request_event = self.get_event_of_type_after(
+            EventType.FEEDBACK_REQUEST, cutoff
         )
+        # Check whether feedback was responded to
+        if feedback_request_event and not self.get_event_of_type_after(
+            EventType.FEEDBACK_RECEIVED, feedback_request_event.timestamp
+        ):
+            return True
+
+        return False
 
     def get_event_of_type_after(
         self, event_type: EventType, cutoff: datetime.datetime
