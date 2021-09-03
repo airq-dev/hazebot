@@ -8,6 +8,7 @@ from twilio.base.exceptions import TwilioRestException
 from airq.lib.readings import ConversionFactor
 from airq.lib.readings import Pm25
 from airq.lib.twilio import TwilioErrorCode
+from airq.lib.twilio import TwilioTestClient
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 from airq.models.events import Event
@@ -60,6 +61,7 @@ class ClientTestCase(BaseTestCase):
         self.db.session.commit()
         return client
 
+    # @mock.patch("")
     def test_maybe_notify(self):
         zipcode = self.zipcode
         assert zipcode is not None, "Mypy is unhappy"
@@ -109,7 +111,16 @@ class ClientTestCase(BaseTestCase):
             client.id,
             EventType.ALERT,
             zipcode=zipcode.zipcode,
-            pm25=self.zipcode.pm25,
+            pm25=zipcode.pm25,
+        )
+        self.assertTrue(
+            TwilioTestClient.has_last_message(
+                body=(
+                    f"AQI is now {client.get_current_aqi()} in zipcode {client.zipcode.zipcode} (level: {client.get_current_pm25_level().display}).\n"
+                    "\n"
+                    'Reply "M" for Menu or "E" to end alerts.'
+                ),
+            )
         )
 
         # Do not resend if the default frequnecy hasn't elapsed
