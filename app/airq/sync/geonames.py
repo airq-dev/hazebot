@@ -58,8 +58,8 @@ def _get_timezones_data() -> typing.Dict[str, str]:
 
     zipcode_to_timezones = {}
     with gzip.open(filename) as f:
-        for line in f:
-            line = line.decode().strip()
+        for line_encoded in f:
+            line = line_encoded.decode().strip()
             if line.startswith("INSERT INTO"):
                 i = 0
                 while line[i] != "(":

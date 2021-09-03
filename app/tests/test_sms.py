@@ -859,3 +859,50 @@ class SMSTestCase(BaseTestCase):
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(3, Event.query.count())
+
+    def test_give_feedback_after_soliciting_feedback(self):
+        client_id = self._create_client().id
+        self.assertEqual(1, Event.query.count())
+
+        bulk_send(
+            message="Asking for feedback?",
+            last_active_at=self.clock.now().timestamp() + 1,
+            locale="en",
+            include_unsubscribed=True,
+            is_feedback_request=True,
+        )
+        self.assert_event(client_id, EventType.FEEDBACK_REQUEST)
+        self.assertEqual(2, Event.query.count())
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "This is some feedback", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(3, Event.query.count())
+
+        # Go through feedback flow
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "5", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(4, Event.query.count())
+        self.assert_twilio_response(
+            "Please enter your feedback below:",
+            response.data,
+        )
+        self.assert_event(client_id, EventType.FEEDBACK_BEGIN)
+
+        self.clock.advance()
+        response = self.client.post(
+            "/sms/en", data={"Body": "Blah Blah Blah", "From": "+13333333333"}
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, Client.query.count())
+        self.assertEqual(5, Event.query.count())
+        self.assert_twilio_response("Thank you for your feedback!", response.data)
+        self.assert_event(
+            client_id, EventType.FEEDBACK_RECEIVED, feedback="Blah Blah Blah"
+        )
