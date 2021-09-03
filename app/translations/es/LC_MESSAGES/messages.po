@@ -20,23 +20,23 @@ msgstr "Por favor introducir sus comentarios a continuación:"
 msgid "Thank you for your feedback!"
 msgstr "¡Gracias por sus comentarios!"
 
-#: airq/commands/feedback.py:70
+#: airq/commands/feedback.py:67
 msgid "Air quality is not a concern in my area"
 msgstr "La calidad del aire no es una preocupación en mi área"
 
-#: airq/commands/feedback.py:71
+#: airq/commands/feedback.py:68
 msgid "SMS texts are not my preferred information source"
 msgstr "Los mensajes de texto SMS no son mi fuente de información preferida"
 
-#: airq/commands/feedback.py:72
+#: airq/commands/feedback.py:69
 msgid "Alerts are too frequent"
 msgstr "Los avisos son demasiado frecuentes"
 
-#: airq/commands/feedback.py:73
+#: airq/commands/feedback.py:70
 msgid "Information is inaccurate"
 msgstr "La información es inexacta"
 
-#: airq/commands/feedback.py:74
+#: airq/commands/feedback.py:71
 msgid "Other"
 msgstr "Otro"
 
@@ -80,7 +80,7 @@ msgstr "O introducir un nuevo código postal."
 msgid "Which preference do you want to set?"
 msgstr "¿Qué preferencia quieres establecer?"
 
-#: airq/commands/prefs.py:61
+#: airq/commands/prefs.py:56
 msgid "Hmm, looks like something went wrong. Try again?"
 msgstr "Mmm, parece que algo salió mal. ¿Inténtalo de nuevo?"
 
@@ -154,7 +154,7 @@ msgstr "¡Entendido! No recibirá actualizaciones de la calidad del aire hasta q
 msgid "Tell us why you're leaving so we can improve our service:"
 msgstr "Decirnos por qué se va para que podamos mejorar nuestro servicio:"
 
-#: airq/lib/client_preferences.py:148
+#: airq/lib/client_preferences.py:146
 msgid "Select one of"
 msgstr "Seleccione uno de"
 
@@ -206,57 +206,57 @@ msgstr "MUY INSALUBRE (AQI: 201 - 300): Aviso de salud. Todos pueden experimenta
 msgid "HAZARDOUS (AQI: 301 - 500): Health warnings of emergency conditions. The entire population is more likely to be affected."
 msgstr "PELIGROSO (AQI: 301 - 500): Advertencias sanitarias de situaciones de emergencia. Es más probable que toda la población se vea afectada."
 
-#: airq/models/clients.py:453
+#: airq/models/clients.py:462
 msgid "Has Hazebot been helpful? We’re looking for ways to grow and improve, and we’d love your help. Save our contact and share Hazebot with a friend, or text “feedback” to send feedback."
 msgstr "Hazebot ha sido de ayuda? Buscamos formas de crecer y mejorar, y nos encantaría su ayuda. Guardar nuestro contacto y compartir Hazebot con un amigo, o enviar un mensaje de texto con \"comentarios\" para dar comentarios."
 
-#: airq/models/clients.py:244
+#: airq/models/clients.py:254
 msgid "AQI category below which Hazebot won't send alerts.\n"
 "For example, if you set this to MODERATE, Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
 msgstr "Categoría de AQI por debajo de la cual Hazebot no enviará alertas.\n"
 "Por ejemplo, si configura esto en MODERADO, Hazebot no enviará alertas cuando AQI pase de BUENO a MODERADO o de MODERADO a BUENO."
 
-#: airq/commands/prefs.py:37
+#: airq/commands/prefs.py:32
 msgid "Hmm, %(input)s doesn't seem to be a valid choice. Please try again."
 msgstr "Mmm, %(input)s no parece ser una opción válida. Inténtalo de nuevo."
 
-#: airq/commands/prefs.py:48
+#: airq/commands/prefs.py:43
 msgid "Current: %(value)s"
 msgstr "Actual: %(value)s"
 
-#: airq/lib/client_preferences.py:63
+#: airq/lib/client_preferences.py:64
 msgid "Hmm, \"%(input)s\" doesn't seem to be a valid choice."
 msgstr "Mmm, \"%(input)s\" no parece ser una opción válida."
 
-#: airq/commands/prefs.py:78
+#: airq/commands/prefs.py:73
 msgid "Your %(pref)s is now %(value)s"
 msgstr "Tu %(pref)s ahora es %(value)s"
 
-#: airq/lib/client_preferences.py:203
+#: airq/lib/client_preferences.py:201
 msgid "Enter an integer between %(min_value)s and %(max_value)s."
 msgstr "Ingrese un número entero entre %(min_value)s y %(max_value)s"
 
-#: airq/lib/client_preferences.py:209
+#: airq/lib/client_preferences.py:207
 msgid "Enter an integer greater than or equal to %(min_value)s."
 msgstr "Ingrese un número entero mayor o igual que %(min_value)s."
 
-#: airq/lib/client_preferences.py:214
+#: airq/lib/client_preferences.py:212
 msgid "Enter an integer less than or equal to %(max_value)s."
 msgstr "Ingrese un número entero menor o igual que %(max_value)s."
 
-#: airq/lib/client_preferences.py:218
+#: airq/lib/client_preferences.py:216
 msgid "Enter an integer."
 msgstr "Ingrese un número entero."
 
-#: airq/models/clients.py:233
+#: airq/models/clients.py:243
 msgid "Alert Frequency"
 msgstr "Frecuencia de alerta."
 
-#: airq/models/clients.py:234
+#: airq/models/clients.py:244
 msgid "By default, Hazebot sends alerts at most every 2 hours."
 msgstr "De forma predeterminada, Hazebot envía alertas como máximo cada 2 horas."
 
-#: airq/models/clients.py:243
+#: airq/models/clients.py:253
 msgid "Alert Threshold"
 msgstr "Límite de alerta"
 
@@ -288,19 +288,19 @@ msgstr "Ninguna"
 msgid "US EPA"
 msgstr "US EPA"
 
-#: airq/models/clients.py:256
+#: airq/models/clients.py:266
 msgid "Conversion Factor"
 msgstr "Factor de conversión"
 
-#: airq/models/clients.py:257
+#: airq/models/clients.py:267
 msgid "Conversion factor to use when calculating AQI. For more details, see https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
 msgstr "Factor de conversión a utilizar al calcular el AQI. Para más detalles, consulte https://www2.purpleair.com/community/faq#hc-should-i-use-the-conversion-factors-on-the-purpleair-map-1."
 
-#: airq/models/clients.py:411
-msgid "Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+#: airq/models/clients.py:421
+msgid "AQI is now %(curr_aqi)s in zipcode %(zipcode)s (level: %(curr_aqi_level)s).\n"
 "\n"
 "Reply \"M\" for Menu or \"E\" to end alerts."
-msgstr "La calidad del aire en %(city)s %(zipcode)s ha cambiado a %(curr_aqi_level)s (AQI %(curr_aqi)s).\n"
+msgstr "AQI es %(curr_aqi)s en el código postal %(zipcode)s (nivel: %(curr_aqi_level)s).\n"
 "\n"
 "Responder \"M\" para el menú o \"E\" para parar los avisos."
 
