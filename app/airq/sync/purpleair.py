@@ -7,7 +7,6 @@ import math
 import requests
 import typing
 
-from sqlalchemy import and_
 from sqlalchemy import func
 from flask_babel import force_locale
 
@@ -251,7 +250,7 @@ def _metrics_sync():
 
     zipcodes_to_sensors = collections.defaultdict(list)
     for zipcode_id, latest_reading, humidity, pm_cf_1, sensor_id, distance in (
-        SensorZipcodeRelation.query.join(Sensor)
+        Sensor.query.join(SensorZipcodeRelation)
         .filter(Sensor.updated_at > ts.timestamp() - (30 * 60))
         .with_entities(
             SensorZipcodeRelation.zipcode_id,
