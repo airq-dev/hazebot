@@ -256,7 +256,7 @@ class Client(db.Model):  # type: ignore
             "For example, if you set this to MODERATE, "
             "Hazebot won't send alerts when AQI transitions from GOOD to MODERATE or from MODERATE to GOOD."
         ),
-        default=Pm25.GOOD,
+        default=Pm25.MODERATE,
         choices=Pm25,
     )
 
