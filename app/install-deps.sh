@@ -11,6 +11,9 @@ apt-get -y install --no-install-recommends \
     libpq-dev \
     libssl-dev \
     libz-dev \
-    netcat
+    netcat \
+    postgresql \
+    postgresql-contrib \
+    gdal-bin
 apt-get clean
 rm -rf /var/lib/apt/lists/*

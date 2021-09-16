@@ -19,19 +19,19 @@ class IntegerChoicesPreferenceTestCase(BaseTestCase):
         pref = self._get_pref()
         self.assertIsNone(pref.clean("0"))
         self.assertIsNone(pref.clean("20"))
-        self.assertEqual(0, pref.clean("1"))
-        self.assertEqual(12, pref.clean("2"))
+        self.assertEqual(0, pref.clean("A"))
+        self.assertEqual(12, pref.clean("B"))
 
     def test_get_prompt(self):
         pref = self._get_pref()
         self.assertEqual(
             "Select one of\n"
-            "1 - GOOD\n"
-            "2 - MODERATE\n"
-            "3 - UNHEALTHY FOR SENSITIVE GROUPS\n"
-            "4 - UNHEALTHY\n"
-            "5 - VERY UNHEALTHY\n"
-            "6 - HAZARDOUS",
+            "A - GOOD\n"
+            "B - MODERATE\n"
+            "C - UNHEALTHY FOR SENSITIVE GROUPS\n"
+            "D - UNHEALTHY\n"
+            "E - VERY UNHEALTHY\n"
+            "F - HAZARDOUS",
             pref.get_prompt(),
         )
 
@@ -50,14 +50,14 @@ class StringChoicesPreferenceTestCase(BaseTestCase):
         pref = self._get_pref()
         self.assertIsNone(pref.clean("0"))
         self.assertIsNone(pref.clean("20"))
-        self.assertEqual(ConversionFactor.NONE, pref.clean("1"))
-        self.assertEqual(ConversionFactor.US_EPA, pref.clean("2"))
+        self.assertEqual(ConversionFactor.NONE, pref.clean("A"))
+        self.assertEqual(ConversionFactor.US_EPA, pref.clean("B"))
 
     def test_get_prompt(self):
         pref = self._get_pref()
         self.assertEqual(
             "Select one of\n"
-            "1 - None\n"
-            "2 - {}".format(ConversionFactor.US_EPA.display),
+            "A - None\n"
+            "B - {}".format(ConversionFactor.US_EPA.display),
             pref.get_prompt(),
         )

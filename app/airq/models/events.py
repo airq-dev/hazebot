@@ -36,6 +36,7 @@ class EventType(enum.IntEnum):
     SET_PREF_REQUEST = 14
     SET_PREF = 15
     DONATE = 16
+    FEEDBACK_REQUEST = 17
 
 
 class EventQuery(BaseQuery):
@@ -140,6 +141,8 @@ class Event(db.Model):  # type: ignore
             return EmptySchema
         elif self.type_code == EventType.FEEDBACK_RECEIVED:
             return FeedbackReceivedEventSchema
+        elif self.type_code == EventType.FEEDBACK_REQUEST:
+            return EmptySchema
         elif self.type_code == EventType.RESUBSCRIBE:
             return SubscribeEventSchema
         elif self.type_code == EventType.UNSUBSCRIBE_AUTO:

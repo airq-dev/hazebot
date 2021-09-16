@@ -11,6 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from twilio.base.exceptions import TwilioRestException
 
+from airq import config
 from airq.config import db
 from airq.lib.client_preferences import IntegerChoicesPreference
 from airq.lib.client_preferences import IntegerPreference
@@ -71,12 +72,21 @@ class ClientQuery(BaseQuery):
     def filter_phones(self) -> "ClientQuery":
         return self.filter(Client.type_code == ClientIdentifierType.PHONE_NUMBER)
 
-    def filter_inactive_since(self, timestamp: float) -> "ClientQuery":
-        return (
-            self.filter_phones()
-            .filter(Client.last_activity_at < timestamp)
-            .filter(Client.last_alert_sent_at < timestamp)
+    def filter_inactive_since(
+        self, timestamp: float, include_unsubscribed: bool
+    ) -> "ClientQuery":
+        query = self.filter(Client.last_activity_at < timestamp).filter(
+            Client.last_alert_sent_at < timestamp
         )
+        if not config.DEV:
+            # Don't bother in dev since it makes testing harder.
+            # We want to be able to look at the logs to confirm this sent even when not using ngrok.
+            query = query.filter_phones()
+        if not include_unsubscribed:
+            query = query.filter(Client.alerts_disabled_at == 0).filter(
+                Client.zipcode_id.isnot(None)
+            )
+        return query
 
     def filter_eligible_for_sending(self) -> "ClientQuery":
         return (
@@ -409,8 +419,7 @@ class Client(db.Model):  # type: ignore
             return False
 
         message = gettext(
-            'Air quality in %(city)s %(zipcode)s has changed to %(curr_aqi_level)s (AQI %(curr_aqi)s).\n\nReply "M" for Menu or "E" to end alerts.',
-            city=self.zipcode.city.name,
+            'AQI is now %(curr_aqi)s in zipcode %(zipcode)s (level: %(curr_aqi_level)s).\n\nReply "M" for Menu or "E" to end alerts.',
             zipcode=self.zipcode.zipcode,
             curr_aqi_level=curr_aqi_level.display,
             curr_aqi=curr_aqi,
@@ -497,9 +506,42 @@ class Client(db.Model):  # type: ignore
         return None
 
     def should_accept_feedback(self) -> bool:
-        return self.has_recent_last_event_of_type(
-            EventType.FEEDBACK_BEGIN
-        ) or self.has_recent_last_event_of_type(EventType.UNSUBSCRIBE)
+        # First check if the most recent event is a feedback begin or unsub event
+        if self.has_recent_last_events_of_type(
+            {
+                EventType.FEEDBACK_BEGIN,
+                EventType.UNSUBSCRIBE,
+            }
+        ):
+            return True
+
+        # Then check if we have an outstanding feedback request
+        cutoff = now() - datetime.timedelta(days=4)
+        feedback_request_event = self.get_event_of_type_after(
+            EventType.FEEDBACK_REQUEST, cutoff
+        )
+        # Check whether feedback was responded to
+        if feedback_request_event and not self.get_event_of_type_after(
+            EventType.FEEDBACK_RECEIVED, feedback_request_event.timestamp
+        ):
+            return True
+
+        return False
+
+    def get_event_of_type_after(
+        self, event_type: EventType, cutoff: datetime.datetime
+    ) -> typing.Optional[Event]:
+        return (
+            Event.query.filter(Event.client_id == self.id)
+            .filter(Event.timestamp > cutoff)
+            .filter(Event.type_code == event_type)
+            .first()
+        )
+
+    def has_recent_last_events_of_type(
+        self, event_types: typing.Set[EventType]
+    ) -> bool:
+        return any(self.has_recent_last_event_of_type(e) for e in event_types)
 
     def has_recent_last_event_of_type(self, event_type: EventType) -> bool:
         last_event = self.get_last_client_event()

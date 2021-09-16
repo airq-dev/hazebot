@@ -1,5 +1,6 @@
 import abc
 import collections
+import string
 import typing
 
 from flask_babel import gettext
@@ -122,8 +123,12 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         super().__init__(display_name, description, default)
         self._choices = choices
 
-    def _get_choices(self) -> typing.List[TChoicesEnum]:
-        return list(self._choices)
+    def _get_choices_with_letters(self) -> typing.List[typing.Tuple[str, TChoicesEnum]]:
+        choices: typing.List[TChoicesEnum] = list(self._choices)
+        out = []
+        for i, choice in enumerate(choices):
+            out.append((string.ascii_uppercase[i], choice))
+        return out
 
     def _cast(self, value: typing.Any) -> TChoicesEnum:
         return self._choices.from_value(value)
@@ -132,22 +137,15 @@ class ChoicesPreference(typing.Generic[TChoicesEnum], ClientPreference[TChoicesE
         return value.display
 
     def clean(self, user_input: str) -> typing.Optional[TChoicesEnum]:
-        choices = self._get_choices()
-        try:
-            idx = int(user_input)
-            if idx <= 0:
-                return None
-            return choices[idx - 1]
-        except (IndexError, TypeError, ValueError):
-            return None
+        return dict(self._get_choices_with_letters()).get(user_input.upper())
 
     def _validate(self, _value: TChoicesEnum):
         pass  # Valid by definition
 
     def get_prompt(self) -> str:
         prompt = [gettext("Select one of")]
-        for i, choice in enumerate(self._get_choices(), start=1):
-            prompt.append(f"{i} - {choice.display}")
+        for letter, choice in self._get_choices_with_letters():
+            prompt.append(f"{letter} - {choice.display}")
         return "\n".join(prompt)
 
 
@@ -244,12 +242,15 @@ class ClientPreferencesRegistry:
         return cls.get_by_name(name).default
 
     @classmethod
-    def iter_with_index(cls) -> typing.Iterator[typing.Tuple[int, ClientPreference]]:
-        return enumerate(cls._prefs.values(), start=1)
+    def iter_with_letters(cls) -> typing.Iterator[typing.Tuple[str, ClientPreference]]:
+        return (
+            (string.ascii_uppercase[i], name)
+            for i, name in enumerate(cls._prefs.values())
+        )
 
     @classmethod
-    def get_by_index(cls, index: int) -> typing.Optional[ClientPreference]:
-        for i, pref in cls.iter_with_index():
-            if i == index:
+    def get_by_letter(cls, letter: str) -> typing.Optional[ClientPreference]:
+        for l, pref in cls.iter_with_letters():
+            if l == letter:
                 return pref
         return None

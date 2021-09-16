@@ -1,5 +1,6 @@
 alembic==1.4.2
 amqp==2.6.1
+Babel==2.9.1
 billiard==3.6.3.0
 blinker==1.4
 boto3==1.14.56
@@ -15,6 +16,7 @@ Flask-Login==0.5.0
 Flask-Migrate==2.5.3
 Flask-SQLAlchemy==2.4.4
 Flask-WTF==0.14.3
+GeoAlchemy2==0.9.4
 gunicorn==20.0.4
 idna==2.10
 itsdangerous==1.1.0
@@ -23,10 +25,12 @@ jmespath==0.10.0
 kombu==4.6.11
 Mako==1.1.3
 MarkupSafe==1.1.1
+packaging==21.0
 phonenumbers==8.12.9
 psycopg2==2.8.5
 pycurl==7.43.0.6
 PyJWT==1.7.1
+pyparsing==2.4.7
 python-dateutil==2.8.1
 python-editor==1.0.4
 python-geohash==0.8.5
