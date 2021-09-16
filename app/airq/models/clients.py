@@ -405,7 +405,7 @@ class Client(db.Model):  # type: ignore
         # Do not alert clients who received an alert recently unless AQI has changed markedly.
         was_alerted_recently = self.last_alert_sent_at > timestamp() - (60 * 60 * 6)
         last_aqi = self.get_last_aqi()
-        if was_alerted_recently and abs(curr_aqi - last_aqi) < 20:
+        if was_alerted_recently and abs(curr_aqi - last_aqi) < 50:
             return False
 
         message = gettext(
