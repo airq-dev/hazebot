@@ -61,7 +61,6 @@ class ClientTestCase(BaseTestCase):
         self.db.session.commit()
         return client
 
-    # @mock.patch("")
     def test_maybe_notify(self):
         zipcode = self.zipcode
         assert zipcode is not None, "Mypy is unhappy"

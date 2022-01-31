@@ -97,6 +97,8 @@ setattr(
 )
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config = {
+    "HAZEBOT_ENABLED": bool(int(os.getenv("HAZEBOT_ENABLED", 1))),
+    "HAZEBOT_SHARE_REQUESTS_ENABLED": os.getenv("HAZEBOT_SHARE_REQUESTS_ENABLED", True),
     "BABEL_DEFAULT_LOCALE": "en",
     "BABEL_TRANSLATION_DIRECTORIES": os.path.join(base_dir, "translations"),
     "SQLALCHEMY_DATABASE_URI": f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}",
