@@ -342,7 +342,7 @@ def _send_alerts():
 
 def _send_share_requests() -> int:
     num_sent = 0
-    if app.config['HAZEBOT_SHARE_REQUESTS_ENABLED']:
+    if app.config["HAZEBOT_SHARE_REQUESTS_ENABLED"]:
         logger = get_celery_logger()
         for client in Client.query.filter_eligible_for_share_requests().all():
             with force_locale(client.locale):

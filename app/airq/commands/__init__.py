@@ -59,8 +59,10 @@ def _parse_command(client: Client, user_input: str) -> SMSCommand:
 def handle_command(
     user_input: str, identifier: str, identifier_type: ClientIdentifierType, locale: str
 ) -> MessageResponse:
-    if not app.config['HAZEBOT_ENABLED']:
-        return MessageResponse("Hazebot is sleeping until fire season. We'll be back in June or July of 2022.")
+    if not app.config["HAZEBOT_ENABLED"]:
+        return MessageResponse(
+            "Hazebot is sleeping until fire season. We'll be back in June or July of 2022."
+        )
     else:
         client, was_created = Client.query.get_or_create(
             identifier, identifier_type, locale
