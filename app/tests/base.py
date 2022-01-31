@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+from copy import deepcopy
 import datetime
 import pytz
 import typing
@@ -138,3 +140,12 @@ class BaseTestCase(unittest.TestCase):
         )
         self.assertIsNotNone(event)
         self.assertDictEqual(data, event.data)
+
+    @contextmanager
+    def mock_config(self, **config):
+        prior_config = deepcopy(app.config)
+        app.config.update(config)
+        try:
+            yield
+        finally:
+            app.config = prior_config

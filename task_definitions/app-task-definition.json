@@ -45,6 +45,14 @@
                 {
                     "name": "TWILIO_NUMBER_ES",
                     "value": "+17732506640"
+                },
+                {
+                    "name": "HAZEBOT_ENABLED",
+                    "value": 0
+                },
+                {
+                    "name": "HAZEBOT_SHARE_REQUESTS_ENABLED",
+                    "value": 0
                 }
             ],
             "secrets": [

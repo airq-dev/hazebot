@@ -1,4 +1,3 @@
-import html
 import typing
 
 from airq.commands.base import MessageResponse
@@ -17,6 +16,7 @@ from airq.commands.prefs import RequestSetPref
 from airq.commands.prefs import SetPref
 from airq.commands.resubscribe import Resubscribe
 from airq.commands.unsubscribe import Unsubscribe
+from airq.config import app
 from airq.models.clients import Client
 from airq.models.clients import ClientIdentifierType
 
@@ -59,9 +59,14 @@ def _parse_command(client: Client, user_input: str) -> SMSCommand:
 def handle_command(
     user_input: str, identifier: str, identifier_type: ClientIdentifierType, locale: str
 ) -> MessageResponse:
-    client, was_created = Client.query.get_or_create(
-        identifier, identifier_type, locale
-    )
-    if not was_created:
-        client.mark_seen(locale)
-    return _parse_command(client, user_input).handle()
+    if not app.config["HAZEBOT_ENABLED"]:
+        return MessageResponse(
+            "Hazebot is sleeping until fire season. We'll be back in June or July of 2022."
+        )
+    else:
+        client, was_created = Client.query.get_or_create(
+            identifier, identifier_type, locale
+        )
+        if not was_created:
+            client.mark_seen(locale)
+        return _parse_command(client, user_input).handle()

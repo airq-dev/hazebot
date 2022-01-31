@@ -9,6 +9,7 @@ import typing
 from flask_babel import force_locale
 
 from airq.celery import get_celery_logger
+from airq.config import app
 from airq.config import db
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
@@ -339,18 +340,21 @@ def _send_alerts():
     logger.info("Sent %s alerts", num_sent)
 
 
-def _send_share_requests():
-    logger = get_celery_logger()
+def _send_share_requests() -> int:
     num_sent = 0
-    for client in Client.query.filter_eligible_for_share_requests().all():
-        with force_locale(client.locale):
-            try:
-                if client.request_share():
-                    num_sent += 1
-            except Exception as e:
-                logger.exception("Failed to request share from %s: %s", client, e)
+    if app.config["HAZEBOT_SHARE_REQUESTS_ENABLED"]:
+        logger = get_celery_logger()
+        for client in Client.query.filter_eligible_for_share_requests().all():
+            with force_locale(client.locale):
+                try:
+                    if client.request_share():
+                        num_sent += 1
+                except Exception as e:
+                    logger.exception("Failed to request share from %s: %s", client, e)
 
-    logger.info("Requests %s shares", num_sent)
+        logger.info("Requests %s shares", num_sent)
+
+    return num_sent
 
 
 def purpleair_sync():

@@ -3,6 +3,7 @@ import logging
 import time
 import typing
 
+from airq.config import app
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
 from airq.sync.geonames import geonames_sync
@@ -26,8 +27,12 @@ def _should_sync_geonames() -> bool:
 def models_sync(
     force_rebuild_geography: typing.Optional[bool] = None,
     only_if_empty: typing.Optional[bool] = None,
-):
+) -> bool:
+    if not app.config["HAZEBOT_ENABLED"]:
+        return False
+
     start_ts = time.perf_counter()
+    updated = False
 
     num_zipcodes = Zipcode.query.count()
     if only_if_empty or num_zipcodes == 0:
@@ -36,9 +41,11 @@ def models_sync(
         force_rebuild_geography = _should_sync_geonames()
 
     if force_rebuild_geography:
+        updated = True
         geonames_sync()
 
     if not only_if_empty or Sensor.query.count() == 0:
+        updated = True
         purpleair_sync()
 
     duration = time.perf_counter() - start_ts
@@ -47,3 +54,5 @@ def models_sync(
     else:
         log_level = logging.INFO
     logger.log(log_level, "Completed models_sync in %s seconds", duration)
+
+    return updated

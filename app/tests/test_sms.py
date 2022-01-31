@@ -906,3 +906,14 @@ class SMSTestCase(BaseTestCase):
         self.assert_event(
             client_id, EventType.FEEDBACK_RECEIVED, feedback="Blah Blah Blah"
         )
+
+    def test_with_hazebot_off(self):
+        with self.mock_config(HAZEBOT_ENABLED=False):
+            response = self.client.post(
+                "/sms/en", data={"Body": "00000", "From": "+12222222222"}
+            )
+        self.assertEqual(200, response.status_code)
+        self.assert_twilio_response(
+            "Hazebot is sleeping until fire season. We'll be back in June or July of 2022.",
+            response.data,
+        )
