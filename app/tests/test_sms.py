@@ -1,4 +1,3 @@
-from airq.config import app
 from airq.lib.readings import Pm25
 from airq.models.clients import Client
 from airq.models.events import Event

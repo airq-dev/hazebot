@@ -5,7 +5,6 @@ import logging
 from requests.exceptions import HTTPError
 from unittest import mock
 
-from airq.config import app
 from airq.lib.purpleair import PURPLEAIR_DATA_API_URL
 from airq.lib.purpleair import PURPLEAIR_SENSORS_API_URL
 from airq.models.cities import City
@@ -55,6 +54,16 @@ class SyncTestCase(BaseTestCase):
         for zipcode in zipcodes:
             self.assertIsNotNone(zipcode.metrics_data)
             self.assertTrue(len(zipcode.metrics_data["sensor_ids"]) > 0)
+
+    def test_sync_disabled(self):
+        with self.mock_config(HAZEBOT_ENABLED=False):
+            with MockRequests(
+                {
+                    GEONAMES_URL: ErrorResponse(HTTPError("foo")),
+                    ZIP_2_TIMEZONES_URL: ErrorResponse(HTTPError("foo")),
+                }
+            ):
+                self.assertFalse(models_sync(force_rebuild_geography=True))
 
     def test_send_share_requests(self):
         zipcode = Zipcode.query.first()
