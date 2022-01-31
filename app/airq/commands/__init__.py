@@ -61,7 +61,9 @@ def handle_command(
 ) -> MessageResponse:
     if not app.config["HAZEBOT_ENABLED"]:
         return MessageResponse(
-            "Hazebot is sleeping until fire season. We'll be back in June or July of 2022."
+            "Hazebot is sleeping until fire season. "
+            "We'll be back in June 2022. "
+            "Until then, you can email info@hazebot.org with questions or feedback."
         )
     else:
         client, was_created = Client.query.get_or_create(
