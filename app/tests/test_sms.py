@@ -914,6 +914,6 @@ class SMSTestCase(BaseTestCase):
             )
         self.assertEqual(200, response.status_code)
         self.assert_twilio_response(
-            "Hazebot is sleeping until fire season. We'll be back in June or July of 2022.",
+            "Hazebot is sleeping until fire season. We'll be back in June 2022. Until then, you can email info@hazebot.org with questions or feedback.",
             response.data,
         )
