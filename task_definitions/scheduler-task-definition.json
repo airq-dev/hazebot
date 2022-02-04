@@ -40,11 +40,11 @@
                 },
                 {
                     "name": "HAZEBOT_ENABLED",
-                    "value": "0"
+                    "value": "1"
                 },
                 {
                     "name": "HAZEBOT_SHARE_REQUESTS_ENABLED",
-                    "value": "0"
+                    "value": "1"
                 }
             ],
             "secrets": [
