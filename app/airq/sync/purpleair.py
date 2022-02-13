@@ -1,4 +1,5 @@
 import collections
+import gc
 import geohash
 import json
 import logging
@@ -6,6 +7,7 @@ import math
 import requests
 import typing
 
+from sqlalchemy import func
 from flask_babel import force_locale
 
 from airq.celery import get_celery_logger
@@ -166,6 +168,7 @@ def _sensors_sync(
                 data.update(
                     latitude=latitude,
                     longitude=longitude,
+                    coordinates=f"POINT({longitude} {latitude})",
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["sensor_index"])
@@ -191,10 +194,6 @@ def _sensors_sync(
 def _relations_sync(moved_sensor_ids: typing.List[int]):
     logger = get_celery_logger()
 
-    trie: Trie[Zipcode] = Trie()
-    for zipcode in Zipcode.query.all():
-        trie.insert(zipcode.geohash, zipcode)
-
     new_relations = []
 
     # Delete the old relations before rebuilding them
@@ -204,44 +203,39 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
     logger.info("Deleting %s relations", deleted_relations_count)
 
     sensors = Sensor.query.filter(Sensor.id.in_(moved_sensor_ids)).all()
+    logger.info("Building relations map for sensors")
+    num_processed = 0
     for sensor in sensors:
-        gh = sensor.geohash
-        latitude = sensor.latitude
-        longitude = sensor.longitude
-        done = False
-        zipcode_ids: typing.Set[int] = set()
-        # TODO: Use Postgres' native geolocation extension.
-        while gh and not done:
-            zipcodes = [
-                zipcode for zipcode in trie.get(gh) if zipcode.id not in zipcode_ids
-            ]
-
-            for zipcode_id, distance in sorted(
-                [
-                    (
-                        z.id,
-                        haversine_distance(
-                            longitude, latitude, z.longitude, z.latitude
-                        ),
-                    )
-                    for z in zipcodes
-                ],
-                key=lambda t: t[1],
-            ):
-                if distance >= 25:
-                    done = True
-                    break
-                if len(zipcode_ids) >= 25:
-                    done = True
-                    break
-                zipcode_ids.add(zipcode_id)
-                data = {
-                    "zipcode_id": zipcode_id,
-                    "sensor_id": sensor.id,
-                    "distance": distance,
-                }
-                new_relations.append(SensorZipcodeRelation(**data))
-            gh = gh[:-1]
+        if num_processed % 50 == 0:
+            logger.info("Processed %s sensors", num_processed)
+        # Get all zipcodes within the desired radius from the sensor
+        #
+        # TODO: We should eventually rebuild all relations using this new PostGIS-powered logic.
+        # The old logic used Geohashing and was less precise.
+        #
+        zipcodes = (
+            Zipcode.query.filter(
+                func.ST_DistanceSphere(Zipcode.coordinates, sensor.coordinates) <= 25000
+            )
+            .with_entities(Zipcode.id)
+            .add_columns(
+                func.ST_DistanceSphere(Zipcode.coordinates, sensor.coordinates).label(
+                    "distance"
+                )
+            )
+            .order_by("distance")
+            .limit(25)
+            .all()
+        )
+        for zipcode_id, distance in zipcodes:
+            new_relations.append(
+                SensorZipcodeRelation(
+                    zipcode_id=zipcode_id, sensor_id=sensor.id, distance=distance / 1000
+                )
+            )
+        num_processed += 1
+        if num_processed % 100 == 0:
+            gc.collect()
 
     if new_relations:
         logger.info("Creating %s relations", len(new_relations))

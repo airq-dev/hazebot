@@ -424,6 +424,7 @@ class Client(db.Model):  # type: ignore
             curr_aqi_level=curr_aqi_level.display,
             curr_aqi=curr_aqi,
         )
+
         if not self.send_message(message):
             return False
 

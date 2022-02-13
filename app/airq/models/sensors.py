@@ -1,4 +1,5 @@
 from flask_sqlalchemy import BaseQuery
+from geoalchemy2 import Geometry
 
 from airq.config import db
 
@@ -39,6 +40,7 @@ class Sensor(db.Model):  # type: ignore
     geohash_bit_10 = db.Column(db.String(), nullable=False)
     geohash_bit_11 = db.Column(db.String(), nullable=False)
     geohash_bit_12 = db.Column(db.String(), nullable=False)
+    coordinates = db.Column(Geometry("POINT"), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Sensor {self.id}: {self.latest_reading}>"
