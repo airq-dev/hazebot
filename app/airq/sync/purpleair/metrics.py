@@ -20,7 +20,7 @@ def _execute_query(timestamp):
     # This approach is really slow (about 5 mins) and hard to test
     # since it's so complex. How can we make this better?
     #
-    # For testability: it would be useful to test this in a single 
+    # For testability: it would be useful to test this in a single
     # zipcode containing a few sensors. That would allow us to assert
     # that the algorithm works correctly:
     # - When there are two equidistant sensors, it assigns equal weight to each.

@@ -172,7 +172,7 @@ def _sensors_sync(
                 moved_sensor_ids.append(result["sensor_index"])
             elif sensor.coordinates is None:
                 # Sensor wasn't moved, but we haven't filled in its coordinates field yet.
-                data['coordinates'] = f"POINT({longitude} {latitude})"
+                data["coordinates"] = f"POINT({longitude} {latitude})"
 
             if sensor:
                 updates.append(data)
