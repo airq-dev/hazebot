@@ -1,4 +1,3 @@
-import collections
 import geohash
 import json
 import logging
@@ -22,6 +21,7 @@ from airq.models.clients import Client
 from airq.models.relations import SensorZipcodeRelation
 from airq.models.sensors import Sensor
 from airq.models.zipcodes import Zipcode
+from airq.sync.purpleair import metrics
 
 
 # Try to get at least 8 readings per zipcode.
@@ -166,9 +166,13 @@ def _sensors_sync(
                 data.update(
                     latitude=latitude,
                     longitude=longitude,
+                    coordinates=f"POINT({longitude} {latitude})",
                     **{f"geohash_bit_{i}": c for i, c in enumerate(gh, start=1)},
                 )
                 moved_sensor_ids.append(result["sensor_index"])
+            elif sensor.coordinates is None:
+                # Sensor wasn't moved, but we haven't filled in its coordinates field yet.
+                data['coordinates'] = f"POINT({longitude} {latitude})"
 
             if sensor:
                 updates.append(data)
@@ -250,82 +254,6 @@ def _relations_sync(moved_sensor_ids: typing.List[int]):
             db.session.commit()
 
 
-def _metrics_sync():
-    logger = get_celery_logger()
-    updates = []
-    ts = now()
-
-    zipcodes_to_sensors = collections.defaultdict(list)
-    for zipcode_id, latest_reading, humidity, pm_cf_1, sensor_id, distance in (
-        Sensor.query.join(SensorZipcodeRelation)
-        .filter(Sensor.updated_at > ts.timestamp() - (30 * 60))
-        .with_entities(
-            SensorZipcodeRelation.zipcode_id,
-            Sensor.latest_reading,
-            Sensor.humidity,
-            Sensor.pm_cf_1,
-            Sensor.id,
-            SensorZipcodeRelation.distance,
-        )
-        .all()
-    ):
-        zipcodes_to_sensors[zipcode_id].append(
-            (latest_reading, humidity, pm_cf_1, sensor_id, distance)
-        )
-
-    for zipcode_id, sensor_tuples in zipcodes_to_sensors.items():
-        pm_25_readings: typing.List[float] = []
-        pm_cf_1_readings: typing.List[float] = []
-        humidities: typing.List[float] = []
-        closest_reading = float("inf")
-        farthest_reading = 0.0
-        sensor_ids: typing.List[int] = []
-        for pm_25, humidity, pm_cf_1, sensor_id, distance in sorted(
-            sensor_tuples, key=lambda s: s[-1]
-        ):
-            if (
-                len(pm_25_readings) < DESIRED_NUM_READINGS
-                or distance < DESIRED_READING_DISTANCE_KM
-            ):
-                pm_25_readings.append(pm_25)
-                humidities.append(humidity)
-                pm_cf_1_readings.append(pm_cf_1)
-                sensor_ids.append(sensor_id)
-                closest_reading = min(distance, closest_reading)
-                farthest_reading = max(distance, farthest_reading)
-            else:
-                break
-
-        if pm_25_readings:
-            num_sensors = len(pm_25_readings)
-            pm25 = round(sum(pm_25_readings) / num_sensors, ndigits=3)
-            humidity = round(sum(humidities) / num_sensors, ndigits=3)
-            pm_cf_1 = round(sum(pm_cf_1_readings) / num_sensors, ndigits=3)
-            min_sensor_distance = round(closest_reading, ndigits=3)
-            max_sensor_distance = round(farthest_reading, ndigits=3)
-            details = {
-                "num_sensors": num_sensors,
-                "min_sensor_distance": min_sensor_distance,
-                "max_sensor_distance": max_sensor_distance,
-                "sensor_ids": sensor_ids,
-            }
-            updates.append(
-                {
-                    "id": zipcode_id,
-                    "pm25": pm25,
-                    "humidity": humidity,
-                    "pm_cf_1": pm_cf_1,
-                    "pm25_updated_at": ts.timestamp(),
-                    "metrics_data": details,
-                }
-            )
-
-    logger.info("Updating %s zipcodes", len(updates))
-    for mappings in chunk_list(updates, batch_size=5000):
-        db.session.bulk_update_mappings(Zipcode, mappings)
-        db.session.commit()
-
-
 def _send_alerts():
     logger = get_celery_logger()
     num_sent = 0
@@ -372,7 +300,7 @@ def purpleair_sync():
         _relations_sync(moved_sensor_ids)
 
     logger.info("Syncing metrics")
-    _metrics_sync()
+    metrics.update()
 
     logger.info("Sending alerts")
     _send_alerts()

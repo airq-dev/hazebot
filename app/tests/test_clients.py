@@ -212,7 +212,7 @@ class ClientTestCase(BaseTestCase):
         client = self._make_client(last_pm25=self.zipcode.pm25)
         client.disable_alerts()
         self.assertEqual(self.timestamp, client.alerts_disabled_at)
-        self.assertEqual(9.875, client.last_pm25)
+        self.assertEqual(10.557, client.last_pm25)
         self.assert_event(
             client.id, EventType.UNSUBSCRIBE, zipcode=client.zipcode.zipcode
         )

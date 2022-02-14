@@ -10,6 +10,7 @@ class SensorZipcodeRelation(db.Model):  # type: ignore
     zipcode_id = db.Column(
         db.Integer(), db.ForeignKey("zipcodes.id"), nullable=False, primary_key=True
     )
+    # Unit: KM
     distance = db.Column(db.Float(), nullable=False)
 
     def __repr__(self) -> str:
