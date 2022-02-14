@@ -16,12 +16,7 @@ DESIRED_NUM_READINGS = 8
 DESIRED_READING_DISTANCE_KM = 2.5
 
 
-def update():
-    logger = get_celery_logger()
-
-    ts = now()
-    start_ts = time.perf_counter()
-
+def _execute_query(timestamp):
     # This approach is really slow (about 5 mins) and hard to test
     # since it's so complex. How can we make this better?
     #
@@ -35,15 +30,16 @@ def update():
     # - When there are three sensors which are not equidistant, the closer
     #   sensors are assigned more weight.
     #
+    # For speed: ¯\_(ツ)_/¯
 
     sql = text(
         textwrap.dedent(
-            f"""
-    -- Compute the Voronoi Diagram for the set of sensors
+            """
+    -- Compute the Voronoi Diagram for the set of sensors.
     WITH voronoi_cells AS (
         SELECT
             ST_Intersection(
-                (ST_DUMP(
+                (ST_Dump(
                     ST_VoronoiPolygons(
                         ST_Collect(coordinates)
                     ) 
@@ -55,7 +51,9 @@ def update():
         AND updated_at > :updated_at
     ),
 
-    -- Map each Voronoi cell to the sensor it contains
+    -- Map each Voronoi cell to the sensor it contains.
+    -- This is actually the slowest part of this query
+    -- but I'm not sure how to speed it up.
     sensors_with_cells AS (
         SELECT 
             s.id,
@@ -68,23 +66,30 @@ def update():
         ON ST_Within(s.coordinates, v.cell)
     ),
 
-    -- Find the distance of the eighth closest sensor to each zipcode
+    -- Find the distance of the eighth closest sensor to each zipcode.
+    -- We use this to ensure that if a zipcode has no sensors within
+    -- a 2.5 KM radius, we can search outside that radius for at most
+    -- eight sensors. This won't result in us choosing sensors really
+    -- far away because the `sensors_zipcodes` only contains relations
+    -- between sensors and zipcodes at most 20 KM apart.
     zipcodes_to_distance AS (
         SELECT
             z.id,
             (
-                SELECT sz.distance
-                FROM sensors_zipcodes sz
-                WHERE sz.zipcode_id = z.id
-                ORDER BY sz.distance
-                LIMIT 1
-                OFFSET :desired_num_readings
+                SELECT MAX(s2.distance)
+                FROM (
+                    SELECT s1.distance
+                    FROM sensors_zipcodes s1
+                    WHERE s1.zipcode_id = z.id
+                    ORDER BY s1.distance
+                    LIMIT :desired_num_readings
+                ) s2
             ) as distance_to_eighth_closest_sensor
         FROM zipcodes z
         GROUP BY z.id
     ) 
 
-    -- For each zipcode, compute metrics
+    -- For each zipcode, compute metrics for all eligible sensors.
     SELECT
         zd.id,
         SUM(sc.latest_reading * sc.area) / SUM(sc.area) as pm25,
@@ -110,15 +115,22 @@ def update():
         )
     )
 
-    rows = list(db.engine.execute(
+    return db.engine.execute(
         sql,
         {
-            "desired_num_readings": DESIRED_NUM_READINGS - 1,
+            "desired_num_readings": DESIRED_NUM_READINGS,
             "desired_reading_distance_km": DESIRED_READING_DISTANCE_KM,
-            "updated_at": ts.timestamp() - (30 * 60),
+            "updated_at": timestamp - (30 * 60),
         },
-    ))
+    )
 
+
+def _compute_updates():
+    logger = get_celery_logger()
+
+    ts = now()
+    start_ts = time.perf_counter()
+    rows = _execute_query(ts.timestamp())
     end_ts = time.perf_counter()
     duration = end_ts - start_ts
     logger.info("executed sql in %f seconds", duration)
@@ -154,7 +166,15 @@ def update():
             }
         )
 
+    return updates
+
+
+def update():
+    updates = _compute_updates()
+
+    logger = get_celery_logger()
     logger.info("Updating %d zipcodes", len(updates))
+
     for mappings in chunk_list(updates, batch_size=5000):
         db.session.bulk_update_mappings(Zipcode, mappings)
         db.session.commit()

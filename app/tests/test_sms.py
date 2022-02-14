@@ -81,7 +81,7 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(2, Client.query.count())
         self.assertEqual(4, Event.query.count())
         self.assert_twilio_response(
-            "Welcome to Hazebot! We'll send you alerts when air quality in Molalla 97038 changes category. Air quality is now MODERATE (AQI 74).\n"
+            "Welcome to Hazebot! We'll send you alerts when air quality in Molalla 97038 changes category. Air quality is now MODERATE (AQI 69).\n"
             "\n"
             'Save this contact and text us your zipcode whenever you\'d like an instant update. And you can always text "M" to see the whole menu.',
             response.data,
@@ -89,7 +89,7 @@ class SMSTestCase(BaseTestCase):
         )
 
         client_id = Client.query.filter_by(identifier="+13333333333").first().id
-        self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=22.9)
+        self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=20.416)
 
         response = self.client.post(
             "/sms/en", data={"Body": "2", "From": "+13333333333"}
@@ -98,12 +98,12 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(2, Client.query.count())
         self.assertEqual(5, Event.query.count())
         self.assert_twilio_response(
-            "Molalla 97038 is MODERATE (AQI 74).\n"
+            "Molalla 97038 is MODERATE (AQI 69).\n"
             "\n"
             'Text "M" for Menu, "E" to end alerts.',
             response.data,
         )
-        self.assert_event(client_id, EventType.LAST, zipcode="97038", pm25=22.9)
+        self.assert_event(client_id, EventType.LAST, zipcode="97038", pm25=20.416)
 
         response = self.client.post(
             "/sms/en", data={"Body": "1", "From": "+13333333333"}
@@ -117,19 +117,19 @@ class SMSTestCase(BaseTestCase):
             "Here are the closest places with better air quality:"
             "\n"
             " - Estacada 97023: GOOD (16.7 mi)\n"
+            " - West Linn 97068: GOOD (17.3 mi)\n"
             " - Gladstone 97027: GOOD (18.5 mi)\n"
-            " - Eagle Creek 97022: GOOD (20.0 mi)\n"
             "\n"
-            "Average PM2.5 from 3 sensors near 97038 is 22.9 ug/m^3.",
+            "Average PM2.5 from 3 sensors near 97038 is 20.416 ug/m^3.",
             response.data,
         )
         self.assert_event(
             client_id,
             EventType.DETAILS,
             zipcode="97038",
-            pm25=22.9,
+            pm25=20.416,
             num_sensors=3,
-            recommendations=["97023", "97027", "97022"],
+            recommendations=["97023", "97068", "97027"],
         )
 
         self.clock.advance()
@@ -140,12 +140,12 @@ class SMSTestCase(BaseTestCase):
         self.assertEqual(2, Client.query.count())
         self.assertEqual(7, Event.query.count())
         self.assert_twilio_response(
-            "Molalla 97038 is MODERATE (AQI 74).\n"
+            "Molalla 97038 is MODERATE (AQI 69).\n"
             "\n"
             'Text "M" for Menu, "E" to end alerts.',
             response.data,
         )
-        self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=22.9)
+        self.assert_event(client_id, EventType.QUALITY, zipcode="97038", pm25=20.416)
 
         self.clock.advance()
         response = self.client.post(

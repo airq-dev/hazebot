@@ -109,7 +109,6 @@ if ! $running; then
       -f docker-compose.yml \
       -f docker-compose.test.yml \
       exec \
-      -T \
       -e SKIP_FORCE_REBUILD=1 \
       app python3 -m unittest tests.test_sync.SyncTestCase.test_sync
 fi
@@ -120,7 +119,6 @@ if [ "$module" ]; then
     -f docker-compose.yml \
     -f docker-compose.test.yml \
     exec \
-    -T \
     app python3 -m unittest ${module}
 else
   echo "Running all tests"
@@ -128,7 +126,6 @@ else
     -f docker-compose.yml \
     -f docker-compose.test.yml \
     exec \
-    -T \
     app python3 -m unittest discover
 fi
 
