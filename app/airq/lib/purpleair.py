@@ -4,7 +4,6 @@ import typing
 from airq.config import PURPLEAIR_API_KEY
 
 
-PURPLEAIR_DATA_API_URL = "https://www.purpleair.com/data.json"
 PURPLEAIR_SENSORS_API_URL = "https://api.purpleair.com/v1/sensors"
 
 

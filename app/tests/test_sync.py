@@ -5,7 +5,6 @@ import logging
 from requests.exceptions import HTTPError
 from unittest import mock
 
-from airq.lib.purpleair import PURPLEAIR_DATA_API_URL
 from airq.lib.purpleair import PURPLEAIR_SENSORS_API_URL
 from airq.models.cities import City
 from airq.models.clients import Client
@@ -37,7 +36,6 @@ class SyncTestCase(BaseTestCase):
             {
                 GEONAMES_URL: "geonames/US.zip",
                 ZIP_2_TIMEZONES_URL: "geonames/zipcodes_to_timezones.gz",
-                PURPLEAIR_DATA_API_URL: "purpleair/pm_cf_1.json",
                 PURPLEAIR_SENSORS_API_URL: "purpleair/purpleair.json",
             }
         ):
@@ -96,7 +94,6 @@ class SyncTestCase(BaseTestCase):
         mock_requests = MockRequests(
             {
                 PURPLEAIR_SENSORS_API_URL: ErrorResponse(error),
-                PURPLEAIR_DATA_API_URL: ErrorResponse(error),
             }
         )
         with mock_requests:
