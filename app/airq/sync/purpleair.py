@@ -14,7 +14,6 @@ from airq.config import db
 from airq.lib.clock import now
 from airq.lib.clock import timestamp
 from airq.lib.geo import haversine_distance
-from airq.lib.purpleair import call_purpleair_data_api
 from airq.lib.purpleair import call_purpleair_sensors_api
 from airq.lib.trie import Trie
 from airq.lib.util import chunk_list
@@ -67,31 +66,10 @@ def _get_purpleair_sensors_data() -> typing.List[typing.Dict[str, typing.Any]]:
                 ]
             except KeyError:
                 pass
+            # Rename `pm2.5_cf_1`
+            sensor_data["pm_cf_1"] = sensor_data.pop("pm2.5_cf_1")
             data.append(sensor_data)
         return data
-
-
-# TODO: Remove this once `pm_cf_1` is available via the sensors API.
-def _get_purpleair_pm_cf_1_data():
-    logger = get_celery_logger()
-    data = {}
-    try:
-        response_dict = call_purpleair_data_api().json()
-    except (requests.RequestException, json.JSONDecodeError) as e:
-        logger.warning(
-            "Failed to retrieve pm_cf_1 data: %s",
-            e,
-            exc_info=True,
-        )
-    else:
-        fields = response_dict.get("fields")
-        if fields:
-            for raw_data in response_dict["data"]:
-                zipped = dict(zip(fields, raw_data))
-                pm_cf_1 = zipped["pm_cf_1"]
-                if isinstance(pm_cf_1, float):
-                    data[zipped["ID"]] = pm_cf_1
-    return data
 
 
 def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
@@ -128,7 +106,6 @@ def _is_valid_reading(sensor_data: typing.Dict[str, typing.Any]) -> bool:
 
 def _sensors_sync(
     purpleair_data: typing.List[typing.Dict[str, typing.Any]],
-    purpleair_pm_cf_1_data: typing.Dict[int, float],
 ) -> typing.List[int]:
     logger = get_celery_logger()
 
@@ -144,10 +121,7 @@ def _sensors_sync(
             longitude = result["longitude"]
             pm25 = float(result["pm2.5"])
             humidity = float(result["humidity"])
-
-            pm_cf_1 = purpleair_pm_cf_1_data.get(result["sensor_index"])
-            if pm_cf_1 is None:
-                continue
+            pm_cf_1 = float(result["pm_cf_1"])
 
             data: typing.Dict[str, typing.Any] = {
                 "id": result["sensor_index"],
@@ -362,10 +336,9 @@ def purpleair_sync():
 
     logger.info("Fetching sensor from purpleair")
     purpleair_data = _get_purpleair_sensors_data()
-    purpleair_pm_cf_1_data = _get_purpleair_pm_cf_1_data()
 
     logger.info("Recieved %s sensors", len(purpleair_data))
-    moved_sensor_ids = _sensors_sync(purpleair_data, purpleair_pm_cf_1_data)
+    moved_sensor_ids = _sensors_sync(purpleair_data)
 
     if moved_sensor_ids:
         logger.info("Syncing relations for %s sensors", len(moved_sensor_ids))
